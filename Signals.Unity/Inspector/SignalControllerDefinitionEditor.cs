@@ -1,4 +1,6 @@
 ﻿using Signals.Common;
+using Signals.Common.States;
+using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -28,10 +30,18 @@ namespace Signals.Unity.Inspector
         public override void OnInspectorGUI()
         {
             EditorGUILayout.PropertyField(_openState);
+            EditorGUILayout.Space();
             _stateList.DoLayoutList();
 
             EditorGUILayout.HelpBox("Order is important, as conditions are checked from top to bottom\n" +
                 "Open state is used if none of these meet their condition", MessageType.Info);
+
+            if (GUILayout.Button("Get States From Children"))
+            {
+                var def = (SignalControllerDefinition)target;
+                def.OtherStates = def.GetComponentsInChildren<SignalStateBaseDefinition>().Where(x => x != def.OpenState).ToArray();
+                AssetHelper.SaveAsset(target);
+            }
 
             serializedObject.ApplyModifiedProperties();
         }

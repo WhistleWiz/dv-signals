@@ -9,6 +9,7 @@ namespace Signals.Game
     public static class SignalCreator
     {
         private static Type[] s_defaultTypes;
+        private static HashSet<Type> s_failedStates = new HashSet<Type>();
 
         internal static Dictionary<Type, Func<SignalStateBaseDefinition, SignalStateBase>> CreatorFunctions;
 
@@ -27,11 +28,20 @@ namespace Signals.Game
 
         internal static SignalStateBase? Create(SignalController controller, SignalStateBaseDefinition def)
         {
-            if (CreatorFunctions.TryGetValue(def.GetType(), out var creator))
+            var t = def.GetType();
+
+            if (CreatorFunctions.TryGetValue(t, out var creator))
             {
                 var result = creator(def);
                 result.Controller = controller;
                 return result;
+            }
+
+            // Otherwise every single signal would output the same error...
+            if (!s_failedStates.Contains(t))
+            {
+                SignalsMod.Error($"Failed to find creator function for state '{t.FullName}'");
+                s_failedStates.Add(t);
             }
 
             return null;
@@ -53,6 +63,7 @@ namespace Signals.Game
                 return false;
             }
 
+            s_failedStates.Clear();
             CreatorFunctions.Add(t, func);
             return true;
         }
@@ -74,6 +85,7 @@ namespace Signals.Game
                 return false;
             }
 
+            s_failedStates.Clear();
             return CreatorFunctions.Remove(t);
         }
     }

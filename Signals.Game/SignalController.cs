@@ -16,9 +16,13 @@ namespace Signals.Game
         public Junction AssignedJunction;
         public bool TowardsSplit;
 
+        private int _currentState = -1;
+
         public SignalStateBase[] AllStates { get; private set; }
-        public SignalStateBase? CurrentState { get; private set; }
+        public SignalStateBase? CurrentState => _currentState >= 0 ? AllStates[_currentState] : null;
         public bool IsOn => CurrentState != null;
+        public SignalLight[] AllLights { get; private set; }
+        public string Name => $"{AssignedJunction.junctionData.junctionIdLong}-{(TowardsSplit ? "F" : "R")}";
 
         public SignalController(SignalControllerDefinition def, Junction junction, bool direction)
         {
@@ -31,11 +35,7 @@ namespace Signals.Game
             {
                 var result = SignalCreator.Create(this, item);
 
-                if (result == null)
-                {
-                    SignalsMod.Error($"Failed to find creator function for state '{item.Id}'");
-                    continue;
-                }
+                if (result == null) continue;
 
                 allStates.Add(result);
             }
@@ -43,6 +43,8 @@ namespace Signals.Game
             allStates.Add(SignalCreator.Create(this, def.OpenState)!);
 
             AllStates = allStates.ToArray();
+            AllLights = def.GetComponentsInChildren<SignalLight>(true);
+
             def.StartCoroutine(CheckRoutine());
         }
 
@@ -77,28 +79,54 @@ namespace Signals.Game
             return UpdateTime;
         }
 
+        /// <summary>
+        /// Updates the current state.
+        /// </summary>
         public void UpdateState()
         {
-            foreach (var item in AllStates)
+            for (int i = 0; i < AllStates.Length; i++)
             {
-                if (item.MeetsConditions())
+                if (AllStates[i].MeetsConditions())
                 {
-                    ChangeState(item);
+                    ChangeState(i);
                     break;
                 }
             }
         }
 
-        public void ChangeState(SignalStateBase newState)
+        /// <summary>
+        /// Changes the current state to a new one. Does nothing if the state is the same.
+        /// </summary>
+        /// <param name="newState">The index of the new state. Negative values turn off the signal.</param>
+        public bool ChangeState(int newState)
         {
-            if (newState == CurrentState)
+            // Check if the state changes. All negative numbers are treated as off.
+            if (newState != _currentState && _currentState == -1 && newState <= -1)
             {
-                return;
+                return false;
             }
 
-            SignalsMod.LogVerbose($"Setting signal '{AssignedJunction.junctionData.junctionIdLong}' to state {newState.Definition.Id}");
-            CurrentState = newState;
-            CurrentState.Apply();
+            // Out of range, ignore request. Maybe make them open the signal (last state)?
+            if (newState >= AllStates.Length)
+            {
+                SignalsMod.Error($"Failed to set state on signal '{Name}': {newState} >= {AllStates.Length}");
+                return false;
+            }
+
+            // Reset signal state.
+            TurnOff();
+
+            if (newState < 0)
+            {
+                // Object was turning off, which was already done.
+                SignalsMod.LogVerbose($"Turning off signal '{Name}'");
+                return true;
+            }
+
+            _currentState = newState;
+            SignalsMod.LogVerbose($"Setting signal '{Name}' to state '{AllStates[newState].Definition.Id}'");
+            CurrentState!.Apply();
+            return true;
         }
 
         /// <summary>
@@ -106,12 +134,12 @@ namespace Signals.Game
         /// </summary>
         public void TurnOff()
         {
-            foreach (var item in Definition.GetComponentsInChildren<SignalLight>())
+            foreach (var item in AllLights)
             {
                 item.TurnOff();
             }
 
-            CurrentState = null;
+            _currentState = -1;
         }
     }
 }

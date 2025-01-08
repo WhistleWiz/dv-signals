@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Signals.Game
 {
-    internal class SignalLight : MonoBehaviour
+    public class SignalLight : MonoBehaviour
     {
         private static Transform? s_glare;
         private static Transform Glare
@@ -59,6 +59,10 @@ namespace Signals.Game
             return glare.GetComponent<Renderer>();
         }
 
+        /// <summary>
+        /// Turns on the light.
+        /// </summary>
+        /// <param name="blink">Optional blinking state.</param>
         public void TurnOn(bool blink = false)
         {
             if (blink)
@@ -71,6 +75,9 @@ namespace Signals.Game
             }
         }
 
+        /// <summary>
+        /// Turns off the light.
+        /// </summary>
         public void TurnOff()
         {
             Lamp.SetLampState(LampControl.LampState.Off);
