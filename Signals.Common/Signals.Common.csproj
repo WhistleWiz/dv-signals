@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<AssemblyName>$(MSBuildProjectName)</AssemblyName>
+		<TargetFramework>netframework4.8</TargetFramework>
+		<Nullable>enable</Nullable>
+		<LangVersion>8</LangVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="UnityEngine" />
+		<Reference Include="UnityEngine.CoreModule" />
+	</ItemGroup>
+</Project>

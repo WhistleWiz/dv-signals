@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<AssemblyName>$(MSBuildProjectName)</AssemblyName>
+		<TargetFramework>netframework4.8</TargetFramework>
+		<Nullable>enable</Nullable>
+		<LangVersion>8</LangVersion>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Signals.Common\Signals.Common.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<Reference Include="Assembly-CSharp" />
+		<Reference Include="UnityModManager" />
+		<Reference Include="0Harmony" />
+		<Reference Include="UnityEngine" />
+		<Reference Include="UnityEngine.AssetBundleModule" />
+		<Reference Include="UnityEngine.AudioModule" />
+		<Reference Include="UnityEngine.CoreModule" />
+		<Reference Include="DV.Interaction" />
+		<Reference Include="DV.Localization" />
+		<Reference Include="DV.Simulation" />
+		<Reference Include="DV.ThingTypes" />
+		<Reference Include="DV.Utils" />
+		<Reference Include="BezierCurves" />
+	</ItemGroup>
+</Project>
