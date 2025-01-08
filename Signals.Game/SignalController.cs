@@ -1,5 +1,4 @@
-﻿using DV.Utils;
-using Signals.Common;
+﻿using Signals.Common;
 using Signals.Game.States;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,6 +18,7 @@ namespace Signals.Game
 
         public SignalStateBase[] AllStates { get; private set; }
         public SignalStateBase? CurrentState { get; private set; }
+        public bool IsOn => CurrentState != null;
 
         public SignalController(SignalControllerDefinition def, Junction junction, bool direction)
         {
@@ -101,12 +101,17 @@ namespace Signals.Game
             CurrentState.Apply();
         }
 
+        /// <summary>
+        /// Turns off all lights.
+        /// </summary>
         public void TurnOff()
         {
             foreach (var item in Definition.GetComponentsInChildren<SignalLight>())
             {
                 item.TurnOff();
             }
+
+            CurrentState = null;
         }
     }
 }

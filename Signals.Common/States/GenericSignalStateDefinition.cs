@@ -2,7 +2,7 @@
 
 namespace Signals.Common.States
 {
-    public class GenericSignalStateDefinition : SignalStateBaseDefinition
+    public abstract class GenericSignalStateDefinition : SignalStateBaseDefinition
     {
         [SerializeField]
         private string _id = string.Empty;

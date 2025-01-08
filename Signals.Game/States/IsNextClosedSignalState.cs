@@ -3,9 +3,9 @@ using Signals.Common.States;
 
 namespace Signals.Game.States
 {
-    public class NextSignalClosedSignalState : SignalStateBase
+    public class IsNextClosedSignalState : SignalStateBase
     {
-        public NextSignalClosedSignalState(SignalStateBaseDefinition def) : base(def) { }
+        public IsNextClosedSignalState(SignalStateBaseDefinition def) : base(def) { }
 
         public override bool MeetsConditions()
         {

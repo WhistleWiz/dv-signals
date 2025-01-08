@@ -1,4 +1,6 @@
-﻿namespace Signals.Common
+﻿using System.Collections.Generic;
+
+namespace Signals.Common
 {
     public static class Constants
     {
@@ -11,6 +13,16 @@
             public const string Open = "OPEN";
             public const string Closed = "CLOSED";
             public const string NextClosed = "NEXT_CLOSED";
+
+            public static IEnumerable<string> AllDefaultIds
+            {
+                get
+                {
+                    yield return Open;
+                    yield return Closed;
+                    yield return NextClosed;
+                }
+            }
         }
     }
 }

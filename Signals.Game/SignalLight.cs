@@ -25,14 +25,17 @@ namespace Signals.Game
 
         public void Initialize(SignalLightDefinition def)
         {
+            Definition = def;
+
+            // Prevent Awake from running on the indicator and lamp control.
             def.gameObject.SetActive(false);
 
             var indicator = def.gameObject.AddComponent<IndicatorEmission>();
-            indicator.lag = 0.2f;
-            indicator.lightIntensity = 2.5f;
+            indicator.lag = def.Lag;
+            indicator.lightIntensity = def.LightIntensity;
             indicator.emissionColor = def.Color;
             indicator.glareColor = def.Color;
-            indicator.renderers = new[] { def.Renderer };
+            indicator.renderers = def.Renderers;
 
             if (def.Glare != null)
             {
@@ -43,7 +46,17 @@ namespace Signals.Game
             Lamp.lampInd = indicator;
 
             def.gameObject.SetActive(true);
-            Definition = def;
+        }
+
+        private Renderer CreateGlare(Transform root)
+        {
+            var glare = Instantiate(Glare, root);
+            glare.localPosition = Vector3.zero;
+            glare.localRotation = Quaternion.identity;
+            glare.localScale = Vector3.one;
+            glare.gameObject.SetActive(true);
+
+            return glare.GetComponent<Renderer>();
         }
 
         public void TurnOn(bool blink = false)
@@ -61,17 +74,6 @@ namespace Signals.Game
         public void TurnOff()
         {
             Lamp.SetLampState(LampControl.LampState.Off);
-        }
-
-        private Renderer CreateGlare(Transform root)
-        {
-            var glare = Instantiate(Glare, root);
-            glare.localPosition = Vector3.zero;
-            glare.localRotation = Quaternion.identity;
-            glare.localScale = Vector3.one;
-            glare.gameObject.SetActive(true);
-
-            return glare.GetComponent<Renderer>();
         }
     }
 }
