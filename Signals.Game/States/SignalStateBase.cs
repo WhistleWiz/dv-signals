@@ -1,5 +1,6 @@
 ﻿using Signals.Common.States;
 using System.Linq;
+using UnityEngine;
 
 namespace Signals.Game.States
 {
@@ -10,6 +11,7 @@ namespace Signals.Game.States
 
         private SignalLight[] _on = null!;
         private SignalLight[] _blink = null!;
+        private int? _animationId;
 
         public string Id => Definition.Id;
 
@@ -19,6 +21,11 @@ namespace Signals.Game.States
 
             _on = def.OnLights.Select(x => x.GetController()).ToArray();
             _blink = def.BlinkingLights.Select(x => x.GetController()).ToArray();
+
+            if (!string.IsNullOrEmpty(def.AnimationName))
+            {
+                _animationId = Animator.StringToHash(def.AnimationName);
+            }
         }
 
         /// <summary>
@@ -36,6 +43,37 @@ namespace Signals.Game.States
             foreach (SignalLight light in _blink)
             {
                 light.TurnOn(true);
+            }
+
+            PlayAnimation();
+        }
+
+        public void Unapply()
+        {
+            foreach (SignalLight light in _on)
+            {
+                light.TurnOff();
+            }
+
+            foreach (SignalLight light in _blink)
+            {
+                light.TurnOff();
+            }
+        }
+
+        private void PlayAnimation()
+        {
+            if (Controller.Definition.Animator == null || !_animationId.HasValue)
+            {
+                return;
+            }
+
+            Controller.Definition.Animator.enabled = true;
+            Controller.Definition.Animator.CrossFade(_animationId.Value, Definition.AnimationTime, 0);
+
+            if (Definition.DisableAnimatorAfterChanging)
+            {
+                Controller.DisableAnimator(Definition.AnimationTime + 0.1f);
             }
         }
     }

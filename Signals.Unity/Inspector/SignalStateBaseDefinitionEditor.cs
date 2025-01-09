@@ -11,16 +11,17 @@ namespace Signals.Unity.Inspector
 
         public override void OnInspectorGUI()
         {
-            base.OnInspectorGUI();
-
             _def = (SignalStateBaseDefinition)target;
 
-            if (_def is GenericSignalStateDefinition) return;
+            if (_def is GenericSignalStateDefinition) goto DrawBase;
 
             // For signals without a user defined ID, show it as a readonly field.
             GUI.enabled = false;
             EditorGUILayout.TextField("Id", _def.Id);
             GUI.enabled = true;
+
+            DrawBase:
+            base.OnInspectorGUI();
         }
     }
 }

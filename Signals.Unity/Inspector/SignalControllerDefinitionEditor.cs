@@ -11,11 +11,13 @@ namespace Signals.Unity.Inspector
     internal class SignalControllerDefinitionEditor : Editor
     {
         private SerializedProperty _openState = null!;
+        private SerializedProperty _animator = null!;
         private ReorderableList _stateList = null!;
 
         private void OnEnable()
         {
             _openState = serializedObject.FindProperty(nameof(SignalControllerDefinition.OpenState));
+            _animator = serializedObject.FindProperty(nameof(SignalControllerDefinition.Animator));
 
             _stateList = EditorHelper.CreateReorderableList(serializedObject, serializedObject.FindProperty(nameof(SignalControllerDefinition.OtherStates)),
                 true, true, true, "Other States");
@@ -42,6 +44,9 @@ namespace Signals.Unity.Inspector
                 def.OtherStates = def.GetComponentsInChildren<SignalStateBaseDefinition>().Where(x => x != def.OpenState).ToArray();
                 AssetHelper.SaveAsset(target);
             }
+
+            EditorGUILayout.Space();
+            EditorGUILayout.PropertyField(_animator);
 
             serializedObject.ApplyModifiedProperties();
         }

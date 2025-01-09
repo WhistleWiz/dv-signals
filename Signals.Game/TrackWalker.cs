@@ -24,7 +24,7 @@ namespace Signals.Game
         /// <param name="controller">The <see cref="SignalController"/> from where to start.</param>
         public static IEnumerable<RailTrack> WalkUntilNextSignal(SignalController controller)
         {
-            return WalkUntilNextSignal(controller.AssignedJunction, controller.TowardsSplit);
+            return WalkUntilNextSignal(controller.AssignedJunction, controller.TowardsBranches);
         }
 
         /// <summary>

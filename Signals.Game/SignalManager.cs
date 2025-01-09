@@ -47,14 +47,19 @@ namespace Signals.Game
                 var junction = track.inJunction;
                 var inTrack = junction.inBranch.track;
 
+                // Use the anchor point as the placement root. Signal is offset to the side by a custom value specified
+                // in the pack, and then backwards by a few metres to look better. Also keeps it out of the way from
+                // switch stands this way. It'll block the stand from the branches side but that is fine. This does
+                // however mean that if the track length is very short, it can look odd.
                 var point = track.curve.GetAnchorPoints()[0];
+                var backward = -point.handle2.normalized;
                 Vector3 offset = Vector3.Cross(Vector3.up, point.handle2).normalized * pack.OffsetFromTrackCentre;
 
                 var to = Instantiate(pack.Signal, point.transform, false);
                 var from = Instantiate(pack.Signal, point.transform, false);
 
-                to.transform.localPosition = offset;
-                from.transform.localPosition = -offset;
+                to.transform.localPosition = offset + backward;
+                from.transform.localPosition = -offset - 4.0f * backward;
                 to.transform.localRotation = Quaternion.LookRotation(point.handle2);
                 from.transform.localRotation = Quaternion.LookRotation(-point.handle2);
 
