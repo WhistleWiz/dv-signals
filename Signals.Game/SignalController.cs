@@ -54,10 +54,10 @@ namespace Signals.Game
 
         public SignalController(SignalControllerDefinition def, Junction junction, bool direction)
         {
+            _forceOff = false;
             Definition = def;
             AssignedJunction = junction;
             TowardsBranches = direction;
-            ForceOff = false;
             CurrentStateIndex = OffState;
 
             List<SignalStateBase> allStates = new List<SignalStateBase>();

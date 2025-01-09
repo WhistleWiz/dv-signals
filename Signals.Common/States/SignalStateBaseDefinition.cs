@@ -6,11 +6,11 @@ namespace Signals.Common.States
     {
         public abstract string Id { get; }
 
-        [Header("Optional")]
+        [Header("Optional - Lights")]
         public SignalLightDefinition[] OnLights = new SignalLightDefinition[0];
         public SignalLightDefinition[] BlinkingLights = new SignalLightDefinition[0];
 
-        [Space]
+        [Header("Optional - Animation")]
         public string? AnimationName;
         public float AnimationTime = 1.0f;
         [Tooltip("Disables the animator after changing the signal state to this\n" +
