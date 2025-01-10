@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Signals.Common
 {
@@ -31,6 +32,14 @@ namespace Signals.Common
             }
 
             return true;
+        }
+
+        public IEnumerable<SignalControllerDefinition> AllSignals
+        {
+            get
+            {
+                yield return Signal;
+            }
         }
     }
 }

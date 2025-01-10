@@ -10,5 +10,10 @@
             To = to;
             From = from;
         }
+
+        public SignalController GetSignal(bool direction)
+        {
+            return direction ? To : From;
+        }
     }
 }

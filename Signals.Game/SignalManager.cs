@@ -9,15 +9,34 @@ using UnityModManagerNet;
 
 namespace Signals.Game
 {
-    internal class SignalManager : SingletonBehaviour<SignalManager>
+    public class SignalManager : SingletonBehaviour<SignalManager>
     {
         private const string YardNameStart = "[Y]";
+        private const int LaserPointerTarget = 15;
+
+        private static Transform? _holder;
+
+        internal static SignalPack DefaultPack = null!;
+        internal static Dictionary<string, SignalPack> InstalledPacks = new Dictionary<string, SignalPack>();
+
+        internal static Transform Holder
+        {
+            get
+            {
+                if (_holder == null)
+                {
+                    var go = new GameObject("[Signal Holder]");
+                    go.SetActive(false);
+                    DontDestroyOnLoad(go);
+                    _holder = go.transform;
+                }
+
+                return _holder;
+            }
+        }
 
         private Dictionary<Junction, SignalPair> _junctionMap =
             new Dictionary<Junction, SignalPair>();
-
-        public static SignalPack DefaultPack = null!;
-        public static Dictionary<string, SignalPack> InstalledPacks = new Dictionary<string, SignalPack>();
 
         public new static string AllowAutoCreate()
         {
@@ -30,7 +49,11 @@ namespace Signals.Game
             _junctionMap.Clear();
         }
 
-        public void CreateSignals()
+        #region Signal Creation
+
+        internal static void RegisterCreation() => Instance.CreateSignals();
+
+        private void CreateSignals()
         {
             SignalsMod.Log("Started creating signals...");
             var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -60,8 +83,8 @@ namespace Signals.Game
 
                 to.transform.localPosition = offset + backward;
                 from.transform.localPosition = -offset - 4.0f * backward;
-                to.transform.localRotation = Quaternion.LookRotation(point.handle2);
-                from.transform.localRotation = Quaternion.LookRotation(-point.handle2);
+                to.transform.localRotation = Quaternion.LookRotation(-point.handle2);
+                from.transform.localRotation = Quaternion.LookRotation(point.handle2);
 
                 _junctionMap.Add(junction,
                     new SignalPair(new SignalController(to, junction, true), new SignalController(from, junction, false)));
@@ -131,12 +154,26 @@ namespace Signals.Game
             return SignalsMod.Settings.CreateSignalsOnPax && track.logicTrack.ID.TrackPartOnly.EndsWith(TrackID.LOADING_PASSENGER_TYPE);
         }
 
-        public bool TryGetSignals(Junction junction, out SignalPair pair)
+        #endregion
+
+        internal bool TryGetSignals(Junction junction, out SignalPair pair)
         {
             return _junctionMap.TryGetValue(junction, out pair);
         }
 
-        public SignalPack GetCurrentPack()
+        public bool TryGetSignal(Junction junction, bool direction, out SignalController signalController)
+        {
+            if (TryGetSignals(junction, out var pair))
+            {
+                signalController = pair.GetSignal(direction);
+                return true;
+            }
+
+            signalController = null!;
+            return false;
+        }
+
+        internal static SignalPack GetCurrentPack()
         {
             if (InstalledPacks.TryGetValue(SignalsMod.Settings.CustomPack, out var pack))
             {
@@ -171,9 +208,12 @@ namespace Signals.Game
 
                 if (pack != null)
                 {
+                    ProcessSignals(pack);
+
                     if (DefaultPack == null)
                     {
                         DefaultPack = pack;
+                        SignalsMod.Log("Loaded default pack.");
                     }
                     else
                     {
@@ -196,6 +236,13 @@ namespace Signals.Game
             }
         }
 
-        internal static void RegisterCreation() => Instance.CreateSignals();
+        internal static void ProcessSignals(SignalPack pack)
+        {
+            foreach (var item in pack.AllSignals)
+            {
+                item.gameObject.layer = LaserPointerTarget;
+                item.gameObject.AddComponent<SignalHover>();
+            }
+        }
     }
 }

@@ -7,9 +7,9 @@ namespace Signals.Game.States
     {
         public ClosedSignalState(SignalStateBaseDefinition def) : base(def) { }
 
-        public override bool MeetsConditions()
+        public override bool MeetsConditions(RailTrack[] tracksToNextSignal, SignalController? nextSignal)
         {
-            foreach (var item in TrackWalker.WalkUntilNextSignal(Controller))
+            foreach (var item in tracksToNextSignal)
             {
                 if (item.onTrackBogies.Count() > 0)
                 {

@@ -13,6 +13,7 @@ namespace Signals.Common
         public SignalStateBaseDefinition[] OtherStates = new SignalStateBaseDefinition[0];
 
         [Header("Optional")]
+        public Sprite? OffStateHUDSprite;
         [Tooltip("Used for mechanical signals")]
         public Animator? Animator;
     }

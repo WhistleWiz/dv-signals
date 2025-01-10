@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Signals.Game
 {
@@ -195,7 +196,13 @@ namespace Signals.Game
                 return null;
             }
 
-            return s_lastDirection.Value ? s_lastSignals.To : s_lastSignals.From;
+            return s_lastSignals.GetSignal(s_lastDirection.Value);
+        }
+
+        public static void GetTracksAndNextSignal(SignalController from, out RailTrack[] tracks, out SignalController? nextSignal)
+        {
+            tracks = WalkUntilNextSignal(from).ToArray();
+            nextSignal = GetNextSignal();
         }
     }
 }

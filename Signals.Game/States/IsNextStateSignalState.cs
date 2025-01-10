@@ -11,16 +11,14 @@ namespace Signals.Game.States
             _fullDef = (IsNextStateSignalStateDefinition)def;
         }
 
-        public override bool MeetsConditions()
+        public override bool MeetsConditions(RailTrack[] tracksToNextSignal, SignalController? nextSignal)
         {
-            var controller = TrackWalker.GetNextSignal(Controller);
-
-            if (controller == null)
+            if (nextSignal == null)
             {
                 return false;
             }
 
-            var state = controller.CurrentState;
+            var state = nextSignal.CurrentState;
 
             if (state == null)
             {

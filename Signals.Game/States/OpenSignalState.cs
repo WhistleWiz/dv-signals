@@ -6,7 +6,7 @@ namespace Signals.Game.States
     {
         public OpenSignalState(SignalStateBaseDefinition def) : base(def) { }
 
-        public override bool MeetsConditions()
+        public override bool MeetsConditions(RailTrack[] tracksToNextSignal, SignalController? nextSignal)
         {
             return true;
         }

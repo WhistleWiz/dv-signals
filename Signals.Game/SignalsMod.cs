@@ -18,6 +18,11 @@ namespace Signals.Game
             Settings = UnityModManager.ModSettings.Load<Settings>(modEntry);
             SignalManager.LoadSignals(modEntry);
 
+            if (SignalManager.DefaultPack == null)
+            {
+                throw new System.Exception("Failed to load default pack, mod won't load!");
+            }
+
             Instance.OnGUI += Settings.Draw;
             Instance.OnSaveGUI += Settings.Save;
 

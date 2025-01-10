@@ -21,6 +21,7 @@ namespace Signals.Game
 
         private bool _forceOff;
         private int? _baseAnimation;
+        private SignalHover _hover;
 
         internal Coroutine? AnimatorDisabler;
 
@@ -82,7 +83,16 @@ namespace Signals.Game
                 def.Animator.enabled = false;
             }
 
+            _hover = def.GetComponent<SignalHover>();
+            _hover.Initialise(def.OffStateHUDSprite);
+
             def.StartCoroutine(CheckRoutine());
+            junction.Switched += JunctionSwitched;
+        }
+
+        private void JunctionSwitched(Junction.SwitchMode mode, int branch)
+        {
+            UpdateState();
         }
 
         private System.Collections.IEnumerator CheckRoutine()
@@ -117,7 +127,7 @@ namespace Signals.Game
         }
 
         /// <summary>
-        /// Updates the current state.
+        /// Updates the current state based on the conditions of <see cref="AllStates"/>.
         /// </summary>
         public void UpdateState()
         {
@@ -131,9 +141,13 @@ namespace Signals.Game
                 return;
             }
 
+            // Precompute this information so each state doesn't have to call the same functions
+            // over and over again.
+            TrackWalker.GetTracksAndNextSignal(this, out var tracks, out var nextSignal);
+
             for (int i = 0; i < AllStates.Length; i++)
             {
-                if (AllStates[i].MeetsConditions())
+                if (AllStates[i].MeetsConditions(tracks, nextSignal))
                 {
                     ChangeState(i);
                     break;
@@ -173,6 +187,7 @@ namespace Signals.Game
             SignalsMod.LogVerbose($"Setting signal '{Name}' to state '{AllStates[newState].Definition.Id}'");
             CurrentStateIndex = newState;
             AllStates[newState].Apply();
+            _hover.UpdateStateDisplay(AllStates[newState].Definition.HUDSprite);
             return true;
         }
 
@@ -190,11 +205,12 @@ namespace Signals.Game
             if (Definition.Animator != null && _baseAnimation.HasValue)
             {
                 Definition.Animator.enabled = true;
-                Definition.Animator.CrossFade(_baseAnimation.Value, UpdateTime / 2, 0);
+                Definition.Animator.CrossFadeInFixedTime(_baseAnimation.Value, UpdateTime / 2, 0);
                 DisableAnimator(UpdateTime);
             }
 
             CurrentStateIndex = OffState;
+            _hover.UpdateStateDisplay(Definition.OffStateHUDSprite);
         }
 
         internal void DisableAnimator(float time)

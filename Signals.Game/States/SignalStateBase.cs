@@ -31,7 +31,7 @@ namespace Signals.Game.States
         /// <summary>
         /// Checks if the conditions for this state to be used are true.
         /// </summary>
-        public abstract bool MeetsConditions();
+        public abstract bool MeetsConditions(RailTrack[] tracksToNextSignal, SignalController? nextSignal);
 
         public void Apply()
         {
@@ -46,6 +46,7 @@ namespace Signals.Game.States
             }
 
             PlayAnimation();
+            PlaySound();
         }
 
         public void Unapply()
@@ -69,11 +70,20 @@ namespace Signals.Game.States
             }
 
             Controller.Definition.Animator.enabled = true;
-            Controller.Definition.Animator.CrossFade(_animationId.Value, Definition.AnimationTime, 0);
+            Controller.Definition.Animator.CrossFadeInFixedTime(_animationId.Value, Definition.AnimationTime, 0);
 
             if (Definition.DisableAnimatorAfterChanging)
             {
                 Controller.DisableAnimator(Definition.AnimationTime + 0.1f);
+            }
+        }
+
+        private void PlaySound()
+        {
+            if (Definition.ActivationAudios.Length > 0)
+            {
+                Definition.ActivationAudios.Play(Definition.AudioPosition != null ? Definition.AudioPosition.position : Definition.transform.position,
+                    mixerGroup: AudioManager.Instance.switchGroup);
             }
         }
     }
