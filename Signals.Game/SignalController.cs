@@ -46,7 +46,7 @@ namespace Signals.Game
         /// </summary>
         public SignalStateBase? CurrentState => IsOn ? AllStates[CurrentStateIndex] : null;
         public SignalLight[] AllLights { get; private set; }
-        public string Name => $"{AssignedJunction.junctionData.junctionIdLong}-{(TowardsBranches ? "F" : "R")}";
+        public string Name => $"{AssignedJunction.junctionData.junctionIdLong}-{(TowardsBranches ? "T" : "F")}";
         /// <summary>
         /// Forces this signal to stay off.
         /// </summary>

@@ -1,4 +1,5 @@
-﻿using DV.Logic.Job;
+﻿using DV.CabControls.Spec;
+using DV.Logic.Job;
 using DV.Utils;
 using Signals.Common;
 using System.Collections.Generic;
@@ -12,7 +13,9 @@ namespace Signals.Game
     public class SignalManager : SingletonBehaviour<SignalManager>
     {
         private const string YardNameStart = "[Y]";
-        private const int LaserPointerTarget = 15;
+        private const int LaserPointerTargetLayer = 15;
+        private const float DeadEndThreshold = 50.0f;
+        private const float ClosenessThreshold = 25.0f;
 
         private static Transform? _holder;
 
@@ -94,12 +97,19 @@ namespace Signals.Game
 
             sw.Stop();
             SignalsMod.Log($"Finished creating {created} signal(s) ({sw.Elapsed.TotalSeconds:F4}s)");
+            sw.Restart();
+
+            // Wish this could be done within the same loop but alas.
+            int mergeCount = MergeCloseSignals();
+
+            sw.Stop();
+            SignalsMod.Log($"Merged {mergeCount} signal(s) ({sw.Elapsed.TotalSeconds:F4}s)");
         }
 
         private bool ShouldMakeSignal(RailTrack track)
         {
-            // Signals only at juntions, and don't duplicate junctions.
-            if (!track.isJunctionTrack || _junctionMap.ContainsKey(track.inJunction))
+            // Signals only at juntions, don't duplicate junctions, don't make them at short dead ends.
+            if (!track.isJunctionTrack || _junctionMap.ContainsKey(track.inJunction) || InIsShortDeadEnd(track.inJunction))
             {
                 return false;
             }
@@ -144,6 +154,22 @@ namespace Signals.Game
             return true;
         }
 
+        private bool InIsShortDeadEnd(Junction junction)
+        {
+            var track = junction.inBranch.track;
+
+            if (track.logicTrack.length > DeadEndThreshold)
+            {
+                return false;
+            }
+
+            var branch = track.inJunction == junction ?
+                track.GetOutBranch() :
+                track.GetInBranch();
+
+            return branch == null;
+        }
+
         private static int GetJunctionId(RailTrack track)
         {
             return track.inJunction.junctionData.junctionId;
@@ -152,6 +178,57 @@ namespace Signals.Game
         private static bool PassengerTest(RailTrack track)
         {
             return SignalsMod.Settings.CreateSignalsOnPax && track.logicTrack.ID.TrackPartOnly.EndsWith(TrackID.LOADING_PASSENGER_TYPE);
+        }
+
+        private int MergeCloseSignals()
+        {
+            HashSet<Junction> merged = new HashSet<Junction>();
+            var pairs = _junctionMap.ToList();
+
+            foreach (var item in pairs)
+            {
+                var track = item.Key.inBranch.track;
+
+                // If the track is large enough, don't merge. Only the in track (not on branching side)
+                // matters, as you always want a signal for the single exit.
+                if (track.logicTrack.length > ClosenessThreshold) continue;
+
+                // Junction at the other end of the track.
+                var other = track.outJunction == item.Key ?
+                    track.inJunction :
+                    track.outJunction;
+
+                // No junction on the other side of the track, ignore merging.
+                // Also ignore if the junctions aren't facing opposite directions.
+                if (other == null || other.inBranch.track != track) continue;
+
+                // Already merged.
+                if (merged.Contains(other)) continue;
+
+                var result = Merge(item.Value, _junctionMap[other]);
+                _junctionMap[item.Key] = result.Flip();
+                _junctionMap[other] = result;
+
+                merged.Add(item.Key);
+            }
+
+            return merged.Count;
+        }
+
+        private static SignalPair Merge(SignalPair p1, SignalPair p2, bool direction = true)
+        {
+            if (direction)
+            {
+                Destroy(p1.To.Definition.gameObject);
+                Destroy(p2.To.Definition.gameObject);
+                return new SignalPair(p1.From, p2.From);
+            }
+            else
+            {
+                Destroy(p1.From.Definition.gameObject);
+                Destroy(p2.From.Definition.gameObject);
+                return new SignalPair(p1.To, p2.To);
+            }
         }
 
         #endregion
@@ -240,7 +317,7 @@ namespace Signals.Game
         {
             foreach (var item in pack.AllSignals)
             {
-                item.gameObject.layer = LaserPointerTarget;
+                item.gameObject.layer = LaserPointerTargetLayer;
                 item.gameObject.AddComponent<SignalHover>();
             }
         }

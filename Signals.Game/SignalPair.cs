@@ -15,5 +15,10 @@
         {
             return direction ? To : From;
         }
+
+        public SignalPair Flip()
+        {
+            return new SignalPair(From, To);
+        }
     }
 }

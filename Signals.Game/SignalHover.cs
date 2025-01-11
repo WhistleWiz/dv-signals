@@ -1,7 +1,9 @@
-﻿using DV.HUD.Signs;
+﻿using DV.Hovering;
+using DV.HUD.Signs;
 using DV.Signs;
 using DV.UI.LocoHUD;
 using System.Collections.Generic;
+using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -51,16 +53,21 @@ namespace Signals.Game
         {
             signTypes.Clear();
 
-            if (sprite == null)
+            if (sprite != null)
             {
-                return;
+                signTypes.Add(new SignDisplay.SignDisplayInstance()
+                {
+                    prefab = GetPrefabFromSprite(sprite),
+                    text = " "
+                });
             }
 
-            signTypes.Add(new SignDisplay.SignDisplayInstance()
+            var (type, obj) = NonVRHoverManager.Instance.CurrentlyHovered;
+            if (type == NonVRHoverManager.HoverType.Sign && ((SignHover)obj) == this)
             {
-                prefab = GetPrefabFromSprite(sprite),
-                text = " "
-            });
+                Unhovered();
+                Hovered();
+            }
         }
 
         public GameObject GetPrefabFromSprite(Sprite sprite)
