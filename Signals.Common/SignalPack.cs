@@ -25,9 +25,9 @@ namespace Signals.Common
                 return false;
             }
 
-            if (Signal.OpenState == null)
+            if (Signal.DefaultState == null)
             {
-                Debug.LogError("Open state is not set!", this);
+                Debug.LogError("Default state is not set!", this);
                 return false;
             }
 

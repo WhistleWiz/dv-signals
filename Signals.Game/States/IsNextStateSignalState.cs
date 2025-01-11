@@ -6,7 +6,7 @@ namespace Signals.Game.States
     {
         private IsNextStateSignalStateDefinition _fullDef;
 
-        public IsNextStateSignalState(SignalStateBaseDefinition def) : base(def)
+        public IsNextStateSignalState(SignalStateBaseDefinition def, SignalController controller) : base(def, controller)
         {
             _fullDef = (IsNextStateSignalStateDefinition)def;
         }

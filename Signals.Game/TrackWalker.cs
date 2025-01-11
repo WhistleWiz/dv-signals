@@ -12,6 +12,7 @@ namespace Signals.Game
 
         private static SignalPair? s_lastSignals = null;
         private static bool? s_lastDirection = null;
+        private static SignalController? s_startingSignal = null;
 
         private static void Clear()
         {
@@ -25,6 +26,7 @@ namespace Signals.Game
         /// <param name="controller">The <see cref="SignalController"/> from where to start.</param>
         public static IEnumerable<RailTrack> WalkUntilNextSignal(SignalController controller)
         {
+            s_startingSignal = controller;
             return WalkUntilNextSignal(controller.AssignedJunction, controller.TowardsBranches);
         }
 
@@ -67,12 +69,21 @@ namespace Signals.Game
 
             //SignalsMod.LogVerbose($"Starting walk from '{from.name}' ({from.logicTrack.ID})...");
 
+            HashSet<RailTrack> visited = new HashSet<RailTrack>();
             RailTrack? current = from;
             Junction? junction;
             int depth = 0;
 
             while (depth++ <= MaxDepth)
             {
+                // If we already visited this track, we are looping, so stop.
+                if (visited.Contains(current))
+                {
+                    yield break;
+                }
+
+                visited.Add(current);
+
                 // Return the track we're on.
                 yield return current;
 
@@ -83,7 +94,16 @@ namespace Signals.Game
                 if (junction != null && SignalManager.Instance.TryGetSignals(junction, out s_lastSignals))
                 {
                     s_lastDirection = current == junction.inBranch.track;
-                    break;
+
+                    // If the next signal is the same one we started on, clear the stored next signal.
+                    if (s_startingSignal != null && s_lastSignals.GetSignal(s_lastDirection.Value) == s_startingSignal)
+                    {
+                        Clear();
+                    }
+                    else
+                    {
+                        yield break;
+                    }
                 }
 
                 // Store the current track as the previous one and get the possible next track.
@@ -93,7 +113,7 @@ namespace Signals.Game
                 // There are no more tracks, stop looking.
                 if (current == null)
                 {
-                    break;
+                    yield break;
                 }
 
                 var branch = current.GetOutBranch();

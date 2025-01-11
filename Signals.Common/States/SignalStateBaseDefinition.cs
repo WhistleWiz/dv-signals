@@ -8,7 +8,7 @@ namespace Signals.Common.States
 
         [Header("HUD Display")]
         [Tooltip("This is the sprite displayed on the HUD\n" +
-            "The recommended size is 256x256px")]
+            "The maximum recommended size is 256x256px")]
         public Sprite? HUDSprite;
 
         [Header("Optional - Lights")]

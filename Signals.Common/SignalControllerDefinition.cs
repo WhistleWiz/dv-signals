@@ -6,7 +6,7 @@ namespace Signals.Common
     public class SignalControllerDefinition : MonoBehaviour
     {
         [Tooltip("The state when no other states meet conditions")]
-        public OpenSignalStateDefinition OpenState = null!;
+        public OpenSignalStateDefinition DefaultState = null!;
         [Tooltip("Each possible state for the signal\n" +
             "Order is important, as conditions are checked from first to last\n" +
             "Open state is used if none of these meet their condition")]

@@ -5,7 +5,7 @@ namespace Signals.Game.States
 {
     public class IsNextClosedSignalState : SignalStateBase
     {
-        public IsNextClosedSignalState(SignalStateBaseDefinition def) : base(def) { }
+        public IsNextClosedSignalState(SignalStateBaseDefinition def, SignalController controller) : base(def, controller) { }
 
         public override bool MeetsConditions(RailTrack[] tracksToNextSignal, SignalController? nextSignal)
         {

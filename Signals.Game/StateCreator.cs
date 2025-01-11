@@ -6,34 +6,35 @@ using System.Linq;
 
 namespace Signals.Game
 {
-    public static class SignalCreator
+    public static class StateCreator
     {
         private static Type[] s_defaultTypes;
         private static HashSet<Type> s_failedStates = new HashSet<Type>();
 
-        internal static Dictionary<Type, Func<SignalStateBaseDefinition, SignalStateBase>> CreatorFunctions;
+        internal static Dictionary<Type, Func<SignalStateBaseDefinition, SignalController, SignalStateBase>> CreatorFunctions;
 
-        static SignalCreator()
+        static StateCreator()
         {
-            CreatorFunctions = new Dictionary<Type, Func<SignalStateBaseDefinition, SignalStateBase>>
+            CreatorFunctions = new Dictionary<Type, Func<SignalStateBaseDefinition, SignalController, SignalStateBase>>
             {
-                { typeof(OpenSignalStateDefinition), (x) => new OpenSignalState(x) },
-                { typeof(ClosedSignalStateDefinition), (x) => new ClosedSignalState(x) },
-                { typeof(IsNextClosedSignalStateDefinition), (x) => new IsNextClosedSignalState(x) },
-                { typeof(IsNextStateSignalStateDefinition), (x) => new IsNextStateSignalState(x) }
+                { typeof(OpenSignalStateDefinition), (x, y) => new OpenSignalState(x, y) },
+                { typeof(ClosedSignalStateDefinition), (x, y) => new ClosedSignalState(x, y) },
+                { typeof(IsNextClosedSignalStateDefinition), (x, y) => new IsNextClosedSignalState(x, y) },
+                { typeof(IsNextStateSignalStateDefinition), (x, y) => new IsNextStateSignalState(x, y) }
             };
 
             s_defaultTypes = CreatorFunctions.Keys.ToArray();
         }
 
-        internal static SignalStateBase? Create(SignalController controller, SignalStateBaseDefinition def)
+        internal static SignalStateBase? Create(SignalController controller, SignalStateBaseDefinition? def)
         {
+            if (def == null) return null;
+
             var t = def.GetType();
 
             if (CreatorFunctions.TryGetValue(t, out var creator))
             {
-                var result = creator(def);
-                result.Controller = controller;
+                var result = creator(def, controller);
                 return result;
             }
 
@@ -50,9 +51,12 @@ namespace Signals.Game
         /// <summary>
         /// Add your own state creators for custom signal states.
         /// </summary>
-        /// <param name="func">The method that turns the definition into an implementation.</param>
+        /// <param name="func">
+        /// The method that turns the definition into an implementation.
+        /// <para>Inputs are the definition and the controller.</para>
+        /// </param>
         /// <returns><see langword="true"/> if the type was sucessfully added, otherwise <see langword="false"/>.</returns>
-        public static bool AddCreatorFunction<T>(Func<SignalStateBaseDefinition, SignalStateBase> func)
+        public static bool AddCreatorFunction<T>(Func<SignalStateBaseDefinition, SignalController, SignalStateBase> func)
             where T : SignalStateBaseDefinition
         {
             var t = typeof(T);

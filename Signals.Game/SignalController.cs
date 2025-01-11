@@ -5,6 +5,13 @@ using UnityEngine;
 
 namespace Signals.Game
 {
+    /// <summary>
+    /// Controls a signal instance.
+    /// </summary>
+    /// <remarks>
+    /// Signal state is updated every second when a player is within 2km of the signal, and slows to
+    /// an update every 5 seconds when further away.
+    /// </remarks>
     public class SignalController
     {
         // Signals at over this distance from the camera update at a slower rate.
@@ -65,14 +72,14 @@ namespace Signals.Game
 
             foreach (var item in def.OtherStates)
             {
-                var result = SignalCreator.Create(this, item);
+                var result = StateCreator.Create(this, item);
 
                 if (result == null) continue;
 
                 allStates.Add(result);
             }
 
-            allStates.Add(SignalCreator.Create(this, def.OpenState)!);
+            allStates.Add(StateCreator.Create(this, def.DefaultState)!);
 
             AllStates = allStates.ToArray();
             AllLights = def.GetComponentsInChildren<SignalLight>(true);
@@ -150,9 +157,12 @@ namespace Signals.Game
                 if (AllStates[i].MeetsConditions(tracks, nextSignal))
                 {
                     ChangeState(i);
-                    break;
+                    return;
                 }
             }
+
+            // This shouldn't be reached but just in case.
+            ChangeState(AllStates.Length - 1);
         }
 
         /// <summary>
@@ -194,8 +204,11 @@ namespace Signals.Game
         /// <summary>
         /// Turns off the signal until the next state update.
         /// </summary>
-        public void TurnOff()
+        /// <param name="keep">If true, keeps the signal off.</param>
+        public void TurnOff(bool keep = false)
         {
+            CurrentState?.Unapply();
+
             foreach (var item in AllLights)
             {
                 item.TurnOff();
@@ -205,12 +218,13 @@ namespace Signals.Game
             if (Definition.Animator != null && _baseAnimation.HasValue)
             {
                 Definition.Animator.enabled = true;
-                Definition.Animator.CrossFadeInFixedTime(_baseAnimation.Value, UpdateTime / 2, 0);
-                DisableAnimator(UpdateTime);
+                Definition.Animator.CrossFadeInFixedTime(_baseAnimation.Value, CurrentState != null ? CurrentState.Definition.AnimationTime : UpdateTime, 0);
+                DisableAnimator(UpdateTime + 0.1f);
             }
 
             CurrentStateIndex = OffState;
             _hover.UpdateStateDisplay(Definition.OffStateHUDSprite);
+            _forceOff = keep;
         }
 
         internal void DisableAnimator(float time)
@@ -224,6 +238,15 @@ namespace Signals.Game
 
             // Disable the animator after some time. Since the animations are instant
             AnimatorDisabler = Definition.StartCoroutine(Helpers.DisableBehaviour(Definition.Animator, time));
+        }
+
+        /// <summary>
+        /// Returns the other signal at the assigned junction.
+        /// </summary>
+        public SignalController GetPaired()
+        {
+            SignalManager.Instance.TryGetSignal(AssignedJunction, !TowardsBranches, out var controller);
+            return controller;
         }
     }
 }
