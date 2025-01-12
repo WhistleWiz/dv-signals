@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-namespace Signals.Common.States
+namespace Signals.Common.Aspects
 {
-    public abstract class SignalStateBaseDefinition : MonoBehaviour
+    public abstract class SignalAspectBaseDefinition : MonoBehaviour
     {
         public abstract string Id { get; }
 

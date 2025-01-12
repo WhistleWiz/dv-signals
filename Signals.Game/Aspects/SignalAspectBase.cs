@@ -1,16 +1,16 @@
-﻿using Signals.Common.States;
+﻿using Signals.Common.Aspects;
 using System.Linq;
 using UnityEngine;
 
-namespace Signals.Game.States
+namespace Signals.Game.Aspects
 {
     /// <summary>
-    /// Base class for a signal state. It handles lights, animation and sound from a
-    /// <see cref="SignalStateBaseDefinition"/> automatically.
+    /// Base class for a signal aspect. It handles lights, animation and sound from a
+    /// <see cref="SignalAspectBaseDefinition"/> automatically.
     /// </summary>
-    public abstract class SignalStateBase
+    public abstract class SignalAspectBase
     {
-        public SignalStateBaseDefinition Definition;
+        public SignalAspectBaseDefinition Definition;
         public SignalController Controller;
 
         private SignalLight[] _on = null!;
@@ -19,7 +19,7 @@ namespace Signals.Game.States
 
         public string Id => Definition.Id;
 
-        public SignalStateBase(SignalStateBaseDefinition def, SignalController controller)
+        public SignalAspectBase(SignalAspectBaseDefinition def, SignalController controller)
         {
             Definition = def;
             Controller = controller;
@@ -34,12 +34,12 @@ namespace Signals.Game.States
         }
 
         /// <summary>
-        /// Checks if the conditions for this state to be used are true.
+        /// Checks if the conditions for this aspect to be used are true.
         /// </summary>
         public abstract bool MeetsConditions(RailTrack[] tracksToNextSignal, SignalController? nextSignal);
 
         /// <summary>
-        /// Applies the state.
+        /// Applies the aspect.
         /// </summary>
         /// <remarks>
         /// When overriding, keep the call to the base version to correctly apply the base features (lights, sound, and animation).
@@ -61,7 +61,7 @@ namespace Signals.Game.States
         }
 
         /// <summary>
-        /// Unapplies the state.
+        /// Unapplies the aspect.
         /// </summary>
         /// <remarks>
         /// When overriding, keep the call to the base version to correctly unapply the base features (lights).

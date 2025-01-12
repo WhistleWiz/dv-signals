@@ -1,5 +1,5 @@
 ﻿using Signals.Common;
-using Signals.Common.States;
+using Signals.Common.Aspects;
 using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
@@ -15,7 +15,7 @@ namespace Signals.Unity.Inspector
 
         private void OnEnable()
         {
-            _stateList = EditorHelper.CreateReorderableList(serializedObject, serializedObject.FindProperty(nameof(SignalControllerDefinition.OtherStates)),
+            _stateList = EditorHelper.CreateReorderableList(serializedObject, serializedObject.FindProperty(nameof(SignalControllerDefinition.OtherAspects)),
                 true, true, true, "Other States");
 
             _stateList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
@@ -27,14 +27,14 @@ namespace Signals.Unity.Inspector
 
         public override void OnInspectorGUI()
         {
-            _prop = serializedObject.FindProperty(nameof(SignalControllerDefinition.DefaultState));
+            _prop = serializedObject.FindProperty(nameof(SignalControllerDefinition.DefaultAspect));
 
             do
             {
                 switch (_prop.name)
                 {
                     // Draw a reorderable list for this property instead of the normal field.
-                    case nameof(SignalControllerDefinition.OtherStates):
+                    case nameof(SignalControllerDefinition.OtherAspects):
                         EditorGUILayout.Space();
                         _stateList.DoLayoutList();
 
@@ -44,7 +44,7 @@ namespace Signals.Unity.Inspector
                         if (GUILayout.Button("Get States From Children"))
                         {
                             var def = (SignalControllerDefinition)target;
-                            def.OtherStates = def.GetComponentsInChildren<SignalStateBaseDefinition>().Where(x => x != def.DefaultState).ToArray();
+                            def.OtherAspects = def.GetComponentsInChildren<SignalAspectBaseDefinition>().Where(x => x != def.DefaultAspect).ToArray();
                             AssetHelper.SaveAsset(target);
                         }
                         continue;

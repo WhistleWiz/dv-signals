@@ -1,11 +1,11 @@
 ﻿using Signals.Common;
-using Signals.Common.States;
+using Signals.Common.Aspects;
 
-namespace Signals.Game.States
+namespace Signals.Game.Aspects
 {
-    public class IsNextClosedSignalState : SignalStateBase
+    public class IsNextClosedSignalAspect : SignalAspectBase
     {
-        public IsNextClosedSignalState(SignalStateBaseDefinition def, SignalController controller) : base(def, controller) { }
+        public IsNextClosedSignalAspect(SignalAspectBaseDefinition def, SignalController controller) : base(def, controller) { }
 
         public override bool MeetsConditions(RailTrack[] tracksToNextSignal, SignalController? nextSignal)
         {
@@ -14,7 +14,7 @@ namespace Signals.Game.States
                 return false;
             }
 
-            var state = nextSignal.CurrentState;
+            var state = nextSignal.CurrentAspect;
 
             if (state == null)
             {

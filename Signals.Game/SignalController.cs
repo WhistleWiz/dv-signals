@@ -1,5 +1,5 @@
 ﻿using Signals.Common;
-using Signals.Game.States;
+using Signals.Game.Aspects;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,7 +9,7 @@ namespace Signals.Game
     /// Controls a signal instance.
     /// </summary>
     /// <remarks>
-    /// Signal state is updated every second when a player is within 2km of the signal, and slows to
+    /// Signal aspect is updated every second when a player is within 2km of the signal, and slows to
     /// an update every 5 seconds when further away.
     /// </remarks>
     public class SignalController
@@ -38,15 +38,15 @@ namespace Signals.Game
         /// Whether the signal refers to the junction's branches or the inbound track.
         /// </summary>
         public bool TowardsBranches { get; private set; }
-        public int CurrentStateIndex { get; private set; }
-        public bool IsOn => CurrentStateIndex >= 0;
-        public SignalStateBase[] AllStates { get; private set; }
+        public int CurrentAspectIndex { get; private set; }
+        public bool IsOn => CurrentAspectIndex >= 0;
+        public SignalAspectBase[] AllAspects { get; private set; }
         /// <summary>
         /// Returns <see langword="null"/> if the signal is off.
         /// </summary>
-        public SignalStateBase? CurrentState => IsOn ? AllStates[CurrentStateIndex] : null;
+        public SignalAspectBase? CurrentAspect => IsOn ? AllAspects[CurrentAspectIndex] : null;
         public SignalLight[] AllLights { get; private set; }
-        public string Name => $"{AssignedJunction.junctionData.junctionIdLong}-{(TowardsBranches ? "T" : "F")}";
+        public string Name => $"{AssignedJunction.junctionData.junctionIdLong}-{(TowardsBranches ? 'T' : 'F')}";
         /// <summary>
         /// Forces this signal to stay off.
         /// </summary>
@@ -56,7 +56,7 @@ namespace Signals.Game
             set
             {
                 _forceOff = value;
-                UpdateState();
+                UpdateAspect();
             }
         }
 
@@ -66,22 +66,22 @@ namespace Signals.Game
             Definition = def;
             AssignedJunction = junction;
             TowardsBranches = direction;
-            CurrentStateIndex = OffState;
+            CurrentAspectIndex = OffState;
 
-            List<SignalStateBase> allStates = new List<SignalStateBase>();
+            List<SignalAspectBase> allStates = new List<SignalAspectBase>();
 
-            foreach (var item in def.OtherStates)
+            foreach (var item in def.OtherAspects)
             {
-                var result = StateCreator.Create(this, item);
+                var result = AspectCreator.Create(this, item);
 
                 if (result == null) continue;
 
                 allStates.Add(result);
             }
 
-            allStates.Add(StateCreator.Create(this, def.DefaultState)!);
+            allStates.Add(AspectCreator.Create(this, def.DefaultAspect)!);
 
-            AllStates = allStates.ToArray();
+            AllAspects = allStates.ToArray();
             AllLights = def.GetComponentsInChildren<SignalLight>(true);
 
             if (def.Animator != null)
@@ -99,7 +99,7 @@ namespace Signals.Game
 
         private void JunctionSwitched(Junction.SwitchMode mode, int branch)
         {
-            UpdateState();
+            UpdateAspect();
         }
 
         private System.Collections.IEnumerator CheckRoutine()
@@ -117,7 +117,7 @@ namespace Signals.Game
 
             while (true)
             {
-                UpdateState();
+                UpdateAspect();
                 yield return new WaitForSeconds(GetUpdateTime());
             }
         }
@@ -134,9 +134,9 @@ namespace Signals.Game
         }
 
         /// <summary>
-        /// Updates the current state based on the conditions of <see cref="AllStates"/>.
+        /// Updates the current aspect based on the conditions of <see cref="AllAspects"/>.
         /// </summary>
-        public void UpdateState()
+        public void UpdateAspect()
         {
             if (ForceOff)
             {
@@ -152,52 +152,52 @@ namespace Signals.Game
             // over and over again.
             TrackWalker.GetTracksAndNextSignal(this, out var tracks, out var nextSignal);
 
-            for (int i = 0; i < AllStates.Length; i++)
+            for (int i = 0; i < AllAspects.Length; i++)
             {
-                if (AllStates[i].MeetsConditions(tracks, nextSignal))
+                if (AllAspects[i].MeetsConditions(tracks, nextSignal))
                 {
-                    ChangeState(i);
+                    ChangeAspect(i);
                     return;
                 }
             }
 
             // This shouldn't be reached but just in case.
-            ChangeState(AllStates.Length - 1);
+            ChangeAspect(AllAspects.Length - 1);
         }
 
         /// <summary>
         /// Changes the current state to a new one. Does nothing if the state is the same.
         /// </summary>
-        /// <param name="newState">The index of the new state. Negative values turn off the signal.</param>
-        public bool ChangeState(int newState)
+        /// <param name="newAspect">The index of the new state. Negative values turn off the signal.</param>
+        public bool ChangeAspect(int newAspect)
         {
             // Check if the state changes. All negative numbers are treated as off.
-            if (newState == CurrentStateIndex || (!IsOn && newState < 0))
+            if (newAspect == CurrentAspectIndex || (!IsOn && newAspect < 0))
             {
                 return false;
             }
 
             // Out of range, ignore request. Maybe make them open the signal (last state)?
-            if (newState >= AllStates.Length)
+            if (newAspect >= AllAspects.Length)
             {
-                SignalsMod.Error($"Failed to set state on signal '{Name}': {newState} >= {AllStates.Length}");
+                SignalsMod.Error($"Failed to set state on signal '{Name}': {newAspect} >= {AllAspects.Length}");
                 return false;
             }
 
             // Turn off on negative numbers.
-            if (newState < 0)
+            if (newAspect < 0)
             {
                 SignalsMod.LogVerbose($"Turning off signal '{Name}'");
                 TurnOff();
                 return true;
             }
 
-            CurrentState?.Unapply();
+            CurrentAspect?.Unapply();
 
-            SignalsMod.LogVerbose($"Setting signal '{Name}' to state '{AllStates[newState].Definition.Id}'");
-            CurrentStateIndex = newState;
-            AllStates[newState].Apply();
-            _hover.UpdateStateDisplay(AllStates[newState].Definition.HUDSprite);
+            SignalsMod.LogVerbose($"Setting signal '{Name}' to state '{AllAspects[newAspect].Definition.Id}'");
+            CurrentAspectIndex = newAspect;
+            AllAspects[newAspect].Apply();
+            _hover.UpdateStateDisplay(AllAspects[newAspect].Definition.HUDSprite);
             return true;
         }
 
@@ -207,7 +207,7 @@ namespace Signals.Game
         /// <param name="keep">If true, keeps the signal off.</param>
         public void TurnOff(bool keep = false)
         {
-            CurrentState?.Unapply();
+            CurrentAspect?.Unapply();
 
             foreach (var item in AllLights)
             {
@@ -218,11 +218,11 @@ namespace Signals.Game
             if (Definition.Animator != null && _baseAnimation.HasValue)
             {
                 Definition.Animator.enabled = true;
-                Definition.Animator.CrossFadeInFixedTime(_baseAnimation.Value, CurrentState != null ? CurrentState.Definition.AnimationTime : UpdateTime, 0);
+                Definition.Animator.CrossFadeInFixedTime(_baseAnimation.Value, CurrentAspect != null ? CurrentAspect.Definition.AnimationTime : UpdateTime, 0);
                 DisableAnimator(UpdateTime + 0.1f);
             }
 
-            CurrentStateIndex = OffState;
+            CurrentAspectIndex = OffState;
             _hover.UpdateStateDisplay(Definition.OffStateHUDSprite);
             _forceOff = keep;
         }

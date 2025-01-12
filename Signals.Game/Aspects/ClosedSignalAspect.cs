@@ -1,14 +1,14 @@
-﻿using Signals.Common.States;
+﻿using Signals.Common.Aspects;
 
-namespace Signals.Game.States
+namespace Signals.Game.Aspects
 {
-    internal class ClosedSignalState : SignalStateBase
+    internal class ClosedSignalAspect : SignalAspectBase
     {
-        private ClosedSignalStateDefinition _fullDef;
+        private ClosedSignalAspectDefinition _fullDef;
 
-        public ClosedSignalState(SignalStateBaseDefinition def, SignalController controller) : base(def, controller)
+        public ClosedSignalAspect(SignalAspectBaseDefinition def, SignalController controller) : base(def, controller)
         {
-            _fullDef = (ClosedSignalStateDefinition)def;
+            _fullDef = (ClosedSignalAspectDefinition)def;
         }
 
         public override bool MeetsConditions(RailTrack[] tracksToNextSignal, SignalController? nextSignal)

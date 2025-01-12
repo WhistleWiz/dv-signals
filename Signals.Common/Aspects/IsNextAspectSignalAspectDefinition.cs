@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-namespace Signals.Common.States
+namespace Signals.Common.Aspects
 {
-    public class IsNextStateSignalStateDefinition : GenericSignalStateDefinition
+    public class IsNextAspectSignalAspectDefinition : GenericSignalAspectDefinition
     {
         [SerializeField]
         private string _nextId = string.Empty;

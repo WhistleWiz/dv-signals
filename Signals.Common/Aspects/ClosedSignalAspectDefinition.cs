@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-namespace Signals.Common.States
+namespace Signals.Common.Aspects
 {
-    public class ClosedSignalStateDefinition : SignalStateBaseDefinition
+    public class ClosedSignalAspectDefinition : SignalAspectBaseDefinition
     {
         [Tooltip("How tracks should be checked at diamond crossings\n" +
             " • None: ignores crossings\n" +

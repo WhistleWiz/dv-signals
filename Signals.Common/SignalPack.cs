@@ -25,7 +25,7 @@ namespace Signals.Common
                 return false;
             }
 
-            if (Signal.DefaultState == null)
+            if (Signal.DefaultAspect == null)
             {
                 Debug.LogError("Default state is not set!", this);
                 return false;

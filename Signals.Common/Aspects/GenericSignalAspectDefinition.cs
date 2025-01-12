@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-namespace Signals.Common.States
+namespace Signals.Common.Aspects
 {
-    public abstract class GenericSignalStateDefinition : SignalStateBaseDefinition
+    public abstract class GenericSignalAspectDefinition : SignalAspectBaseDefinition
     {
         [Header("Required - IDs")]
         [SerializeField]

@@ -1,21 +1,21 @@
-﻿using Signals.Common.States;
+﻿using Signals.Common.Aspects;
 using UnityEditor;
 using UnityEngine;
 
 namespace Signals.Unity.Inspector
 {
-    [CustomEditor(typeof(SignalStateBaseDefinition), true)]
+    [CustomEditor(typeof(SignalAspectBaseDefinition), true)]
     internal class SignalStateBaseDefinitionEditor : Editor
     {
-        private SignalStateBaseDefinition _def = null!;
+        private SignalAspectBaseDefinition _def = null!;
 
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
 
-            _def = (SignalStateBaseDefinition)target;
+            _def = (SignalAspectBaseDefinition)target;
 
-            if (_def is GenericSignalStateDefinition) return;
+            if (_def is GenericSignalAspectDefinition) return;
 
             // For signals without a user defined ID, show it as a readonly field.
             EditorGUILayout.Space();
