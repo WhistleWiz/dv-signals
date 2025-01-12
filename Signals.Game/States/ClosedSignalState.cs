@@ -1,17 +1,21 @@
 ﻿using Signals.Common.States;
-using System.Linq;
 
 namespace Signals.Game.States
 {
     internal class ClosedSignalState : SignalStateBase
     {
-        public ClosedSignalState(SignalStateBaseDefinition def, SignalController controller) : base(def, controller) { }
+        private ClosedSignalStateDefinition _fullDef;
+
+        public ClosedSignalState(SignalStateBaseDefinition def, SignalController controller) : base(def, controller)
+        {
+            _fullDef = (ClosedSignalStateDefinition)def;
+        }
 
         public override bool MeetsConditions(RailTrack[] tracksToNextSignal, SignalController? nextSignal)
         {
             foreach (var item in tracksToNextSignal)
             {
-                if (item.onTrackBogies.Count() > 0)
+                if (item.IsOccupied(_fullDef.CrossingCheckMode))
                 {
                     return true;
                 }

@@ -1,5 +1,4 @@
-﻿using DV.CabControls.Spec;
-using DV.Logic.Job;
+﻿using DV.Logic.Job;
 using DV.Utils;
 using Signals.Common;
 using System.Collections.Generic;
@@ -14,7 +13,7 @@ namespace Signals.Game
     {
         private const string YardNameStart = "[Y]";
         private const int LaserPointerTargetLayer = 15;
-        private const float DeadEndThreshold = 50.0f;
+        private const float DeadEndThreshold = 100.0f;
         private const float ClosenessThreshold = 25.0f;
 
         private static Transform? _holder;
@@ -54,14 +53,15 @@ namespace Signals.Game
 
         #region Signal Creation
 
+        // Prevents triggering the Instance call too soon and creating the singleton.
         internal static void RegisterCreation() => Instance.CreateSignals();
 
         private void CreateSignals()
         {
             SignalsMod.Log("Started creating signals...");
+
             var sw = System.Diagnostics.Stopwatch.StartNew();
             int created = 0;
-
             var pack = GetCurrentPack();
 
             foreach (var track in RailTrackRegistry.Instance.AllTracks)
@@ -104,6 +104,8 @@ namespace Signals.Game
 
             sw.Stop();
             SignalsMod.Log($"Merged {mergeCount} signal(s) ({sw.Elapsed.TotalSeconds:F4}s)");
+
+            TrackChecker.StartBuildingMap();
         }
 
         private bool ShouldMakeSignal(RailTrack track)
@@ -238,6 +240,13 @@ namespace Signals.Game
             return _junctionMap.TryGetValue(junction, out pair);
         }
 
+        /// <summary>
+        /// Tries to find a signal at a junction.
+        /// </summary>
+        /// <param name="junction">The <see cref="Junction"/> where a signal may be.</param>
+        /// <param name="direction">The direction of the signal. <see langword="true"/> if pointing towards the branches, <see langword="false"/> otherwise.</param>
+        /// <param name="signalController">The signal, if found.</param>
+        /// <returns><see langword="true"/> if a signal was found, <see langword="false"/> otherwise.</returns>
         public bool TryGetSignal(Junction junction, bool direction, out SignalController signalController)
         {
             if (TryGetSignals(junction, out var pair))
@@ -249,6 +258,8 @@ namespace Signals.Game
             signalController = null!;
             return false;
         }
+
+        #region Mod Loading
 
         internal static SignalPack GetCurrentPack()
         {
@@ -313,7 +324,7 @@ namespace Signals.Game
             }
         }
 
-        internal static void ProcessSignals(SignalPack pack)
+        private static void ProcessSignals(SignalPack pack)
         {
             foreach (var item in pack.AllSignals)
             {
@@ -321,5 +332,7 @@ namespace Signals.Game
                 item.gameObject.AddComponent<SignalHover>();
             }
         }
+
+        #endregion
     }
 }
