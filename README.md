@@ -36,7 +36,7 @@ This mod adds signals to Derail Valley. Besides the default look, it is also a f
 
 ## Future Plans
 
-* Mechanical signals
+* Shunting signals
 
 
 
@@ -45,7 +45,7 @@ This mod adds signals to Derail Valley. Besides the default look, it is also a f
 
 ## Known Bugs
 
-None at the moment.
+* Signals may spawn on top of tracks crossing switches
 
 
 
