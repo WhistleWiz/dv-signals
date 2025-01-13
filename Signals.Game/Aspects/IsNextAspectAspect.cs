@@ -1,11 +1,15 @@
-﻿using Signals.Common;
-using Signals.Common.Aspects;
+﻿using Signals.Common.Aspects;
 
 namespace Signals.Game.Aspects
 {
-    public class IsNextClosedSignalAspect : SignalAspectBase
+    internal class IsNextAspectAspect : AspectBase
     {
-        public IsNextClosedSignalAspect(SignalAspectBaseDefinition def, SignalController controller) : base(def, controller) { }
+        private IsNextAspectAspectDefinition _fullDef;
+
+        public IsNextAspectAspect(AspectBaseDefinition def, SignalController controller) : base(def, controller)
+        {
+            _fullDef = (IsNextAspectAspectDefinition)def;
+        }
 
         public override bool MeetsConditions(RailTrack[] tracksToNextSignal, SignalController? nextSignal)
         {
@@ -21,7 +25,7 @@ namespace Signals.Game.Aspects
                 return false;
             }
 
-            return state.Id == Constants.SignalIds.Closed;
+            return state.Id == _fullDef.NextId;
         }
     }
 }

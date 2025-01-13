@@ -2,9 +2,9 @@
 
 namespace Signals.Game.Aspects
 {
-    internal class OpenSignalAspect : SignalAspectBase
+    internal class OpenAspect : AspectBase
     {
-        public OpenSignalAspect(SignalAspectBaseDefinition def, SignalController controller) : base(def, controller) { }
+        public OpenAspect(AspectBaseDefinition def, SignalController controller) : base(def, controller) { }
 
         public override bool MeetsConditions(RailTrack[] tracksToNextSignal, SignalController? nextSignal)
         {

@@ -15,7 +15,7 @@ namespace Signals.Common
 
         [Space]
         public SignalControllerDefinition Signal = null!;
-        public float OffsetFromTrackCentre = 4.5f / 2.0f;
+        public float OffsetFromTrackCentre = 2.0f;
 
         public bool Validate()
         {

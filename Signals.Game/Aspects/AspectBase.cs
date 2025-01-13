@@ -6,11 +6,11 @@ namespace Signals.Game.Aspects
 {
     /// <summary>
     /// Base class for a signal aspect. It handles lights, animation and sound from a
-    /// <see cref="SignalAspectBaseDefinition"/> automatically.
+    /// <see cref="AspectBaseDefinition"/> automatically.
     /// </summary>
-    public abstract class SignalAspectBase
+    public abstract class AspectBase
     {
-        public SignalAspectBaseDefinition Definition;
+        public AspectBaseDefinition Definition;
         public SignalController Controller;
 
         private SignalLight[] _on = null!;
@@ -19,7 +19,7 @@ namespace Signals.Game.Aspects
 
         public string Id => Definition.Id;
 
-        public SignalAspectBase(SignalAspectBaseDefinition def, SignalController controller)
+        public AspectBase(AspectBaseDefinition def, SignalController controller)
         {
             Definition = def;
             Controller = controller;
@@ -104,8 +104,7 @@ namespace Signals.Game.Aspects
         {
             if (Definition.ActivationAudios.Length > 0)
             {
-                Definition.ActivationAudios.Play(Definition.AudioPosition != null ? Definition.AudioPosition.position : Definition.transform.position,
-                    mixerGroup: AudioManager.Instance.switchGroup);
+                Definition.ActivationAudios.Play(Definition.transform.position, mixerGroup: AudioManager.Instance.switchGroup);
             }
         }
     }

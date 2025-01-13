@@ -40,11 +40,11 @@ namespace Signals.Game
         public bool TowardsBranches { get; private set; }
         public int CurrentAspectIndex { get; private set; }
         public bool IsOn => CurrentAspectIndex >= 0;
-        public SignalAspectBase[] AllAspects { get; private set; }
+        public AspectBase[] AllAspects { get; private set; }
         /// <summary>
         /// Returns <see langword="null"/> if the signal is off.
         /// </summary>
-        public SignalAspectBase? CurrentAspect => IsOn ? AllAspects[CurrentAspectIndex] : null;
+        public AspectBase? CurrentAspect => IsOn ? AllAspects[CurrentAspectIndex] : null;
         public SignalLight[] AllLights { get; private set; }
         public string Name => $"{AssignedJunction.junctionData.junctionIdLong}-{(TowardsBranches ? 'T' : 'F')}";
         /// <summary>
@@ -68,7 +68,7 @@ namespace Signals.Game
             TowardsBranches = direction;
             CurrentAspectIndex = OffState;
 
-            List<SignalAspectBase> allStates = new List<SignalAspectBase>();
+            List<AspectBase> allStates = new List<AspectBase>();
 
             foreach (var item in def.OtherAspects)
             {

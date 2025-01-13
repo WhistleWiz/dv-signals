@@ -3,7 +3,6 @@ using DV.HUD.Signs;
 using DV.Signs;
 using DV.UI.LocoHUD;
 using System.Collections.Generic;
-using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,6 +10,7 @@ namespace Signals.Game
 {
     internal class SignalHover : SignHover
     {
+        private static Vector2 s_size = new Vector2(120, 120);
         private static Dictionary<Sprite, GameObject> s_sprites = new Dictionary<Sprite, GameObject>();
         private static ContentSizeFitter? s_sizeFitter;
         private static SignDisplayElement? s_template;
@@ -78,7 +78,7 @@ namespace Signals.Game
             {
                 var display = Instantiate(Template, SignalManager.Holder);
                 var rect = display.GetComponentInChildren<RectTransform>();
-                rect.sizeDelta = new Vector2(120, 120);
+                rect.sizeDelta = GetSize(sprite);
                 var img = display.GetComponentInChildren<Image>();
                 img.sprite = sprite;
 
@@ -96,6 +96,11 @@ namespace Signals.Game
             }
 
             return go;
+        }
+
+        private static Vector2 GetSize(Sprite sprite)
+        {
+            return s_size * sprite.rect.size / Mathf.Max(sprite.rect.size.x, sprite.rect.size.y);
         }
     }
 }

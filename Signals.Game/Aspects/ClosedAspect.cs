@@ -2,13 +2,13 @@
 
 namespace Signals.Game.Aspects
 {
-    internal class ClosedSignalAspect : SignalAspectBase
+    internal class ClosedAspect : AspectBase
     {
-        private ClosedSignalAspectDefinition _fullDef;
+        private ClosedAspectDefinition _fullDef;
 
-        public ClosedSignalAspect(SignalAspectBaseDefinition def, SignalController controller) : base(def, controller)
+        public ClosedAspect(AspectBaseDefinition def, SignalController controller) : base(def, controller)
         {
-            _fullDef = (ClosedSignalAspectDefinition)def;
+            _fullDef = (ClosedAspectDefinition)def;
         }
 
         public override bool MeetsConditions(RailTrack[] tracksToNextSignal, SignalController? nextSignal)

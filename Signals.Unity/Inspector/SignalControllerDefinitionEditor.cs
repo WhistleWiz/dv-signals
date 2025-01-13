@@ -16,7 +16,7 @@ namespace Signals.Unity.Inspector
         private void OnEnable()
         {
             _stateList = EditorHelper.CreateReorderableList(serializedObject, serializedObject.FindProperty(nameof(SignalControllerDefinition.OtherAspects)),
-                true, true, true, "Other States");
+                true, true, true, "Other Aspects");
 
             _stateList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
             {
@@ -41,10 +41,11 @@ namespace Signals.Unity.Inspector
                         EditorGUILayout.HelpBox("Order is important, as conditions are checked from top to bottom\n" +
                             "Open state is used if none of these meet their condition", MessageType.Info);
 
-                        if (GUILayout.Button("Get States From Children"))
+                        if (GUILayout.Button("Get Aspects From Children"))
                         {
                             var def = (SignalControllerDefinition)target;
-                            def.OtherAspects = def.GetComponentsInChildren<SignalAspectBaseDefinition>().Where(x => x != def.DefaultAspect).ToArray();
+                            def.DefaultAspect = def.GetComponentInChildren<OpenAspectDefinition>();
+                            def.OtherAspects = def.GetComponentsInChildren<AspectBaseDefinition>().Where(x => x != def.DefaultAspect).ToArray();
                             AssetHelper.SaveAsset(target);
                         }
                         continue;

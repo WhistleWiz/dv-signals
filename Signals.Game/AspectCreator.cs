@@ -14,22 +14,22 @@ namespace Signals.Game
         private static Type[] s_defaultTypes;
         private static HashSet<Type> s_failedAspects = new HashSet<Type>();
 
-        internal static Dictionary<Type, Func<SignalAspectBaseDefinition, SignalController, SignalAspectBase>> CreatorFunctions;
+        internal static Dictionary<Type, Func<AspectBaseDefinition, SignalController, AspectBase>> CreatorFunctions;
 
         static AspectCreator()
         {
-            CreatorFunctions = new Dictionary<Type, Func<SignalAspectBaseDefinition, SignalController, SignalAspectBase>>
+            CreatorFunctions = new Dictionary<Type, Func<AspectBaseDefinition, SignalController, AspectBase>>
             {
-                { typeof(OpenSignalAspectDefinition), (x, y) => new OpenSignalAspect(x, y) },
-                { typeof(ClosedSignalAspectDefinition), (x, y) => new ClosedSignalAspect(x, y) },
-                { typeof(IsNextClosedSignalAspectDefinition), (x, y) => new IsNextClosedSignalAspect(x, y) },
-                { typeof(IsNextAspectSignalAspectDefinition), (x, y) => new IsNextAspectSignalAspect(x, y) }
+                { typeof(OpenAspectDefinition), (x, y) => new OpenAspect(x, y) },
+                { typeof(ClosedAspectDefinition), (x, y) => new ClosedAspect(x, y) },
+                { typeof(IsNextAspectAspectDefinition), (x, y) => new IsNextAspectAspect(x, y) },
+                { typeof(JunctionBranchAspectDefinition), (x, y) => new JunctionBranchAspect(x, y) }
             };
 
             s_defaultTypes = CreatorFunctions.Keys.ToArray();
         }
 
-        internal static SignalAspectBase? Create(SignalController controller, SignalAspectBaseDefinition? def)
+        internal static AspectBase? Create(SignalController controller, AspectBaseDefinition? def)
         {
             if (def == null) return null;
 
@@ -59,8 +59,8 @@ namespace Signals.Game
         /// <para>Inputs are the definition and the controller.</para>
         /// </param>
         /// <returns><see langword="true"/> if the type was sucessfully added, otherwise <see langword="false"/>.</returns>
-        public static bool AddCreatorFunction<T>(Func<SignalAspectBaseDefinition, SignalController, SignalAspectBase> func)
-            where T : SignalAspectBaseDefinition
+        public static bool AddCreatorFunction<T>(Func<AspectBaseDefinition, SignalController, AspectBase> func)
+            where T : AspectBaseDefinition
         {
             var t = typeof(T);
 
@@ -82,7 +82,7 @@ namespace Signals.Game
         /// <returns><see langword="true"/> if the ID was sucessfully removed, otherwise <see langword="false"/>.</returns>
         /// <remarks>This method will not remove the default IDs.</remarks>
         public static bool RemoveCreatorFunction<T>()
-            where T : SignalAspectBaseDefinition
+            where T : AspectBaseDefinition
         {
             var t = typeof(T);
 
