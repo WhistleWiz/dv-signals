@@ -61,7 +61,7 @@ namespace Signals.Game.Controllers
             TrackChecker.OnMapBuilt += FixPositionDueToCrossing;
         }
 
-        private void FixPositionDueToCrossing(Dictionary<RailTrack, TrackChecker.TrackIntersectionPoint> junctionMap)
+        private void FixPositionDueToCrossing(Dictionary<RailTrack, TrackChecker.TrackIntersectionPoints> junctionMap)
         {
             TrackChecker.OnMapBuilt -= FixPositionDueToCrossing;
 

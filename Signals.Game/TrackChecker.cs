@@ -2,6 +2,7 @@
 using Signals.Game.Curves;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Signals.Game
@@ -14,7 +15,7 @@ namespace Signals.Game
         /// <summary>
         /// Contains information about the intersections of a track with others.
         /// </summary>
-        public class TrackIntersectionPoint
+        public class TrackIntersectionPoints
         {
             private const float CheckHeight = 4.0f;
             private const float CheckRadius = 2.5f;
@@ -25,7 +26,7 @@ namespace Signals.Game
             public RailTrack Track { get; private set; }
             public List<(RailTrack Track, Transform Position)> IntersectionPoints { get; private set; }
 
-            public TrackIntersectionPoint(RailTrack track)
+            public TrackIntersectionPoints(RailTrack track)
             {
                 Track = track;
                 IntersectionPoints = new List<(RailTrack Track, Transform Position)>();
@@ -63,17 +64,26 @@ namespace Signals.Game
 
                 return false;
             }
+
+            /// <summary>
+            /// Returns <see langword="true"/> if there are any intersection points with <paramref name="track"/>.
+            /// </summary>
+            /// <param name="track">The other track.</param>
+            public bool HasIntersectionWithTrack(RailTrack track)
+            {
+                return IntersectionPoints.Any(x  => x.Track == track);
+            }
         }
 
         private const float Distance = 0.01f;
         private const float DefaultPrecision = 0.5f;
 
-        private static Dictionary<RailTrack, TrackIntersectionPoint> s_intersectionMap = new Dictionary<RailTrack, TrackIntersectionPoint>();
+        private static Dictionary<RailTrack, TrackIntersectionPoints> s_intersectionMap = new Dictionary<RailTrack, TrackIntersectionPoints>();
 
         /// <summary>
         /// Called when the intersection map finishes building.
         /// </summary>
-        public static Action<Dictionary<RailTrack, TrackIntersectionPoint>>? OnMapBuilt;
+        public static Action<Dictionary<RailTrack, TrackIntersectionPoints>>? OnMapBuilt;
 
         /// <summary>
         /// Checks if a track is occupied by a train.
@@ -112,21 +122,59 @@ namespace Signals.Game
             s_intersectionMap.Clear();
             var tracks = RailTrackRegistry.Instance.AllTracks;
 
-            foreach (var track in tracks)
+            int length = tracks.Length;
+
+            for (int i = 0; i < length; i++)
             {
-                yield return null;
+                var track = tracks[i];
+                s_intersectionMap.TryGetValue(track, out TrackIntersectionPoints? point);
 
-                var result = CalculateIntersections(track, tracks, DefaultPrecision);
+                for (int j = i + 1; j < length; j++)
+                {
+                    var other = tracks[j];
 
-                if (result == null) continue;
+                    // Don't intersect with itself.
+                    // Don't intersect if the tracks connect to eachother normally.
+                    // Don't intersect if the tracks are from the same junction.
+                    if (track == other || AreTracksConnected(track, other) || AreTracksFromSameJunction(track, other)) continue;
 
-                s_intersectionMap.Add(track, result);
+                    // Skip if no intersection was detected.
+                    if (!BezierHelper.Intersects(track.curve, other.curve, DefaultPrecision, out var intersection)) continue;
+
+                    SignalsMod.LogVerbose($"Found intersection between track '{track.logicTrack.ID}' and '{other.logicTrack.ID}'");
+
+                    if (point == null)
+                    {
+                        point = new TrackIntersectionPoints(track);
+                        s_intersectionMap.Add(track, point);
+                    }
+
+                    if (!s_intersectionMap.TryGetValue(other, out TrackIntersectionPoints? otherPoint))
+                    {
+                        otherPoint = new TrackIntersectionPoints(other);
+                        s_intersectionMap.Add(other, otherPoint);
+                    }
+
+                    var t = new GameObject("[Intersection Point]").transform;
+                    t.parent = track.transform.parent;
+                    t.position = intersection;
+
+                    //var debug = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    //debug.transform.parent = t;
+                    //debug.transform.localPosition = Vector3.zero;
+
+                    point.IntersectionPoints.Add((other, t));
+                    otherPoint.IntersectionPoints.Add((track, t));
+                }
             }
+
+            BezierHelper.Clear();
 
             sw.Stop();
             SignalsMod.Log($"Finished building intersection map with {s_intersectionMap.Count} entries ({sw.Elapsed.TotalSeconds:F4}s)");
 
             OnMapBuilt?.Invoke(s_intersectionMap);
+            yield return null;
         }
 
         /// <summary>
@@ -135,14 +183,14 @@ namespace Signals.Game
         /// <param name="track">The <see cref="RailTrack"/> to check.</param>
         /// <param name="others">A collection of <see cref="RailTrack"/> to check against.</param>
         /// <param name="precision">The minimum precision allowed.</param>
-        /// <returns>A <see cref="TrackIntersectionPoint"/> if there are any intersections, <see langword="null"/> otherwise.</returns>
+        /// <returns>A <see cref="TrackIntersectionPoints"/> if there are any intersections, <see langword="null"/> otherwise.</returns>
         /// <remarks>
         /// This recursive method attempts to approximate intersections between the curves that make up the tracks.
         /// For more information check the <see cref="BezierHelper.Intersects(BezierCurve, BezierCurve, float, out Vector3)"/> method.
         /// </remarks>
-        public static TrackIntersectionPoint? CalculateIntersections(RailTrack track, IEnumerable<RailTrack> others, float precision)
+        public static TrackIntersectionPoints? CalculateIntersections(RailTrack track, IEnumerable<RailTrack> others, float precision)
         {
-            TrackIntersectionPoint? result = null;
+            TrackIntersectionPoints? result = null;
 
             foreach (RailTrack other in others)
             {
@@ -156,7 +204,7 @@ namespace Signals.Game
 
                 SignalsMod.LogVerbose($"Found intersection between track '{track.logicTrack.ID}' and '{other.logicTrack.ID}'");
 
-                result ??= new TrackIntersectionPoint(track);
+                result ??= new TrackIntersectionPoints(track);
 
                 var t = new GameObject("[Intersection Point]").transform;
                 t.parent = track.transform.parent;
