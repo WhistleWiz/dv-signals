@@ -27,7 +27,7 @@ namespace Signals.Game
         public static IEnumerable<RailTrack> WalkUntilNextSignal(JunctionSignalController controller)
         {
             s_startingSignal = controller;
-            return WalkUntilNextSignal(controller.Junction, controller.TowardsBranches);
+            return WalkUntilNextSignal(controller.Junction!, controller.TowardsBranches);
         }
 
         /// <summary>

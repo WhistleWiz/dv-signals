@@ -1,4 +1,5 @@
 ﻿using Signals.Common.Aspects;
+using Signals.Common.Displays;
 using UnityEngine;
 
 namespace Signals.Common
@@ -16,6 +17,8 @@ namespace Signals.Common
         public Sprite? OffStateHUDSprite;
         [Tooltip("Used for mechanical signals")]
         public Animator? Animator;
+        [Tooltip("Extra signal displays")]
+        public InfoDisplay[] Displays = new InfoDisplay[0];
 
         private void OnDrawGizmos()
         {

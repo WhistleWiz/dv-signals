@@ -1,5 +1,6 @@
 ﻿using Signals.Common;
 using Signals.Common.Aspects;
+using Signals.Common.Displays;
 using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
@@ -26,24 +27,38 @@ namespace Signals.Unity.Inspector
 
         public override void OnInspectorGUI()
         {
-            EditorGUILayout.Space();
-            _stateList.DoLayoutList();
-
-            EditorGUILayout.HelpBox("Order is important, as conditions are checked from top to bottom", MessageType.Info);
-
-            if (GUILayout.Button("Get Aspects From Children"))
-            {
-                var def = (SignalControllerDefinition)target;
-                def.Aspects = def.GetComponentsInChildren<AspectBaseDefinition>().ToArray();
-                AssetHelper.SaveAsset(target);
-            }
-
+            var def = (SignalControllerDefinition)target;
             var prop = serializedObject.FindProperty(nameof(SignalControllerDefinition.Aspects));
 
-            while (prop.Next(false))
+            do
             {
-                EditorGUILayout.PropertyField(prop);
-            }
+                switch (prop.name)
+                {
+                    case nameof(SignalControllerDefinition.Aspects):
+                        EditorGUILayout.Space();
+                        _stateList.DoLayoutList();
+
+                        EditorGUILayout.HelpBox("Order is important, as conditions are checked from top to bottom", MessageType.Info);
+
+                        if (GUILayout.Button("Get Aspects From Children"))
+                        {
+                            def.Aspects = def.GetComponentsInChildren<AspectBaseDefinition>().ToArray();
+                            AssetHelper.SaveAsset(target);
+                        }
+                        break;
+                    case nameof(SignalControllerDefinition.Displays):
+                        EditorGUILayout.PropertyField(prop);
+                        if (GUILayout.Button("Get Displays From Children"))
+                        {
+                            def.Displays = def.GetComponentsInChildren<InfoDisplay>().ToArray();
+                            AssetHelper.SaveAsset(target);
+                        }
+                        break;
+                    default:
+                        EditorGUILayout.PropertyField(prop);
+                        break;
+                }
+            } while (prop.Next(false));
 
             serializedObject.ApplyModifiedProperties();
         }

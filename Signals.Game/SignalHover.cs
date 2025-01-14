@@ -2,6 +2,8 @@
 using DV.HUD.Signs;
 using DV.Signs;
 using DV.UI.LocoHUD;
+using Signals.Common.Displays;
+using Signals.Game.Controllers;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,7 +22,7 @@ namespace Signals.Game
             {
                 if (s_template == null)
                 {
-                    s_template = Sign.Config.GetSignReference(SignType.RectRed).uiDisplayElement;
+                    s_template = Sign.Config.GetSignReference(SignType.RectWhite).uiDisplayElement;
                 }
 
                 if (s_sizeFitter == null && HUDManager.Instance != null)
@@ -49,7 +51,7 @@ namespace Signals.Game
             });
         }
 
-        public void UpdateStateDisplay(Sprite? sprite)
+        public void UpdateStateDisplay(BasicSignalController controller, Sprite? sprite)
         {
             signTypes.Clear();
 
@@ -58,8 +60,34 @@ namespace Signals.Game
                 signTypes.Add(new SignDisplay.SignDisplayInstance()
                 {
                     prefab = GetPrefabFromSprite(sprite),
-                    text = " "
+                    text = string.Empty
                 });
+            }
+
+            foreach (var item in controller.Definition.Displays)
+            {
+                if (item == null || item.Mode == InfoDisplay.DisplayMode.WorldOnly) continue;
+
+                switch (item)
+                {
+                    case SignalNameDisplay _:
+                        signTypes.Add(new SignDisplay.SignDisplayInstance()
+                        {
+                            prefab = GetPrefabFromSprite(item.HUDBackground),
+                            text = controller.Name
+                        });
+                        break;
+                    case JunctionBranchDisplay junction:
+                        if (controller.Junction == null || (junction.TowardsOnly && !controller.TowardsBranches)) break;
+                        signTypes.Add(new SignDisplay.SignDisplayInstance()
+                        {
+                            prefab = GetPrefabFromSprite(item.HUDBackground),
+                            text = $"{controller.Junction.selectedBranch + (junction.OffsetByOne ? 1 : 0)}",
+                        });
+                        break;
+                    default:
+                        break;
+                }
             }
 
             var (type, obj) = NonVRHoverManager.Instance.CurrentlyHovered;
@@ -70,8 +98,10 @@ namespace Signals.Game
             }
         }
 
-        public GameObject GetPrefabFromSprite(Sprite sprite)
+        public GameObject GetPrefabFromSprite(Sprite? sprite)
         {
+            if (sprite == null) return null!;
+
             bool found = s_sprites.TryGetValue(sprite, out var go);
 
             if (!found || go == null)
@@ -100,6 +130,7 @@ namespace Signals.Game
 
         private static Vector2 GetSize(Sprite sprite)
         {
+            // Rework scalling to not always max out at 120px?
             return s_size * sprite.rect.size / Mathf.Max(sprite.rect.size.x, sprite.rect.size.y);
         }
     }

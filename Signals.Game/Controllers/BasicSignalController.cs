@@ -115,7 +115,7 @@ namespace Signals.Game.Controllers
             }
 
             CurrentAspectIndex = OffValue;
-            _hover.UpdateStateDisplay(Definition.OffStateHUDSprite);
+            _hover.UpdateStateDisplay(this, Definition.OffStateHUDSprite);
         }
 
         /// <summary>
@@ -152,7 +152,7 @@ namespace Signals.Game.Controllers
             SignalsMod.LogVerbose($"Setting signal '{Name}' to state '{AllAspects[newAspect].Definition.Id}'");
             CurrentAspectIndex = newAspect;
             AllAspects[newAspect].Apply();
-            _hover.UpdateStateDisplay(AllAspects[newAspect].Definition.HUDSprite);
+            _hover.UpdateStateDisplay(this, AllAspects[newAspect].Definition.HUDSprite);
             return true;
         }
     }
