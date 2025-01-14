@@ -10,13 +10,12 @@ namespace Signals.Unity.Inspector
     [CustomEditor(typeof(SignalControllerDefinition))]
     internal class SignalControllerDefinitionEditor : Editor
     {
-        private SerializedProperty _prop = null!;
         private ReorderableList _stateList = null!;
 
         private void OnEnable()
         {
-            _stateList = EditorHelper.CreateReorderableList(serializedObject, serializedObject.FindProperty(nameof(SignalControllerDefinition.OtherAspects)),
-                true, true, true, "Other Aspects");
+            _stateList = EditorHelper.CreateReorderableList(serializedObject, serializedObject.FindProperty(nameof(SignalControllerDefinition.Aspects)),
+                true, true, true, "Aspects");
 
             _stateList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
             {
@@ -27,35 +26,24 @@ namespace Signals.Unity.Inspector
 
         public override void OnInspectorGUI()
         {
-            _prop = serializedObject.FindProperty(nameof(SignalControllerDefinition.DefaultAspect));
+            EditorGUILayout.Space();
+            _stateList.DoLayoutList();
 
-            do
+            EditorGUILayout.HelpBox("Order is important, as conditions are checked from top to bottom", MessageType.Info);
+
+            if (GUILayout.Button("Get Aspects From Children"))
             {
-                switch (_prop.name)
-                {
-                    // Draw a reorderable list for this property instead of the normal field.
-                    case nameof(SignalControllerDefinition.OtherAspects):
-                        EditorGUILayout.Space();
-                        _stateList.DoLayoutList();
+                var def = (SignalControllerDefinition)target;
+                def.Aspects = def.GetComponentsInChildren<AspectBaseDefinition>().ToArray();
+                AssetHelper.SaveAsset(target);
+            }
 
-                        EditorGUILayout.HelpBox("Order is important, as conditions are checked from top to bottom\n" +
-                            "Open state is used if none of these meet their condition", MessageType.Info);
+            var prop = serializedObject.FindProperty(nameof(SignalControllerDefinition.Aspects));
 
-                        if (GUILayout.Button("Get Aspects From Children"))
-                        {
-                            var def = (SignalControllerDefinition)target;
-                            def.DefaultAspect = def.GetComponentInChildren<OpenAspectDefinition>();
-                            def.OtherAspects = def.GetComponentsInChildren<AspectBaseDefinition>().Where(x => x != def.DefaultAspect).ToArray();
-                            AssetHelper.SaveAsset(target);
-                        }
-                        continue;
-                    default:
-                        EditorGUILayout.PropertyField(_prop);
-                        continue;
-                }
-
-
-            } while (_prop.Next(false));
+            while (prop.Next(false))
+            {
+                EditorGUILayout.PropertyField(prop);
+            }
 
             serializedObject.ApplyModifiedProperties();
         }

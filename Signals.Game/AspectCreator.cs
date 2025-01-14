@@ -1,5 +1,6 @@
 ﻿using Signals.Common.Aspects;
 using Signals.Game.Aspects;
+using Signals.Game.Controllers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,11 +15,11 @@ namespace Signals.Game
         private static Type[] s_defaultTypes;
         private static HashSet<Type> s_failedAspects = new HashSet<Type>();
 
-        internal static Dictionary<Type, Func<AspectBaseDefinition, SignalController, AspectBase>> CreatorFunctions;
+        internal static Dictionary<Type, Func<AspectBaseDefinition, BasicSignalController, AspectBase>> CreatorFunctions;
 
         static AspectCreator()
         {
-            CreatorFunctions = new Dictionary<Type, Func<AspectBaseDefinition, SignalController, AspectBase>>
+            CreatorFunctions = new Dictionary<Type, Func<AspectBaseDefinition, BasicSignalController, AspectBase>>
             {
                 { typeof(OpenAspectDefinition), (x, y) => new OpenAspect(x, y) },
                 { typeof(ClosedAspectDefinition), (x, y) => new ClosedAspect(x, y) },
@@ -29,7 +30,7 @@ namespace Signals.Game
             s_defaultTypes = CreatorFunctions.Keys.ToArray();
         }
 
-        internal static AspectBase? Create(SignalController controller, AspectBaseDefinition? def)
+        internal static AspectBase? Create(BasicSignalController controller, AspectBaseDefinition? def)
         {
             if (def == null) return null;
 
@@ -59,7 +60,7 @@ namespace Signals.Game
         /// <para>Inputs are the definition and the controller.</para>
         /// </param>
         /// <returns><see langword="true"/> if the type was sucessfully added, otherwise <see langword="false"/>.</returns>
-        public static bool AddCreatorFunction<T>(Func<AspectBaseDefinition, SignalController, AspectBase> func)
+        public static bool AddCreatorFunction<T>(Func<AspectBaseDefinition, BasicSignalController, AspectBase> func)
             where T : AspectBaseDefinition
         {
             var t = typeof(T);

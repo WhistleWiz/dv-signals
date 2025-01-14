@@ -1,4 +1,5 @@
 ﻿using Signals.Common.Aspects;
+using Signals.Game.Controllers;
 
 namespace Signals.Game.Aspects
 {
@@ -6,14 +7,14 @@ namespace Signals.Game.Aspects
     {
         private ClosedAspectDefinition _fullDef;
 
-        public ClosedAspect(AspectBaseDefinition def, SignalController controller) : base(def, controller)
+        public ClosedAspect(AspectBaseDefinition def, BasicSignalController controller) : base(def, controller)
         {
             _fullDef = (ClosedAspectDefinition)def;
         }
 
-        public override bool MeetsConditions(RailTrack[] tracksToNextSignal, SignalController? nextSignal)
+        public override bool MeetsConditions(WalkInfo info)
         {
-            foreach (var item in tracksToNextSignal)
+            foreach (var item in info.Tracks)
             {
                 if (item.IsOccupied(_fullDef.CrossingCheckMode))
                 {

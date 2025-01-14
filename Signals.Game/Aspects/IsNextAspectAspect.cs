@@ -1,4 +1,5 @@
 ﻿using Signals.Common.Aspects;
+using Signals.Game.Controllers;
 
 namespace Signals.Game.Aspects
 {
@@ -6,19 +7,19 @@ namespace Signals.Game.Aspects
     {
         private IsNextAspectAspectDefinition _fullDef;
 
-        public IsNextAspectAspect(AspectBaseDefinition def, SignalController controller) : base(def, controller)
+        public IsNextAspectAspect(AspectBaseDefinition def, BasicSignalController controller) : base(def, controller)
         {
             _fullDef = (IsNextAspectAspectDefinition)def;
         }
 
-        public override bool MeetsConditions(RailTrack[] tracksToNextSignal, SignalController? nextSignal)
+        public override bool MeetsConditions(WalkInfo info)
         {
-            if (nextSignal == null)
+            if (info.NextMainlineSignal == null)
             {
                 return false;
             }
 
-            var state = nextSignal.CurrentAspect;
+            var state = info.NextMainlineSignal.CurrentAspect;
 
             if (state == null)
             {

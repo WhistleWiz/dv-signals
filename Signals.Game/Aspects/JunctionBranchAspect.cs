@@ -1,4 +1,5 @@
 ﻿using Signals.Common.Aspects;
+using Signals.Game.Controllers;
 
 namespace Signals.Game.Aspects
 {
@@ -6,16 +7,16 @@ namespace Signals.Game.Aspects
     {
         private JunctionBranchAspectDefinition _fullDef;
 
-        public JunctionBranchAspect(AspectBaseDefinition def, SignalController controller) : base(def, controller)
+        public JunctionBranchAspect(AspectBaseDefinition def, BasicSignalController controller) : base(def, controller)
         {
             _fullDef = (JunctionBranchAspectDefinition)def;
         }
 
-        public override bool MeetsConditions(RailTrack[] tracksToNextSignal, SignalController? nextSignal)
+        public override bool MeetsConditions(WalkInfo _)
         {
-            if (_fullDef.IgnoreIfFacingInBranch && !Controller.TowardsBranches) return false;
+            if (!Controller.HasJunction) return false;
 
-            return Controller.AssignedJunction.selectedBranch == _fullDef.ActiveOnBranch;
+            return Controller.Junction!.selectedBranch == _fullDef.ActiveOnBranch;
         }
     }
 }

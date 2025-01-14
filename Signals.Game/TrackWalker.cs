@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using Signals.Game.Controllers;
+using System.Collections.Generic;
 
 namespace Signals.Game
 {
@@ -10,9 +10,9 @@ namespace Signals.Game
     {
         public const int MaxDepth = 50;
 
-        private static SignalPair? s_lastSignals = null;
+        private static JunctionSignalPair? s_lastSignals = null;
         private static bool? s_lastDirection = null;
-        private static SignalController? s_startingSignal = null;
+        private static BasicSignalController? s_startingSignal = null;
 
         private static void Clear()
         {
@@ -24,10 +24,10 @@ namespace Signals.Game
         /// Returns all tracks after a signal until another signal is found.
         /// </summary>
         /// <param name="controller">The <see cref="SignalController"/> from where to start.</param>
-        public static IEnumerable<RailTrack> WalkUntilNextSignal(SignalController controller)
+        public static IEnumerable<RailTrack> WalkUntilNextSignal(JunctionSignalController controller)
         {
             s_startingSignal = controller;
-            return WalkUntilNextSignal(controller.AssignedJunction, controller.TowardsBranches);
+            return WalkUntilNextSignal(controller.Junction, controller.TowardsBranches);
         }
 
         /// <summary>
@@ -159,7 +159,7 @@ namespace Signals.Game
         /// </summary>
         /// <param name="controller">The current <see cref="SignalController"/>.</param>
         /// <returns>The first <see cref="SignalController"/> after this one, or <see langword="null"/> if none is found.</returns>
-        public static SignalController? GetNextSignal(SignalController controller)
+        public static JunctionSignalController? GetNextSignal(JunctionSignalController controller)
         {
             WalkUntilNextSignal(controller);
             return GetNextSignal();
@@ -171,7 +171,7 @@ namespace Signals.Game
         /// <param name="from">The <see cref="Junction"/> where to start.</param>
         /// <param name="direction">The search direction. <see langword="true"/> for the outbound tracks, <see langword="false"/> for the inbound track.</param>
         /// <returns>The first <see cref="SignalController"/> after this one, or <see langword="null"/> if none is found.</returns>
-        public static SignalController? GetNextSignal(Junction from, bool direction)
+        public static JunctionSignalController? GetNextSignal(Junction from, bool direction)
         {
             WalkUntilNextSignal(from, direction);
             return GetNextSignal();
@@ -184,7 +184,7 @@ namespace Signals.Game
         /// <param name="direction">The search direction. <see langword="true"/> for the outbound tracks, <see langword="false"/> for the inbound track.</param>
         /// <param name="branch">The junction branch to follow.</param>
         /// <returns></returns>
-        public static SignalController? GetNextSignal(Junction from, bool direction, int branch)
+        public static JunctionSignalController? GetNextSignal(Junction from, bool direction, int branch)
         {
             WalkUntilNextSignal(from, direction, branch);
             return GetNextSignal();
@@ -196,7 +196,7 @@ namespace Signals.Game
         /// <param name="from">The <see cref="RailTrack"/> where to start.</param>
         /// <param name="direction">The search direction. <see langword="true"/> for the outbound track, <see langword="false"/> for the inbound track.</param>
         /// <returns>The first <see cref="SignalController"/> after this one, or <see langword="null"/> if none is found.</returns>
-        public static SignalController? GetNextSignal(RailTrack from, bool direction)
+        public static JunctionSignalController? GetNextSignal(RailTrack from, bool direction)
         {
             WalkUntilNextSignal(from, direction);
             return GetNextSignal();
@@ -209,7 +209,7 @@ namespace Signals.Game
         /// This method is used to avoid running a walk again if both the tracks and the signal are needed.
         /// <para>Value is cleared after every call to a walk method.</para>
         /// </remarks>
-        public static SignalController? GetNextSignal()
+        public static JunctionSignalController? GetNextSignal()
         {
             if (!s_lastDirection.HasValue || s_lastSignals == null)
             {
@@ -219,10 +219,9 @@ namespace Signals.Game
             return s_lastSignals.GetSignal(s_lastDirection.Value);
         }
 
-        public static void GetTracksAndNextSignal(SignalController from, out RailTrack[] tracks, out SignalController? nextSignal)
+        public static WalkInfo GetTracksAndNextSignal(JunctionSignalController from)
         {
-            tracks = WalkUntilNextSignal(from).ToArray();
-            nextSignal = GetNextSignal();
+            return new WalkInfo(WalkUntilNextSignal(from), GetNextSignal());
         }
     }
 }

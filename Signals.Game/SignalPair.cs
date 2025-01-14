@@ -1,24 +1,26 @@
-﻿namespace Signals.Game
-{
-    internal class SignalPair
-    {
-        public SignalController To;
-        public SignalController From;
+﻿using Signals.Game.Controllers;
 
-        public SignalPair(SignalController to, SignalController from)
+namespace Signals.Game
+{
+    internal class JunctionSignalPair
+    {
+        public JunctionSignalController To;
+        public JunctionSignalController From;
+
+        public JunctionSignalPair(JunctionSignalController to, JunctionSignalController from)
         {
             To = to;
             From = from;
         }
 
-        public SignalController GetSignal(bool direction)
+        public JunctionSignalController GetSignal(bool direction)
         {
             return direction ? To : From;
         }
 
-        public SignalPair Flip()
+        public JunctionSignalPair Flip()
         {
-            return new SignalPair(From, To);
+            return new JunctionSignalPair(From, To);
         }
     }
 }

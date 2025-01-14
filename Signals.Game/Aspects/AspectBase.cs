@@ -1,4 +1,5 @@
 ﻿using Signals.Common.Aspects;
+using Signals.Game.Controllers;
 using System.Linq;
 using UnityEngine;
 
@@ -11,7 +12,7 @@ namespace Signals.Game.Aspects
     public abstract class AspectBase
     {
         public AspectBaseDefinition Definition;
-        public SignalController Controller;
+        public BasicSignalController Controller;
 
         private SignalLight[] _on = null!;
         private SignalLight[] _blink = null!;
@@ -19,7 +20,7 @@ namespace Signals.Game.Aspects
 
         public string Id => Definition.Id;
 
-        public AspectBase(AspectBaseDefinition def, SignalController controller)
+        public AspectBase(AspectBaseDefinition def, BasicSignalController controller)
         {
             Definition = def;
             Controller = controller;
@@ -36,7 +37,7 @@ namespace Signals.Game.Aspects
         /// <summary>
         /// Checks if the conditions for this aspect to be used are true.
         /// </summary>
-        public abstract bool MeetsConditions(RailTrack[] tracksToNextSignal, SignalController? nextSignal);
+        public abstract bool MeetsConditions(WalkInfo info);
 
         /// <summary>
         /// Applies the aspect.

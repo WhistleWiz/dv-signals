@@ -15,19 +15,12 @@ namespace Signals.Common
 
         [Space]
         public SignalControllerDefinition Signal = null!;
-        public float OffsetFromTrackCentre = 2.0f;
 
         public bool Validate()
         {
             if (Signal == null)
             {
                 Debug.LogError("Controller is not set!", this);
-                return false;
-            }
-
-            if (Signal.DefaultAspect == null)
-            {
-                Debug.LogError("Default state is not set!", this);
                 return false;
             }
 
