@@ -38,5 +38,9 @@ namespace Signals.Game
             var size = bounds.size;
             return size.x * size.z;
         }
+
+        public static bool IsOut(this TrackDirection direction) => direction == TrackDirection.Out;
+
+        public static TrackDirection Flipped(this TrackDirection direction) => direction == TrackDirection.Out ? TrackDirection.In : TrackDirection.Out;
     }
 }

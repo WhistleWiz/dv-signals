@@ -12,6 +12,8 @@ namespace Signals.Game
 {
     internal class SignalHover : SignHover
     {
+        private const string BlankSpace = " ";
+
         private static Vector2 s_size = new Vector2(120, 120);
         private static Dictionary<Sprite, GameObject> s_sprites = new Dictionary<Sprite, GameObject>();
         private static ContentSizeFitter? s_sizeFitter;
@@ -60,7 +62,7 @@ namespace Signals.Game
                 signTypes.Add(new SignDisplay.SignDisplayInstance()
                 {
                     prefab = GetPrefabFromSprite(sprite),
-                    text = string.Empty
+                    text = BlankSpace
                 });
             }
 
@@ -78,11 +80,11 @@ namespace Signals.Game
                         });
                         break;
                     case JunctionBranchDisplay junction:
-                        if (controller.Junction == null || (junction.TowardsOnly && !controller.TowardsBranches)) break;
+                        if (!(controller is JunctionSignalController jController) || (junction.TowardsOnly && !jController.TowardsBranches)) break;
                         signTypes.Add(new SignDisplay.SignDisplayInstance()
                         {
                             prefab = GetPrefabFromSprite(item.HUDBackground),
-                            text = $"{controller.Junction.selectedBranch + (junction.OffsetByOne ? 1 : 0)}",
+                            text = $"{jController.Junction.selectedBranch + (junction.OffsetByOne ? 1 : 0)}",
                         });
                         break;
                     default:

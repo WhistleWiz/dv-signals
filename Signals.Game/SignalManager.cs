@@ -59,6 +59,82 @@ namespace Signals.Game
             _junctionMap.Clear();
         }
 
+        #region Mod Loading
+
+        internal static SignalPack GetCurrentPack()
+        {
+            if (InstalledPacks.TryGetValue(SignalsMod.Settings.CustomPack, out var pack))
+            {
+                return pack;
+            }
+
+            if (!string.IsNullOrEmpty(SignalsMod.Settings.CustomPack))
+            {
+                SignalsMod.Error($"Could not find pack '{SignalsMod.Settings.CustomPack}', using default signals.");
+            }
+
+            return DefaultPack;
+        }
+
+        internal static void LoadSignals(UnityModManager.ModEntry mod)
+        {
+            AssetBundle bundle;
+            var files = Directory.EnumerateFiles(mod.Path, Constants.Bundle, SearchOption.AllDirectories);
+
+            foreach (var file in files)
+            {
+                bundle = AssetBundle.LoadFromFile(file);
+
+                // Somehow failed to load the bundle.
+                if (bundle == null)
+                {
+                    SignalsMod.Error("Failed to load bundle!");
+                    continue;
+                }
+
+                var pack = bundle.LoadAllAssets<SignalPack>().FirstOrDefault();
+
+                if (pack != null)
+                {
+                    ProcessSignals(pack);
+
+                    if (DefaultPack == null)
+                    {
+                        DefaultPack = pack;
+                        SignalsMod.Log("Loaded default pack.");
+                    }
+                    else
+                    {
+                        InstalledPacks.Add(mod.Info.Id, pack);
+                    }
+
+                    bundle.Unload(false);
+                    break;
+                }
+
+                bundle.Unload(false);
+            }
+        }
+
+        internal static void UnloadSignals(UnityModManager.ModEntry mod)
+        {
+            if (InstalledPacks.ContainsKey(mod.Info.Id))
+            {
+                InstalledPacks.Remove(mod.Info.Id);
+            }
+        }
+
+        private static void ProcessSignals(SignalPack pack)
+        {
+            foreach (var item in pack.AllSignals)
+            {
+                item.gameObject.layer = LaserPointerTargetLayer;
+                item.gameObject.AddComponent<SignalHover>();
+            }
+        }
+
+        #endregion
+
         #region Signal Creation
 
         // Prevents triggering the Instance call too soon and creating the singleton.
@@ -213,9 +289,7 @@ namespace Signals.Game
                 // Already merged.
                 if (merged.Contains(other)) continue;
 
-                var result = Merge(item.Value, _junctionMap[other]);
-                _junctionMap[item.Key] = result.Flip();
-                _junctionMap[other] = result;
+                Merge(item.Value, _junctionMap[other]);
 
                 merged.Add(item.Key);
             }
@@ -223,19 +297,21 @@ namespace Signals.Game
             return merged.Count;
         }
 
-        private static JunctionSignalPair Merge(JunctionSignalPair p1, JunctionSignalPair p2, bool direction = true)
+        private static void Merge(JunctionSignalPair p1, JunctionSignalPair p2, bool direction = true)
         {
             if (direction)
             {
-                Destroy(p1.To.Definition.gameObject);
-                Destroy(p2.To.Definition.gameObject);
-                return new JunctionSignalPair(p1.From, p2.From);
+                Destroy(p1.OutBranchesSignal?.Definition.gameObject);
+                Destroy(p2.OutBranchesSignal?.Definition.gameObject);
+                p1.OutBranchesSignal = null;
+                p2.OutBranchesSignal = null;
             }
             else
             {
-                Destroy(p1.From.Definition.gameObject);
-                Destroy(p2.From.Definition.gameObject);
-                return new JunctionSignalPair(p1.To, p2.To);
+                Destroy(p1.InBranchesSignal?.Definition.gameObject);
+                Destroy(p2.InBranchesSignal?.Definition.gameObject);
+                p1.InBranchesSignal = null;
+                p2.InBranchesSignal = null;
             }
         }
 
@@ -253,92 +329,20 @@ namespace Signals.Game
         /// <param name="direction">The direction of the signal. <see langword="true"/> if pointing towards the branches, <see langword="false"/> otherwise.</param>
         /// <param name="signalController">The signal, if found.</param>
         /// <returns><see langword="true"/> if a signal was found, <see langword="false"/> otherwise.</returns>
-        public bool TryGetSignal(Junction junction, bool direction, out JunctionSignalController signalController)
+        public bool TryGetSignal(Junction junction, bool direction, out JunctionSignalController? signalController)
         {
             if (TryGetSignals(junction, out var pair))
             {
                 signalController = pair.GetSignal(direction);
-                return true;
+
+                if (signalController != null)
+                {
+                    return true;
+                }
             }
 
-            signalController = null!;
+            signalController = null;
             return false;
         }
-
-        #region Mod Loading
-
-        internal static SignalPack GetCurrentPack()
-        {
-            if (InstalledPacks.TryGetValue(SignalsMod.Settings.CustomPack, out var pack))
-            {
-                return pack;
-            }
-
-            if (!string.IsNullOrEmpty(SignalsMod.Settings.CustomPack))
-            {
-                SignalsMod.Error($"Could not find pack '{SignalsMod.Settings.CustomPack}', using default signals.");
-            }
-
-            return DefaultPack;
-        }
-
-        internal static void LoadSignals(UnityModManager.ModEntry mod)
-        {
-            AssetBundle bundle;
-            var files = Directory.EnumerateFiles(mod.Path, Constants.Bundle, SearchOption.AllDirectories);
-
-            foreach (var file in files)
-            {
-                bundle = AssetBundle.LoadFromFile(file);
-
-                // Somehow failed to load the bundle.
-                if (bundle == null)
-                {
-                    SignalsMod.Error("Failed to load bundle!");
-                    continue;
-                }
-
-                var pack = bundle.LoadAllAssets<SignalPack>().FirstOrDefault();
-
-                if (pack != null)
-                {
-                    ProcessSignals(pack);
-
-                    if (DefaultPack == null)
-                    {
-                        DefaultPack = pack;
-                        SignalsMod.Log("Loaded default pack.");
-                    }
-                    else
-                    {
-                        InstalledPacks.Add(mod.Info.Id, pack);
-                    }
-
-                    bundle.Unload(false);
-                    break;
-                }
-
-                bundle.Unload(false);
-            }
-        }
-
-        internal static void UnloadSignals(UnityModManager.ModEntry mod)
-        {
-            if (InstalledPacks.ContainsKey(mod.Info.Id))
-            {
-                InstalledPacks.Remove(mod.Info.Id);
-            }
-        }
-
-        private static void ProcessSignals(SignalPack pack)
-        {
-            foreach (var item in pack.AllSignals)
-            {
-                item.gameObject.layer = LaserPointerTargetLayer;
-                item.gameObject.AddComponent<SignalHover>();
-            }
-        }
-
-        #endregion
     }
 }

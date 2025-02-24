@@ -22,12 +22,6 @@ namespace Signals.Game.Controllers
         public AspectBase[] AllAspects { get; private set; }
         public SignalLight[] AllLights { get; private set; }
 
-        public Junction? Junction { get; protected set; }
-        /// <summary>
-        /// Whether the signal refers to the junction's branches or the inbound track.
-        /// </summary>
-        public bool TowardsBranches { get; protected set; }
-
         public virtual string Name => NameOverride;
         public bool Exists => Definition != null;
         public bool IsOn => CurrentAspectIndex >= 0;
@@ -35,7 +29,6 @@ namespace Signals.Game.Controllers
         /// Returns <see langword="null"/> if the signal is off.
         /// </summary>
         public AspectBase? CurrentAspect => IsOn ? AllAspects[CurrentAspectIndex] : null;
-        public bool HasJunction => Junction != null;
 
         public BasicSignalController(SignalControllerDefinition def)
         {
@@ -43,7 +36,7 @@ namespace Signals.Game.Controllers
             CurrentAspectIndex = OffValue;
 
             // Instantiate all aspect implementations.
-            AllAspects = def.Aspects.Select(x => AspectCreator.Create(this, x)).ToArray();
+            AllAspects = def.Aspects.Select(x => AspectCreator.Create(this, x)).Where(x => x != null).ToArray()!;
 
             // Get an array of all lights.
             AllLights = def.GetComponentsInChildren<SignalLight>(true);
@@ -154,6 +147,17 @@ namespace Signals.Game.Controllers
             AllAspects[newAspect].Apply();
             _hover.UpdateStateDisplay(this, AllAspects[newAspect].Definition.HUDSprite);
             return true;
+        }
+
+        /// <summary>
+        /// Update the signal automatically.
+        /// </summary>
+        /// <returns>
+        /// The next signal found, <see langword="null"/> if there's no next signal.
+        /// </returns>
+        public virtual BasicSignalController? UpdateAspect()
+        {
+            return null;
         }
     }
 }

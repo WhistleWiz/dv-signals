@@ -23,7 +23,13 @@ namespace Signals.Game.Controllers
         // Used to add artifical delays so that signals don't all update on the same frame.
         private static System.Random s_random = new System.Random();
 
-        public override string Name => $"{Junction!.junctionData.junctionIdLong}-{(TowardsBranches ? 'T' : 'F')}";
+        public Junction Junction { get; protected set; }
+        /// <summary>
+        /// Whether the signal refers to the junction's branches or the inbound track.
+        /// </summary>
+        public bool TowardsBranches { get; protected set; }
+
+        public override string Name => $"{Junction.junctionData.junctionIdLong}-{(TowardsBranches ? 'T' : 'F')}";
 
         public JunctionSignalController(SignalControllerDefinition def, Junction junction, bool direction) : base(def)
         {
@@ -31,6 +37,7 @@ namespace Signals.Game.Controllers
             TowardsBranches = direction;
 
             Definition.StartCoroutine(UpdateRoutine());
+            Junction.Switched += JunctionSwitched;
         }
 
         private void JunctionSwitched(Junction.SwitchMode mode, int branch)
@@ -78,29 +85,30 @@ namespace Signals.Game.Controllers
         /// <summary>
         /// Updates the current aspect based on the conditions of <see cref="AllAspects"/>.
         /// </summary>
-        public void UpdateAspect()
+        public override BasicSignalController? UpdateAspect()
         {
             // Precompute this information so each state doesn't have to call the same functions
             // over and over again.
-            var info = TrackWalker.GetTracksAndNextSignal(this);
+            var info = TrackWalker.WalkUntilNextSignal(this);
 
             for (int i = 0; i < AllAspects.Length; i++)
             {
                 if (AllAspects[i].MeetsConditions(info))
                 {
                     ChangeAspect(i);
-                    return;
+                    return info.NextMainlineSignal;
                 }
             }
 
             // Turn off if no conditions are met.
             TurnOff();
+            return info.NextMainlineSignal;
         }
 
         /// <summary>
         /// Returns the other signal at the assigned junction.
         /// </summary>
-        public JunctionSignalController GetPaired()
+        public JunctionSignalController? GetPaired()
         {
             SignalManager.Instance.TryGetSignal(Junction, !TowardsBranches, out var controller);
             return controller;

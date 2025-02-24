@@ -4,23 +4,23 @@ namespace Signals.Game
 {
     internal class JunctionSignalPair
     {
-        public JunctionSignalController To;
-        public JunctionSignalController From;
+        public JunctionSignalController? OutBranchesSignal;
+        public JunctionSignalController? InBranchesSignal;
 
-        public JunctionSignalPair(JunctionSignalController to, JunctionSignalController from)
+        public JunctionSignalPair(JunctionSignalController? outSignal, JunctionSignalController? inSignal)
         {
-            To = to;
-            From = from;
+            OutBranchesSignal = outSignal;
+            InBranchesSignal = inSignal;
         }
 
-        public JunctionSignalController GetSignal(bool direction)
+        public JunctionSignalController? GetSignal(bool direction)
         {
-            return direction ? To : From;
+            return direction ? OutBranchesSignal : InBranchesSignal;
         }
 
         public JunctionSignalPair Flip()
         {
-            return new JunctionSignalPair(From, To);
+            return new JunctionSignalPair(InBranchesSignal, OutBranchesSignal);
         }
     }
 }
