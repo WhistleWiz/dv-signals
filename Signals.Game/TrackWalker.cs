@@ -25,7 +25,7 @@ namespace Signals.Game
         /// <param name="controller">The <see cref="SignalController"/> from where to start.</param>
         public static WalkInfo WalkUntilNextSignal(JunctionSignalController controller)
         {
-            return WalkUntilNextSignal(controller.Junction, controller.TowardsBranches ? TrackDirection.Out : TrackDirection.In);
+            return WalkUntilNextSignal(controller.Junction, controller.Direction);
         }
 
         /// <summary>
@@ -63,7 +63,8 @@ namespace Signals.Game
             int depth = 0;
             HashSet<RailTrack> visited = new HashSet<RailTrack>();
             List<RailTrack> ordered = new List<RailTrack>();
-            JunctionSignalController? signal = null;
+            JunctionSignalController? mainlineSignal = null;
+            JunctionSignalController? shuntingSignal = null;
 
             // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
             while (depth++ < MaxDepth && track != null && !visited.Contains(track))
@@ -81,11 +82,22 @@ namespace Signals.Game
                     // If the junction has a signal for the current direction, stop the loop.
                     if (SignalManager.Instance.TryGetSignals(junction, out var signals))
                     {
-                        signal = signals.GetSignal(junctionDir);
+                        mainlineSignal = signals.GetSignal(junctionDir ? TrackDirection.Out : TrackDirection.In);
 
-                        if (signal != null)
+                        if (mainlineSignal != null)
                         {
-                            break;
+                            switch (mainlineSignal.Type)
+                            {
+                                case SignalType.Mainline:
+                                case SignalType.IntoYard:
+                                    goto ExitLoop;
+                                case SignalType.Shunting:
+                                    shuntingSignal ??= mainlineSignal;
+                                    goto default;
+                                default:
+                                    mainlineSignal = null;
+                                    break;
+                            }
                         }
                     }
 
@@ -117,7 +129,9 @@ namespace Signals.Game
                 track = branch.track;
             }
 
-            return new WalkInfo(ordered, signal);
+            ExitLoop:
+
+            return new WalkInfo(ordered, mainlineSignal, shuntingSignal);
         }
 
         private static bool ContainsTrack(RailTrack from, Branch branch, TrackDirection direction)

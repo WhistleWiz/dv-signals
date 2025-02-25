@@ -27,14 +27,14 @@ namespace Signals.Game.Controllers
         /// <summary>
         /// Whether the signal refers to the junction's branches or the inbound track.
         /// </summary>
-        public bool TowardsBranches { get; protected set; }
+        public TrackDirection Direction { get; protected set; }
 
-        public override string Name => $"{Junction.junctionData.junctionIdLong}-{(TowardsBranches ? 'T' : 'F')}";
+        public override string Name => string.IsNullOrEmpty(NameOverride) ? $"{Junction.junctionData.junctionIdLong}-{(Direction.IsOut() ? 'T' : 'F')}" : NameOverride;
 
-        public JunctionSignalController(SignalControllerDefinition def, Junction junction, bool direction) : base(def)
+        public JunctionSignalController(SignalControllerDefinition def, Junction junction, TrackDirection direction) : base(def)
         {
             Junction = junction;
-            TowardsBranches = direction;
+            Direction = direction;
 
             Definition.StartCoroutine(UpdateRoutine());
             Junction.Switched += JunctionSwitched;
@@ -48,7 +48,10 @@ namespace Signals.Game.Controllers
                 return;
             }
 
+            // Force update the display because of junction branch updates even if
+            // the state didn't change.
             UpdateAspect();
+            UpdateDisplay();
         }
 
         private System.Collections.IEnumerator UpdateRoutine()
@@ -110,7 +113,7 @@ namespace Signals.Game.Controllers
         /// </summary>
         public JunctionSignalController? GetPaired()
         {
-            SignalManager.Instance.TryGetSignal(Junction, !TowardsBranches, out var controller);
+            SignalManager.Instance.TryGetSignal(Junction, Direction.Flipped(), out var controller);
             return controller;
         }
     }

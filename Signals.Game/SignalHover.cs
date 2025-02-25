@@ -66,32 +66,34 @@ namespace Signals.Game
                 });
             }
 
-            foreach (var item in controller.Definition.Displays)
-            {
-                if (item == null || item.Mode == InfoDisplay.DisplayMode.WorldOnly) continue;
+            // No HUD displays for now.
+            //foreach (var item in controller.Definition.Displays)
+            //{
+            //    if (item == null || item.Mode == InfoDisplay.DisplayMode.WorldOnly) continue;
 
-                switch (item)
-                {
-                    case SignalNameDisplay _:
-                        signTypes.Add(new SignDisplay.SignDisplayInstance()
-                        {
-                            prefab = GetPrefabFromSprite(item.HUDBackground),
-                            text = controller.Name
-                        });
-                        break;
-                    case JunctionBranchDisplay junction:
-                        if (!(controller is JunctionSignalController jController) || (junction.TowardsOnly && !jController.TowardsBranches)) break;
-                        signTypes.Add(new SignDisplay.SignDisplayInstance()
-                        {
-                            prefab = GetPrefabFromSprite(item.HUDBackground),
-                            text = $"{jController.Junction.selectedBranch + (junction.OffsetByOne ? 1 : 0)}",
-                        });
-                        break;
-                    default:
-                        break;
-                }
-            }
+            //    switch (item)
+            //    {
+            //        case SignalNameDisplay _:
+            //            signTypes.Add(new SignDisplay.SignDisplayInstance()
+            //            {
+            //                prefab = GetPrefabFromSprite(item.HUDBackground),
+            //                text = controller.Name
+            //            });
+            //            break;
+            //        case JunctionBranchDisplay junction:
+            //            if (!(controller is JunctionSignalController jController) || (junction.TowardsOnly && !jController.TowardsBranches)) break;
+            //            signTypes.Add(new SignDisplay.SignDisplayInstance()
+            //            {
+            //                prefab = GetPrefabFromSprite(item.HUDBackground),
+            //                text = $"{jController.Junction.selectedBranch + (junction.OffsetByOne ? 1 : 0)}",
+            //            });
+            //            break;
+            //        default:
+            //            break;
+            //    }
+            //}
 
+            // Refresh if the current hovered thing is this.
             var (type, obj) = NonVRHoverManager.Instance.CurrentlyHovered;
             if (type == NonVRHoverManager.HoverType.Sign && ((SignHover)obj) == this)
             {
@@ -115,16 +117,7 @@ namespace Signals.Game
                 img.sprite = sprite;
 
                 go = display.gameObject;
-
-                // Sprite existed in dictionary but GO was deleted somehow, so just reassign with the new one.
-                if (found)
-                {
-                    s_sprites[sprite] = go;
-                }
-                else
-                {
-                    s_sprites.Add(sprite, go);
-                }
+                s_sprites[sprite] = go;
             }
 
             return go;
@@ -133,7 +126,7 @@ namespace Signals.Game
         private static Vector2 GetSize(Sprite sprite)
         {
             // Rework scalling to not always max out at 120px?
-            return s_size * sprite.rect.size / Mathf.Max(sprite.rect.size.x, sprite.rect.size.y);
+            return s_size * sprite.rect.size / 256.0f;
         }
     }
 }

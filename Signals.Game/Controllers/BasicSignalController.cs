@@ -15,6 +15,7 @@ namespace Signals.Game.Controllers
 
         protected Coroutine? AnimatorDisabler;
 
+        public SignalType Type = SignalType.NotSet;
         public string NameOverride = string.Empty;
 
         public SignalControllerDefinition Definition { get; private set; }
@@ -108,7 +109,7 @@ namespace Signals.Game.Controllers
             }
 
             CurrentAspectIndex = OffValue;
-            _hover.UpdateStateDisplay(this, Definition.OffStateHUDSprite);
+            UpdateDisplay();
         }
 
         /// <summary>
@@ -145,8 +146,21 @@ namespace Signals.Game.Controllers
             SignalsMod.LogVerbose($"Setting signal '{Name}' to state '{AllAspects[newAspect].Definition.Id}'");
             CurrentAspectIndex = newAspect;
             AllAspects[newAspect].Apply();
-            _hover.UpdateStateDisplay(this, AllAspects[newAspect].Definition.HUDSprite);
+            UpdateDisplay();
             return true;
+        }
+
+        public void UpdateDisplay()
+        {
+            if (IsOn)
+            {
+                // Current aspect is not null when the signal is on.
+                _hover.UpdateStateDisplay(this, CurrentAspect!.Definition.HUDSprite);
+            }
+            else
+            {
+                _hover.UpdateStateDisplay(this, Definition.OffStateHUDSprite);
+            }
         }
 
         /// <summary>

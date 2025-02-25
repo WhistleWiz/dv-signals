@@ -15,6 +15,8 @@ namespace Signals.Common
 
         [Space]
         public SignalControllerDefinition Signal = null!;
+        public SignalControllerDefinition? IntoYardSignal = null;
+        public SignalControllerDefinition? ShuntingSignal = null;
 
         public bool Validate()
         {
@@ -32,6 +34,8 @@ namespace Signals.Common
             get
             {
                 yield return Signal;
+                if (IntoYardSignal != null) yield return IntoYardSignal;
+                if (ShuntingSignal != null) yield return ShuntingSignal;
             }
         }
     }
