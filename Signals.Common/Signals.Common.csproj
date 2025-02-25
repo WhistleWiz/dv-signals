@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyName>$(MSBuildProjectName)</AssemblyName>
 		<TargetFramework>netframework4.8</TargetFramework>
@@ -11,5 +11,7 @@
 		<Reference Include="UnityEngine.AnimationModule" />
 		<Reference Include="UnityEngine.AudioModule" />
 		<Reference Include="UnityEngine.CoreModule" />
+		<Reference Include="UnityEngine.UI" />
+		<Reference Include="Unity.TextMeshPro" />
 	</ItemGroup>
 </Project>

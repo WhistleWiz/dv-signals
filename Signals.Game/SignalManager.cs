@@ -1,4 +1,5 @@
-﻿using DV.Logic.Job;
+﻿using DV.Localization;
+using DV.Logic.Job;
 using DV.Utils;
 using Signals.Common;
 using Signals.Game.Controllers;
@@ -138,8 +139,25 @@ namespace Signals.Game
 
         #region Signal Creation
 
-        // Prevents triggering the Instance call too soon and creating the singleton.
-        internal static void RegisterCreation() => Instance.CreateSignals();
+        internal static void CheckStartCreation(string msg, bool isError, float percent)
+        {
+            if (msg != LocalizationAPI.L(WorldStreamingInit.INFO_GAME_CONTENT)) return;
+
+            DisplayLoadingThingy();
+            Instance.CreateSignals();
+        }
+
+        private static void DisplayLoadingThingy()
+        {
+            // Thanks Skin Manager.
+            var info = FindObjectOfType<DisplayLoadingInfo>();
+
+            if (info != null)
+            {
+                info.loadProgressTMP.richText = true;
+                info.loadProgressTMP.text += "\ncreating <color=#FF2200>si</color><color=#FFDD22>gna</color><color=#22FF44>ls</color>";
+            }
+        }
 
         private void CreateSignals()
         {
@@ -151,40 +169,22 @@ namespace Signals.Game
 
             foreach (var track in RailTrackRegistry.Instance.AllTracks)
             {
+                JunctionSignalPair signals;
+                var junction = track.inJunction;
+
                 switch (ShouldMakeSignal(track))
                 {
                     case SignalCreationMode.Mainline:
-                        var junction = track.inJunction;
-                        var signals = CreateJunctionSignals(pack.Signal, junction);
-
-                        foreach (var signal in signals.AllSignals)
-                        {
-                            signal.Type = SignalType.Mainline;
-                        }
-
-                        _junctionMap.Add(junction, signals);
+                        signals = CreateMainlineSignals(pack, junction);
                         break;
                     case SignalCreationMode.IntoYard:
-                        junction = track.inJunction;
-                        signals = CreateJunctionSignals(pack.IntoYardSignal, pack.Signal, junction);
-
-                        foreach (var signal in signals.AllSignals)
-                        {
-                            signal.Type = SignalType.IntoYard;
-                        }
-
-                        // The signal facing the in branch does not point to the yard.
-                        if (signals.InBranchSignal != null)
-                        {
-                            signals.InBranchSignal.Type = SignalType.Mainline;
-                        }
-
-                        _junctionMap.Add(junction, signals);
+                        signals = CreateIntoYardSignals(pack, junction);
                         break;
                     default:
                         continue;
                 }
 
+                _junctionMap.Add(junction, signals);
                 created++;
             }
 
@@ -200,6 +200,8 @@ namespace Signals.Game
 
             TrackChecker.StartBuildingMap();
         }
+
+        // Creation testing.
 
         private SignalCreationMode ShouldMakeSignal(RailTrack track)
         {
@@ -265,6 +267,40 @@ namespace Signals.Game
             return SignalsMod.Settings.CreateSignalsOnPax && track.logicTrack.ID.TrackPartOnly.EndsWith(TrackID.LOADING_PASSENGER_TYPE);
         }
 
+        // Main creation methods.
+
+        private static JunctionSignalPair CreateMainlineSignals(SignalPack pack, Junction junction)
+        {
+            var signals = CreateJunctionSignals(pack.Signal, junction);
+
+            foreach (var signal in signals.AllSignals)
+            {
+                signal.Type = SignalType.Mainline;
+            }
+
+            return signals;
+        }
+
+        private static JunctionSignalPair CreateIntoYardSignals(SignalPack pack, Junction junction)
+        {
+            var signals = CreateJunctionSignals(pack.IntoYardSignal, pack.Signal, junction);
+
+            foreach (var signal in signals.AllSignals)
+            {
+                signal.Type = SignalType.IntoYard;
+            }
+
+            // The signal facing the in branch does not point to the yard.
+            if (signals.InBranchSignal != null)
+            {
+                signals.InBranchSignal.Type = SignalType.Mainline;
+            }
+
+            return signals;
+        }
+
+        // Internal creation methods.
+
         private static JunctionSignalPair CreateJunctionSignals(SignalControllerDefinition signal, Junction junction)
         {
             return CreateDoubleJunctionSignals(signal, signal, junction);
@@ -323,6 +359,8 @@ namespace Signals.Game
 
             return new JunctionSignalPair(null, new JunctionSignalController(from, junction, TrackDirection.In));
         }
+
+        // Post processing.
 
         private int MergeCloseSignals()
         {
@@ -403,6 +441,17 @@ namespace Signals.Game
 
             signalController = null;
             return false;
+        }
+
+        /// <summary>
+        /// Tries to find a pack from the mod ID.
+        /// </summary>
+        /// <param name="id">The mod ID that added the pack.</param>
+        /// <param name="pack">The returned pack if it exists.</param>
+        /// <returns></returns>
+        public static bool TryGetPack(string id, out SignalPack pack)
+        {
+            return InstalledPacks.TryGetValue(id, out pack);
         }
     }
 }

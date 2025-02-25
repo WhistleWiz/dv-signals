@@ -18,7 +18,8 @@
 		<Reference Include="UnityEngine.AudioModule" />
 		<Reference Include="UnityEngine.CoreModule" />
 		<Reference Include="UnityEngine.PhysicsModule" />
-		<Reference Include="UnityEngine.UI" />
+    <Reference Include="UnityEngine.UI" />
+    <Reference Include="Unity.TextMeshPro" />
 		<Reference Include="DV.Interaction" />
 		<Reference Include="DV.Localization" />
 		<Reference Include="DV.NAudio" />

@@ -15,13 +15,15 @@ namespace Signals.Game.Controllers
         // Signals at over this distance from the camera update at a slower rate.
         // Can't completely stop updates or else signals reading states that are
         // far may be stuck at the wrong state.
-        private const float OptimiseDistance = 2000;
-        private const float OptimiseDistanceSqr = OptimiseDistance * OptimiseDistance;
+        private const float OptimiseDistanceSqr = 1500 * 1500;
+        private const float SkipDistanceSqr = 5000 * 5000;
         private const float UpdateTime = 1.0f;
-        private const float LongUpdateTime = 5.0f;
+        private const int MaxUpdateDelay = 5;
 
         // Used to add artifical delays so that signals don't all update on the same frame.
         private static System.Random s_random = new System.Random();
+
+        private int _updateDelay = 0;
 
         public Junction Junction { get; protected set; }
         /// <summary>
@@ -42,16 +44,10 @@ namespace Signals.Game.Controllers
 
         private void JunctionSwitched(Junction.SwitchMode mode, int branch)
         {
-            if (Definition == null)
-            {
-                Junction.Switched -= JunctionSwitched;
-                return;
-            }
-
             // Force update the display because of junction branch updates even if
             // the state didn't change.
             UpdateAspect();
-            UpdateDisplay();
+            UpdateHoverDisplay();
         }
 
         private System.Collections.IEnumerator UpdateRoutine()
@@ -67,22 +63,44 @@ namespace Signals.Game.Controllers
             // Prevent cluttering log by setting states too early. Also add random delay to ungroup start times.
             yield return new WaitForSeconds((float)(s_random.NextDouble() + 0.1));
 
+            // Initial update.
+            UpdateAspect();
+
             while (true)
             {
+                yield return new WaitForSeconds(UpdateTime);
+
+                // Instanced signal is gone, stop the routine.
+                if (Definition == null)
+                {
+                    Junction.Switched -= JunctionSwitched;
+                    yield break;
+                }
+
+                // No camera, no update.
+                if (PlayerManager.ActiveCamera == null)
+                {
+                    continue;
+                }
+
+                var dist = GetCameraDistance();
+
+                // If the camera is too far from the signal, skip updating.
+                // If the camera is far, but the signal is relatively close, use a slowed update rate.
+                if (dist > SkipDistanceSqr || (dist > OptimiseDistanceSqr && _updateDelay < MaxUpdateDelay))
+                {
+                    _updateDelay++;
+                    continue;
+                }
+
                 UpdateAspect();
-                yield return new WaitForSeconds(GetUpdateTime());
+                _updateDelay = 0;
             }
         }
 
-        private float GetUpdateTime()
+        private float GetCameraDistance()
         {
-            if (PlayerManager.ActiveCamera != null &&
-                Helpers.DistanceSqr(Definition.transform.position, PlayerManager.ActiveCamera.transform.position) > OptimiseDistanceSqr)
-            {
-                return LongUpdateTime;
-            }
-
-            return UpdateTime;
+            return Helpers.DistanceSqr(Definition.transform.position, PlayerManager.ActiveCamera.transform.position);
         }
 
         /// <summary>

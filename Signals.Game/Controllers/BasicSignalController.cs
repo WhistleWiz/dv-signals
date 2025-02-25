@@ -109,7 +109,7 @@ namespace Signals.Game.Controllers
             }
 
             CurrentAspectIndex = OffValue;
-            UpdateDisplay();
+            UpdateHoverDisplay();
         }
 
         /// <summary>
@@ -146,11 +146,11 @@ namespace Signals.Game.Controllers
             SignalsMod.LogVerbose($"Setting signal '{Name}' to state '{AllAspects[newAspect].Definition.Id}'");
             CurrentAspectIndex = newAspect;
             AllAspects[newAspect].Apply();
-            UpdateDisplay();
+            UpdateHoverDisplay();
             return true;
         }
 
-        public void UpdateDisplay()
+        public void UpdateHoverDisplay()
         {
             if (IsOn)
             {

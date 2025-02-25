@@ -31,7 +31,7 @@ namespace Signals.Game
             var harmony = new Harmony(modEntry.Info.Id);
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
-            WorldStreamingInit.LoadingFinished += SignalManager.RegisterCreation;
+            WorldStreamingInit.LoadingStatusChanged += SignalManager.CheckStartCreation;
 
             return true;
         }
