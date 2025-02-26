@@ -7,7 +7,7 @@ namespace Signals.Game.Aspects
     {
         public OpenAspect(AspectBaseDefinition definition, BasicSignalController controller) : base(definition, controller) { }
 
-        public override bool MeetsConditions(WalkInfo _)
+        public override bool MeetsConditions()
         {
             return true;
         }

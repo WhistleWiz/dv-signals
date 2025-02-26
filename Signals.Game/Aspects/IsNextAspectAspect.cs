@@ -12,14 +12,11 @@ namespace Signals.Game.Aspects
             _fullDef = (IsNextAspectAspectDefinition)definition;
         }
 
-        public override bool MeetsConditions(WalkInfo info)
+        public override bool MeetsConditions()
         {
-            if (info.NextMainlineSignal == null)
-            {
-                return false;
-            }
+            if (ControllerTrackInfo == null || ControllerTrackInfo.NextMainlineSignal == null) return false;
 
-            var state = info.NextMainlineSignal.CurrentAspect;
+            var state = ControllerTrackInfo.NextMainlineSignal.CurrentAspect;
 
             if (state == null)
             {

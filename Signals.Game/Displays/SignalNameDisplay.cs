@@ -9,7 +9,12 @@ namespace Signals.Game.Displays
 
         public override void UpdateDisplay()
         {
-            DisplayText = Controller.Name;
+            var name = Controller.Name;
+
+            if (name != DisplayText)
+            {
+                DisplayText = name;
+            }
         }
     }
 }

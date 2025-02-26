@@ -25,12 +25,12 @@ namespace Signals.Game.Displays
 
         private static string GetJunctionText(TrackIdDisplayDefinition def, JunctionSignalController junction)
         {
-            if (junction.LastWalkInfo == null) return string.Empty;
+            if (junction.TrackInfo == null) return string.Empty;
 
             return def.TrackIDMode switch
             {
-                TrackIdDisplayDefinition.TrackIdDisplayMode.NumberOnly => junction.LastWalkInfo.NextYardTrackNumber,
-                TrackIdDisplayDefinition.TrackIdDisplayMode.NumberAndType => junction.LastWalkInfo.NextYardTrackSign,
+                TrackIdDisplayDefinition.TrackIdDisplayMode.NumberOnly => junction.TrackInfo.NextYardTrackNumber,
+                TrackIdDisplayDefinition.TrackIdDisplayMode.NumberAndType => junction.TrackInfo.NextYardTrackSign,
                 _ => string.Empty,
             };
         }

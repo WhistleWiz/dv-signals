@@ -23,7 +23,7 @@ namespace Signals.Game
         /// Returns all tracks after a signal until another signal is found.
         /// </summary>
         /// <param name="controller">The <see cref="SignalController"/> from where to start.</param>
-        public static WalkInfo WalkUntilNextSignal(JunctionSignalController controller)
+        public static TrackInfo WalkUntilNextSignal(JunctionSignalController controller)
         {
             return WalkUntilNextSignal(controller.Junction, controller.Direction);
         }
@@ -34,7 +34,7 @@ namespace Signals.Game
         /// <param name="from">The <see cref="Junction"/> where to start.</param>
         /// <param name="direction">The search direction. <see langword="true"/> for the outbound tracks, <see langword="false"/> for the inbound track.</param>
         /// <remarks>Uses the currently selected branch.</remarks>
-        public static WalkInfo WalkUntilNextSignal(Junction from, TrackDirection direction)
+        public static TrackInfo WalkUntilNextSignal(Junction from, TrackDirection direction)
         {
             return WalkUntilNextSignal(from, direction, from.selectedBranch);
         }
@@ -46,7 +46,7 @@ namespace Signals.Game
         /// <param name="direction">The search direction. <see langword="true"/> for the outbound tracks, <see langword="false"/> for the inbound track.</param>
         /// <param name="branch">The junction branch to follow.</param>
         /// <returns></returns>
-        public static WalkInfo WalkUntilNextSignal(Junction from, TrackDirection direction, int branch)
+        public static TrackInfo WalkUntilNextSignal(Junction from, TrackDirection direction, int branch)
         {
             var track = direction.IsOut() ? from.outBranches[branch].track : from.inBranch.track;
             return WalkUntilNextSignal(track, track.inJunction == from ? TrackDirection.Out : TrackDirection.In);
@@ -58,13 +58,14 @@ namespace Signals.Game
         /// <param name="track">The track to start on.</param>
         /// <param name="direction">The direction to search in. <see langword="true"/> for the out branch, <see langword="false"/> for the in branch.</param>
         /// <returns></returns>
-        public static WalkInfo WalkUntilNextSignal(RailTrack track, TrackDirection direction)
+        public static TrackInfo WalkUntilNextSignal(RailTrack track, TrackDirection direction)
         {
             int depth = 0;
             HashSet<RailTrack> visited = new HashSet<RailTrack>();
             List<RailTrack> ordered = new List<RailTrack>();
             JunctionSignalController? mainlineSignal = null;
             JunctionSignalController? shuntingSignal = null;
+            Junction? nextJunction = null;
 
             // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
             while (depth++ < MaxDepth && track != null && !visited.Contains(track))
@@ -78,6 +79,11 @@ namespace Signals.Game
                 if (junction != null)
                 {
                     bool junctionDir = junction.inBranch.track == track;
+
+                    if (nextJunction == null)
+                    {
+                        nextJunction = junction;
+                    }
 
                     // If the junction has a signal for the current direction, stop the loop.
                     if (SignalManager.Instance.TryGetSignals(junction, out var signals))
@@ -131,7 +137,7 @@ namespace Signals.Game
 
             ExitLoop:
 
-            return new WalkInfo(ordered, mainlineSignal, shuntingSignal);
+            return new TrackInfo(ordered, mainlineSignal, shuntingSignal, nextJunction);
         }
 
         private static bool ContainsTrack(RailTrack from, Branch branch, TrackDirection direction)

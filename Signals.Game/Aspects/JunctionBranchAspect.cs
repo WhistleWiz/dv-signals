@@ -14,7 +14,7 @@ namespace Signals.Game.Aspects
             _junctionController = (JunctionSignalController)controller;
         }
 
-        public override bool MeetsConditions(WalkInfo _)
+        public override bool MeetsConditions()
         {
             if (_junctionController == null) return false;
 

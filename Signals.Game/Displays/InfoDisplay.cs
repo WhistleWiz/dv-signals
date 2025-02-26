@@ -18,11 +18,13 @@ namespace Signals.Game.Displays
         {
             Definition = definition;
             Controller = controller;
-
-            UpdateDisplay();
         }
 
-        public void CheckUpdate()
+        /// <summary>
+        /// Checks and updates the displays.
+        /// </summary>
+        /// <returns></returns>
+        public bool CheckAndUpdate()
         {
             if (Definition.DisableWhenSignalIsOff && !Controller.IsOn)
             {
@@ -32,7 +34,7 @@ namespace Signals.Game.Displays
                     _off = true;
                 }
 
-                return;
+                return false;
             }
 
             if (_off)
@@ -42,6 +44,7 @@ namespace Signals.Game.Displays
             }
 
             UpdateDisplay();
+            return true;
         }
 
         public abstract void UpdateDisplay();

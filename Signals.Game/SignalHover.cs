@@ -2,9 +2,9 @@
 using DV.HUD.Signs;
 using DV.Signs;
 using DV.UI.LocoHUD;
-using Signals.Common.Displays;
 using Signals.Game.Controllers;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -70,9 +70,17 @@ namespace Signals.Game
             {
                 if (item == null || !item.ShouldDisplayHUD) continue;
 
+                var go = GetPrefabFromSprite(item.Definition.HUDBackground);
+                var text = go.GetComponentInChildren<TMP_Text>();
+
+                if (text != null)
+                {
+                    text.color = item.Definition.HUDTextColour;
+                }
+
                 signTypes.Add(new SignDisplay.SignDisplayInstance()
                 {
-                    prefab = GetPrefabFromSprite(item.Definition.HUDBackground),
+                    prefab = go,
                     text = item.DisplayText
                 });
             }

@@ -1,6 +1,7 @@
 ﻿using Signals.Common;
 using Signals.Game.Aspects;
 using Signals.Game.Displays;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -24,6 +25,7 @@ namespace Signals.Game.Controllers
         public AspectBase[] AllAspects { get; private set; }
         public SignalLight[] AllLights { get; private set; }
         public InfoDisplay[] AllDisplays { get; private set; }
+        public TrackInfo? TrackInfo { get; protected set; }
 
         public virtual string Name => NameOverride;
         public bool Exists => Definition != null;
@@ -32,6 +34,9 @@ namespace Signals.Game.Controllers
         /// Returns <see langword="null"/> if the signal is off.
         /// </summary>
         public AspectBase? CurrentAspect => IsOn ? AllAspects[CurrentAspectIndex] : null;
+
+        public Action<AspectBase?>? OnAspectChanged;
+        public Action<InfoDisplay[]>? OnDisplaysUpdated;
 
         public BasicSignalController(SignalControllerDefinition def)
         {
@@ -95,9 +100,10 @@ namespace Signals.Game.Controllers
         /// Turns off the signal until the next state update.
         /// </summary>
         /// <param name="keep">If true, keeps the signal off.</param>
-        public void TurnOff()
+        /// <returns><see langword="true"/> if the signal was turned off successfuly, <see langword="false"/> otherwise.</returns>
+        public bool TurnOff()
         {
-            if (!IsOn) return;
+            if (!IsOn) return false;
 
             CurrentAspect?.Unapply();
 
@@ -117,6 +123,9 @@ namespace Signals.Game.Controllers
 
             CurrentAspectIndex = OffValue;
             UpdateDisplays();
+
+            OnAspectChanged?.Invoke(null);
+            return true;
         }
 
         /// <summary>
@@ -154,6 +163,8 @@ namespace Signals.Game.Controllers
             CurrentAspectIndex = newAspect;
             AllAspects[newAspect].Apply();
             UpdateDisplays();
+
+            OnAspectChanged?.Invoke(AllAspects[newAspect]);
             return true;
         }
 
@@ -174,18 +185,30 @@ namespace Signals.Game.Controllers
         {
             foreach (var item in AllDisplays)
             {
-                item.CheckUpdate();
+                item.CheckAndUpdate();
             }
 
             UpdateHoverDisplay();
+
+            OnDisplaysUpdated?.Invoke(AllDisplays);
         }
 
         /// <summary>
         /// Update the signal automatically.
         /// </summary>
-        /// <returns>
-        /// The next signal found, <see langword="null"/> if there's no next signal.
-        /// </returns>
-        public virtual void UpdateAspect() { }
+        public virtual void UpdateAspect()
+        {
+            for (int i = 0; i < AllAspects.Length; i++)
+            {
+                if (AllAspects[i].MeetsConditions())
+                {
+                    ChangeAspect(i);
+                    return;
+                }
+            }
+
+            // Turn off if no conditions are met.
+            TurnOff();
+        }
     }
 }

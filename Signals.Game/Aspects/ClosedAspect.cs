@@ -12,9 +12,11 @@ namespace Signals.Game.Aspects
             _fullDef = (ClosedAspectDefinition)definition;
         }
 
-        public override bool MeetsConditions(WalkInfo info)
+        public override bool MeetsConditions()
         {
-            foreach (var item in info.Tracks)
+            if (ControllerTrackInfo == null) return false;
+
+            foreach (var item in ControllerTrackInfo.Tracks)
             {
                 if (item.IsOccupied(_fullDef.CrossingCheckMode))
                 {

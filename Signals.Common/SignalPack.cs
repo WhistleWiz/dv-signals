@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Signals.Common
@@ -13,10 +14,20 @@ namespace Signals.Common
         public string HomePage = string.Empty;
         public string Repository = string.Empty;
 
-        [Space]
+        [Header("Main Signal")]
+        [Tooltip("Used on all junctions in mainlines")]
         public SignalControllerDefinition Signal = null!;
-        public SignalControllerDefinition? IntoYardSignal = null;
-        public SignalControllerDefinition? ShuntingSignal = null;
+        [Header("Optional Signals")]
+        [Tooltip("Used on junctions that enter/change yards")]
+        public SignalControllerDefinition? IntoYardSignal;
+        [Tooltip("Used on junctions inside yards")]
+        public SignalControllerDefinition? ShuntingSignal;
+        [Tooltip("Used on mainline tracks that meet certain conditions")]
+        public SignalControllerDefinition? DistantSignal;
+        [Tooltip("The distance a Distant Signal must be from its corresponding signal")]
+        public float DistantSignalDistance = 200.0f;
+        [Tooltip("Any additional signals included in this pack")]
+        public SignalControllerDefinition[] OtherSignals = Array.Empty<SignalControllerDefinition>();
 
         public bool Validate()
         {
@@ -34,8 +45,15 @@ namespace Signals.Common
             get
             {
                 yield return Signal;
+
                 if (IntoYardSignal != null) yield return IntoYardSignal;
                 if (ShuntingSignal != null) yield return ShuntingSignal;
+                if (DistantSignal != null) yield return DistantSignal;
+
+                foreach (var item in OtherSignals)
+                {
+                    if (item != null) yield return item;
+                }
             }
         }
     }

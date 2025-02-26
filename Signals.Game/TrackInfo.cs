@@ -1,34 +1,34 @@
 ﻿using Signals.Game.Controllers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Signals.Game
 {
     /// <summary>
-    /// Class holding information about a track walk.
+    /// Class holding information about a tracks.
     /// </summary>
-    public class WalkInfo
+    public class TrackInfo
     {
         private RailTrack[] _tracks;
-        private JunctionSignalController? _nextMainlineSignal;
-        private JunctionSignalController? _nextShuntingSignal;
         private float? _distanceWalked;
         private float? _distanceWalkedWithoutStartingTrack;
         private string? _nextYardTrackNumber;
         private string? _nextYardTrackSign;
 
-        /// <summary>
-        /// The tracks walked until the next signal.
-        /// </summary>
         public RailTrack[] Tracks => _tracks;
         /// <summary>
         /// The next mainline (non shunting) signal.
         /// </summary>
-        public JunctionSignalController? NextMainlineSignal => _nextMainlineSignal;
+        public BasicSignalController? NextMainlineSignal { get; private set; }
         /// <summary>
         /// The next shunting signal.
         /// </summary>
-        public JunctionSignalController? NextShuntingSignal => _nextShuntingSignal;
+        public BasicSignalController? NextShuntingSignal { get; private set; }
+        /// <summary>
+        /// The next junction.
+        /// </summary>
+        public Junction? NextJunction { get; private set; }
         /// <summary>
         /// The total track length walked, including the starting track.
         /// </summary>
@@ -90,31 +90,33 @@ namespace Signals.Game
             }
         }
 
-        public WalkInfo(IEnumerable<RailTrack> tracks, JunctionSignalController? nextMainlineSignal, JunctionSignalController? nextShuntingSignal)
+        /// <summary>
+        /// Creates a complete WalkInfo.
+        /// </summary>
+        /// <param name="tracks"></param>
+        /// <param name="nextMainlineSignal"></param>
+        /// <param name="nextShuntingSignal"></param>
+        public TrackInfo(IEnumerable<RailTrack>? tracks = null, BasicSignalController? nextMainlineSignal = null, BasicSignalController? nextShuntingSignal = null,
+            Junction? nextJunction = null)
         {
-            _tracks = tracks.ToArray();
-            _nextMainlineSignal = nextMainlineSignal;
-            _nextShuntingSignal = nextShuntingSignal;
+            _tracks = tracks == null ? Array.Empty<RailTrack>() : tracks.ToArray();
+
+            NextMainlineSignal = nextMainlineSignal;
+            NextShuntingSignal = nextShuntingSignal;
+            NextJunction = nextJunction;
         }
 
         private void CalculateDistances()
         {
             if (Tracks.Length > 0)
             {
-                _distanceWalked = 0;
+                _distanceWalked = (float)Tracks[0].logicTrack.length;
+                _distanceWalkedWithoutStartingTrack = 0.0f;
 
                 for (int i = 0; i < Tracks.Length; i++)
                 {
                     _distanceWalked += (float)Tracks[i].logicTrack.length;
-                }
-
-                if (Tracks.Length > 1)
-                {
-                    _distanceWalkedWithoutStartingTrack = DistanceWalked - (float)Tracks[0].logicTrack.length;
-                }
-                else
-                {
-                    _distanceWalkedWithoutStartingTrack = 0;
+                    _distanceWalkedWithoutStartingTrack = (float)Tracks[0].logicTrack.length;
                 }
             }
             else
@@ -156,6 +158,16 @@ namespace Signals.Game
             }
 
             _nextYardTrackSign = string.Empty;
+        }
+
+        public static TrackInfo NextSignalTrackInfo(BasicSignalController controller)
+        {
+            return new TrackInfo(nextMainlineSignal: controller);
+        }
+
+        public static TrackInfo NextSignalTrackInfo(BasicSignalController controller, Junction junction)
+        {
+            return new TrackInfo(nextMainlineSignal: controller, nextJunction: junction);
         }
     }
 }

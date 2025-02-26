@@ -19,6 +19,8 @@ namespace Signals.Common.Displays
         public bool DisableWhenSignalIsOff = false;
         [Tooltip("The background of this display when hovered")]
         public Sprite HUDBackground = null!;
+        [Tooltip("The colour of the text when hovered")]
+        public Color HUDTextColour = Color.black;
         [Tooltip("Optional world text object to assign the value of this display")]
         public TMP_Text? Text;
 

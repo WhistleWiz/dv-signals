@@ -19,6 +19,7 @@ namespace Signals.Game.Aspects
         private int? _animationId;
 
         public string Id => Definition.Id;
+        public TrackInfo? ControllerTrackInfo => Controller.TrackInfo;
 
         public AspectBase(AspectBaseDefinition definition, BasicSignalController controller)
         {
@@ -37,7 +38,7 @@ namespace Signals.Game.Aspects
         /// <summary>
         /// Checks if the conditions for this aspect to be used are true.
         /// </summary>
-        public abstract bool MeetsConditions(WalkInfo info);
+        public abstract bool MeetsConditions();
 
         /// <summary>
         /// Applies the aspect.
