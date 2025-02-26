@@ -15,6 +15,8 @@ namespace Signals.Common.Displays
         private string _displayText = string.Empty;
 
         public DisplayMode Mode;
+        [Tooltip("Disables this GO when the signal is turned off")]
+        public bool DisableWhenSignalIsOff = false;
         [Tooltip("The background of this display when hovered")]
         public Sprite HUDBackground = null!;
         [Tooltip("Optional world text object to assign the value of this display")]

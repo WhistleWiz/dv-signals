@@ -174,7 +174,7 @@ namespace Signals.Game.Controllers
         {
             foreach (var item in AllDisplays)
             {
-                item.UpdateDisplay();
+                item.CheckUpdate();
             }
 
             UpdateHoverDisplay();

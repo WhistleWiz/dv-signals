@@ -51,7 +51,7 @@ namespace Signals.Game.Controllers
             // Force update the display because of junction branch updates even if
             // the state didn't change.
             UpdateAspect();
-            UpdateHoverDisplay();
+            UpdateDisplays();
         }
 
         private System.Collections.IEnumerator UpdateRoutine()

@@ -66,17 +66,16 @@ namespace Signals.Game
                 });
             }
 
-            // No HUD displays for now.
-            //foreach (var item in controller.Definition.Displays)
-            //{
-            //    if (item == null || item.Mode == InfoDisplayDefinition.DisplayMode.WorldOnly || string.IsNullOrEmpty(item.DisplayText)) continue;
+            foreach (var item in controller.AllDisplays)
+            {
+                if (item == null || !item.ShouldDisplayHUD) continue;
 
-            //    signTypes.Add(new SignDisplay.SignDisplayInstance()
-            //    {
-            //        prefab = GetPrefabFromSprite(item.HUDBackground),
-            //        text = item.DisplayText
-            //    });
-            //}
+                signTypes.Add(new SignDisplay.SignDisplayInstance()
+                {
+                    prefab = GetPrefabFromSprite(item.Definition.HUDBackground),
+                    text = item.DisplayText
+                });
+            }
 
             // Refresh if the current hovered thing is this.
             var (type, obj) = NonVRHoverManager.Instance.CurrentlyHovered;

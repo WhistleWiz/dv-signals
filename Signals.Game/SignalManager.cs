@@ -211,14 +211,15 @@ namespace Signals.Game
                 return SignalCreationMode.None;
             }
 
-            var inName = track.inJunction.inBranch.track.name;
+            var junction = track.inJunction;
+            var inName = junction.inBranch.track.name;
             SignalsMod.LogVerbose($"Testing track '{inName}' for signals...");
 
             // If the in track belongs to a yard...
             if (inName.StartsWith(YardNameStart))
             {
                 // Check all out branches.
-                foreach (var branch in track.inJunction.outBranches)
+                foreach (var branch in junction.outBranches)
                 {
                     // Track ends after a switch for some reason, plop signal.
                     if (!branch.track.outIsConnected)
@@ -240,6 +241,27 @@ namespace Signals.Game
 
                 // Switch branches stay in the same yard, no signal needed.
                 return SignalCreationMode.Shunting;
+            }
+
+            // In case we are in a mainline, check all out branches for yards.
+            foreach (var branch in junction.outBranches)
+            {
+                // Track ends after a switch for some reason, plop signal.
+                if (!branch.track.outIsConnected)
+                {
+                    return SignalCreationMode.Mainline;
+                }
+
+                // Get the track after the switch track.
+                var outName = branch.track.outBranch.track.name;
+
+                SignalsMod.LogVerbose($"Testing branch '{outName}' for signals...");
+
+                // If this non yard track goes to a yard track...
+                if (outName.StartsWith(YardNameStart) || PassengerTest(branch.track.outBranch.track))
+                {
+                    return SignalCreationMode.IntoYard;
+                }
             }
 
             // No conditions met, plop signal.

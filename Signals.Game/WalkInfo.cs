@@ -128,6 +128,8 @@ namespace Signals.Game
         {
             foreach (var track in _tracks)
             {
+                if (track.logicTrack.ID.IsGeneric()) continue;
+
                 var number = ReflectionHelpers.GetTrimmedOrderNumber(track.logicTrack.ID);
 
                 if (!string.IsNullOrEmpty(number))
@@ -144,6 +146,8 @@ namespace Signals.Game
         {
             foreach (var track in _tracks)
             {
+                if (track.logicTrack.ID.IsGeneric()) continue;
+
                 if (!string.IsNullOrEmpty(track.logicTrack.ID.SignIDTrackPart))
                 {
                     _nextYardTrackSign = track.logicTrack.ID.SignIDTrackPart;
