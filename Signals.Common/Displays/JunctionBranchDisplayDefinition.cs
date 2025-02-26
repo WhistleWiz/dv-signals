@@ -2,7 +2,7 @@
 
 namespace Signals.Common.Displays
 {
-    public class JunctionBranchDisplay : InfoDisplay
+    public class JunctionBranchDisplayDefinition : InfoDisplayDefinition
     {
         [Tooltip("If true, numbers start at 1 instead of 0")]
         public bool OffsetByOne = true;

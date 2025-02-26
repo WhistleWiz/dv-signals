@@ -20,17 +20,17 @@ namespace Signals.Game.Aspects
 
         public string Id => Definition.Id;
 
-        public AspectBase(AspectBaseDefinition def, BasicSignalController controller)
+        public AspectBase(AspectBaseDefinition definition, BasicSignalController controller)
         {
-            Definition = def;
+            Definition = definition;
             Controller = controller;
 
-            _on = def.OnLights.Select(x => x.GetController()).ToArray();
-            _blink = def.BlinkingLights.Select(x => x.GetController()).ToArray();
+            _on = definition.OnLights.Select(x => x.GetController()).ToArray();
+            _blink = definition.BlinkingLights.Select(x => x.GetController()).ToArray();
 
-            if (!string.IsNullOrEmpty(def.AnimationName))
+            if (!string.IsNullOrEmpty(definition.AnimationName))
             {
-                _animationId = Animator.StringToHash(def.AnimationName);
+                _animationId = Animator.StringToHash(definition.AnimationName);
             }
         }
 

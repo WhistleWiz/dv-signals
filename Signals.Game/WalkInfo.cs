@@ -14,7 +14,7 @@ namespace Signals.Game
         private JunctionSignalController? _nextShuntingSignal;
         private float? _distanceWalked;
         private float? _distanceWalkedWithoutStartingTrack;
-        private int? _nextYardTrackNumber;
+        private string? _nextYardTrackNumber;
         private string? _nextYardTrackSign;
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace Signals.Game
         /// <summary>
         /// The next yard track number. Is <see langword="null"/> if there is no yard track until the next signal.
         /// </summary>
-        public int? NextYardTrackNumber
+        public string NextYardTrackNumber
         {
             get
             {
@@ -71,15 +71,13 @@ namespace Signals.Game
                     CalculateTrackNumber();
                 }
 
-                if (_nextYardTrackNumber < 0) return null;
-
-                return _nextYardTrackNumber;
+                return _nextYardTrackNumber!;
             }
         }
         /// <summary>
         /// The next yard track ID. Is <see langword="null"/> if there is no yard track until the next signal.
         /// </summary>
-        public string? NextYardTrackSign
+        public string NextYardTrackSign
         {
             get
             {
@@ -88,7 +86,7 @@ namespace Signals.Game
                     CalculateNextTrackSign();
                 }
 
-                return _nextYardTrackSign;
+                return _nextYardTrackSign!;
             }
         }
 
@@ -132,14 +130,14 @@ namespace Signals.Game
             {
                 var number = ReflectionHelpers.GetTrimmedOrderNumber(track.logicTrack.ID);
 
-                if (!string.IsNullOrEmpty(number) && int.TryParse(number, out int result))
+                if (!string.IsNullOrEmpty(number))
                 {
-                    _nextYardTrackNumber = result;
+                    _nextYardTrackNumber = number;
                     return;
                 }
             }
 
-            _nextYardTrackNumber = -1;
+            _nextYardTrackNumber = string.Empty;
         }
 
         private void CalculateNextTrackSign()
@@ -153,7 +151,7 @@ namespace Signals.Game
                 }
             }
 
-            _nextYardTrackSign = null;
+            _nextYardTrackSign = string.Empty;
         }
     }
 }

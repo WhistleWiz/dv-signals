@@ -18,7 +18,7 @@ namespace Signals.Common
         [Tooltip("Used for mechanical signals")]
         public Animator? Animator;
         [Tooltip("Extra signal displays")]
-        public InfoDisplay[] Displays = new InfoDisplay[0];
+        public InfoDisplayDefinition[] Displays = new InfoDisplayDefinition[0];
 
         private void OnDrawGizmos()
         {

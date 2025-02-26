@@ -8,9 +8,9 @@ namespace Signals.Game.Aspects
         private JunctionBranchAspectDefinition _fullDef;
         private JunctionSignalController? _junctionController;
 
-        public JunctionBranchAspect(AspectBaseDefinition def, BasicSignalController controller) : base(def, controller)
+        public JunctionBranchAspect(AspectBaseDefinition definition, BasicSignalController controller) : base(definition, controller)
         {
-            _fullDef = (JunctionBranchAspectDefinition)def;
+            _fullDef = (JunctionBranchAspectDefinition)definition;
             _junctionController = (JunctionSignalController)controller;
         }
 

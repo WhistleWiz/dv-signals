@@ -45,7 +45,7 @@ namespace Signals.Game
             // Otherwise every single signal would output the same error...
             if (!s_failedAspects.Contains(t))
             {
-                SignalsMod.Error($"Failed to find creator function for state '{t.FullName}'");
+                SignalsMod.Error($"Failed to find creator function for aspect '{t.FullName}'");
                 s_failedAspects.Add(t);
             }
 
@@ -79,9 +79,8 @@ namespace Signals.Game
         /// <summary>
         /// Remove your custom aspect creators.
         /// </summary>
-        /// <param name="id">The ID to remove.</param>
-        /// <returns><see langword="true"/> if the ID was sucessfully removed, otherwise <see langword="false"/>.</returns>
-        /// <remarks>This method will not remove the default IDs.</remarks>
+        /// <returns><see langword="true"/> if the tpe was sucessfully removed, otherwise <see langword="false"/>.</returns>
+        /// <remarks>This method will not remove the default types.</remarks>
         public static bool RemoveCreatorFunction<T>()
             where T : AspectBaseDefinition
         {

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Signals.Common.Displays
 {
-    public abstract class InfoDisplay : MonoBehaviour
+    public abstract class InfoDisplayDefinition : MonoBehaviour
     {
         public enum DisplayMode
         {

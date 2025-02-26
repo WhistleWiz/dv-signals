@@ -1,5 +1,6 @@
 ﻿using Signals.Common;
 using Signals.Game.Aspects;
+using Signals.Game.Displays;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace Signals.Game.Controllers
         public int CurrentAspectIndex { get; private set; }
         public AspectBase[] AllAspects { get; private set; }
         public SignalLight[] AllLights { get; private set; }
+        public InfoDisplay[] AllDisplays { get; private set; }
 
         public virtual string Name => NameOverride;
         public bool Exists => Definition != null;
@@ -41,6 +43,9 @@ namespace Signals.Game.Controllers
 
             // Get an array of all lights.
             AllLights = def.GetComponentsInChildren<SignalLight>(true);
+
+            // Same as aspects but for displays.
+            AllDisplays = def.Displays.Select(x => DisplayCreator.Create(this, x)).Where(x => x != null).ToArray()!;
 
             // If there's an animator, set up the default state
             if (def.Animator != null)
@@ -92,6 +97,8 @@ namespace Signals.Game.Controllers
         /// <param name="keep">If true, keeps the signal off.</param>
         public void TurnOff()
         {
+            if (!IsOn) return;
+
             CurrentAspect?.Unapply();
 
             foreach (var item in AllLights)
@@ -109,7 +116,7 @@ namespace Signals.Game.Controllers
             }
 
             CurrentAspectIndex = OffValue;
-            UpdateHoverDisplay();
+            UpdateDisplays();
         }
 
         /// <summary>
@@ -146,7 +153,7 @@ namespace Signals.Game.Controllers
             SignalsMod.LogVerbose($"Setting signal '{Name}' to state '{AllAspects[newAspect].Definition.Id}'");
             CurrentAspectIndex = newAspect;
             AllAspects[newAspect].Apply();
-            UpdateHoverDisplay();
+            UpdateDisplays();
             return true;
         }
 
@@ -163,15 +170,22 @@ namespace Signals.Game.Controllers
             }
         }
 
+        public void UpdateDisplays()
+        {
+            foreach (var item in AllDisplays)
+            {
+                item.UpdateDisplay();
+            }
+
+            UpdateHoverDisplay();
+        }
+
         /// <summary>
         /// Update the signal automatically.
         /// </summary>
         /// <returns>
         /// The next signal found, <see langword="null"/> if there's no next signal.
         /// </returns>
-        public virtual BasicSignalController? UpdateAspect()
-        {
-            return null;
-        }
+        public virtual void UpdateAspect() { }
     }
 }

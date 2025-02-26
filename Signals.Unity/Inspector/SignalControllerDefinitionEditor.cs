@@ -50,7 +50,7 @@ namespace Signals.Unity.Inspector
                         EditorGUILayout.PropertyField(prop);
                         if (GUILayout.Button("Get Displays From Children"))
                         {
-                            def.Displays = def.GetComponentsInChildren<InfoDisplay>().ToArray();
+                            def.Displays = def.GetComponentsInChildren<InfoDisplayDefinition>().ToArray();
                             AssetHelper.SaveAsset(target);
                         }
                         break;

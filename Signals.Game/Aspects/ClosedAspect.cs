@@ -7,9 +7,9 @@ namespace Signals.Game.Aspects
     {
         private ClosedAspectDefinition _fullDef;
 
-        public ClosedAspect(AspectBaseDefinition def, BasicSignalController controller) : base(def, controller)
+        public ClosedAspect(AspectBaseDefinition definition, BasicSignalController controller) : base(definition, controller)
         {
-            _fullDef = (ClosedAspectDefinition)def;
+            _fullDef = (ClosedAspectDefinition)definition;
         }
 
         public override bool MeetsConditions(WalkInfo info)

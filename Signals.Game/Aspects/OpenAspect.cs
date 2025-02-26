@@ -5,7 +5,7 @@ namespace Signals.Game.Aspects
 {
     internal class OpenAspect : AspectBase
     {
-        public OpenAspect(AspectBaseDefinition def, BasicSignalController controller) : base(def, controller) { }
+        public OpenAspect(AspectBaseDefinition definition, BasicSignalController controller) : base(definition, controller) { }
 
         public override bool MeetsConditions(WalkInfo _)
         {

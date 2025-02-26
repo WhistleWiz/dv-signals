@@ -69,28 +69,13 @@ namespace Signals.Game
             // No HUD displays for now.
             //foreach (var item in controller.Definition.Displays)
             //{
-            //    if (item == null || item.Mode == InfoDisplay.DisplayMode.WorldOnly) continue;
+            //    if (item == null || item.Mode == InfoDisplayDefinition.DisplayMode.WorldOnly || string.IsNullOrEmpty(item.DisplayText)) continue;
 
-            //    switch (item)
+            //    signTypes.Add(new SignDisplay.SignDisplayInstance()
             //    {
-            //        case SignalNameDisplay _:
-            //            signTypes.Add(new SignDisplay.SignDisplayInstance()
-            //            {
-            //                prefab = GetPrefabFromSprite(item.HUDBackground),
-            //                text = controller.Name
-            //            });
-            //            break;
-            //        case JunctionBranchDisplay junction:
-            //            if (!(controller is JunctionSignalController jController) || (junction.TowardsOnly && !jController.TowardsBranches)) break;
-            //            signTypes.Add(new SignDisplay.SignDisplayInstance()
-            //            {
-            //                prefab = GetPrefabFromSprite(item.HUDBackground),
-            //                text = $"{jController.Junction.selectedBranch + (junction.OffsetByOne ? 1 : 0)}",
-            //            });
-            //            break;
-            //        default:
-            //            break;
-            //    }
+            //        prefab = GetPrefabFromSprite(item.HUDBackground),
+            //        text = item.DisplayText
+            //    });
             //}
 
             // Refresh if the current hovered thing is this.

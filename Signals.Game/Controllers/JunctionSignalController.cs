@@ -30,6 +30,10 @@ namespace Signals.Game.Controllers
         /// Whether the signal refers to the junction's branches or the inbound track.
         /// </summary>
         public TrackDirection Direction { get; protected set; }
+        /// <summary>
+        /// The <see cref="WalkInfo"/> resulting from the last time this signal was updated.
+        /// </summary>
+        public WalkInfo? LastWalkInfo { get; protected set; }
 
         public override string Name => string.IsNullOrEmpty(NameOverride) ? $"{Junction.junctionData.junctionIdLong}-{(Direction.IsOut() ? 'T' : 'F')}" : NameOverride;
 
@@ -106,24 +110,24 @@ namespace Signals.Game.Controllers
         /// <summary>
         /// Updates the current aspect based on the conditions of <see cref="AllAspects"/>.
         /// </summary>
-        public override BasicSignalController? UpdateAspect()
+        public override void UpdateAspect()
         {
             // Precompute this information so each state doesn't have to call the same functions
             // over and over again.
             var info = TrackWalker.WalkUntilNextSignal(this);
+            LastWalkInfo = info;
 
             for (int i = 0; i < AllAspects.Length; i++)
             {
                 if (AllAspects[i].MeetsConditions(info))
                 {
                     ChangeAspect(i);
-                    return info.NextMainlineSignal;
+                    return;
                 }
             }
 
             // Turn off if no conditions are met.
             TurnOff();
-            return info.NextMainlineSignal;
         }
 
         /// <summary>

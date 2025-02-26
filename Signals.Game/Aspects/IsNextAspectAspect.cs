@@ -7,9 +7,9 @@ namespace Signals.Game.Aspects
     {
         private IsNextAspectAspectDefinition _fullDef;
 
-        public IsNextAspectAspect(AspectBaseDefinition def, BasicSignalController controller) : base(def, controller)
+        public IsNextAspectAspect(AspectBaseDefinition definition, BasicSignalController controller) : base(definition, controller)
         {
-            _fullDef = (IsNextAspectAspectDefinition)def;
+            _fullDef = (IsNextAspectAspectDefinition)definition;
         }
 
         public override bool MeetsConditions(WalkInfo info)
