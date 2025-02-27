@@ -13,6 +13,7 @@ namespace Signals.Common.Aspects
         [Space]
         public SignalLightDefinition[] OnLights = new SignalLightDefinition[0];
         public SignalLightDefinition[] BlinkingLights = new SignalLightDefinition[0];
+        public SignalLightSequenceDefinition[] LightSequences = new SignalLightSequenceDefinition[0];
 
         [Space]
         public string? AnimationName;

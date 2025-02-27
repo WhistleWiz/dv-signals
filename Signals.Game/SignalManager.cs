@@ -1,8 +1,8 @@
 ﻿using DV.Localization;
-using DV.Logic.Job;
 using DV.Utils;
 using Signals.Common;
 using Signals.Game.Controllers;
+using Signals.Game.Curves;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -49,6 +49,8 @@ namespace Signals.Game
 
         private Dictionary<Junction, JunctionSignalPair> _junctionMap =
             new Dictionary<Junction, JunctionSignalPair>();
+        private Dictionary<BasicSignalController, DistantSignalController> _distantSignals =
+            new Dictionary<BasicSignalController, DistantSignalController>();
 
         public new static string AllowAutoCreate()
         {
@@ -197,8 +199,38 @@ namespace Signals.Game
 
             sw.Stop();
             SignalsMod.Log($"Merged {mergeCount} signal(s) ({sw.Elapsed.TotalSeconds:F4}s)");
+            sw.Restart();
+
+            int distantCount = CreateDistantSignals(pack);
+
+            sw.Stop();
+            SignalsMod.Log($"Finished creating {distantCount} distant signal(s) ({sw.Elapsed.TotalSeconds:F4}s)");
 
             TrackChecker.StartBuildingMap();
+        }
+
+        private int CreateDistantSignals(SignalPack pack)
+        {
+            if (pack.DistantSignal == null) return 0;
+
+            int count = 0;
+
+            foreach (var junction in _junctionMap)
+            {
+                foreach (var signal in junction.Value.AllSignals)
+                {
+                    if (signal.Type != SignalType.Mainline) continue;
+
+                    var distant = CreateDistantSignal(signal, pack.DistantSignal, pack.DistantSignalDistance);
+
+                    if (distant == null) continue;
+
+                    _distantSignals.Add(signal, distant);
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         // Creation testing.
@@ -233,7 +265,7 @@ namespace Signals.Game
                     SignalsMod.LogVerbose($"Testing branch '{outName}' for signals...");
 
                     // If this yard track goes to a non yard track...
-                    if (!outName.StartsWith(YardNameStart) || PassengerTest(branch.track.outBranch.track))
+                    if (!outName.StartsWith(YardNameStart))
                     {
                         return SignalCreationMode.IntoYard;
                     }
@@ -258,7 +290,7 @@ namespace Signals.Game
                 SignalsMod.LogVerbose($"Testing branch '{outName}' for signals...");
 
                 // If this non yard track goes to a yard track...
-                if (outName.StartsWith(YardNameStart) || PassengerTest(branch.track.outBranch.track))
+                if (outName.StartsWith(YardNameStart))
                 {
                     return SignalCreationMode.IntoYard;
                 }
@@ -282,11 +314,6 @@ namespace Signals.Game
                 track.GetInBranch();
 
             return branch == null;
-        }
-
-        private static bool PassengerTest(RailTrack track)
-        {
-            return SignalsMod.Settings.CreateSignalsOnPax && track.logicTrack.ID.TrackPartOnly.EndsWith(TrackID.LOADING_PASSENGER_TYPE);
         }
 
         // Main creation methods.
@@ -319,6 +346,30 @@ namespace Signals.Game
             }
 
             return signals;
+        }
+
+        private static DistantSignalController? CreateDistantSignal(JunctionSignalController junctionSignal, SignalControllerDefinition def, float distance)
+        {
+            if (!junctionSignal.Direction.IsOut()) return null;
+
+            var track = junctionSignal.Junction.inBranch.track;
+
+            if (track.logicTrack.length < distance * 2) return null;
+
+            SignalsMod.LogVerbose($"Making distant signal for signal '{junctionSignal.Name}'");
+
+            bool dir = track.inJunction == junctionSignal.Junction;
+
+            var (point, forward) = dir ?
+                BezierHelper.GetAproxPointAtLength(track.curve, distance) :
+                BezierHelper.GetAproxPointAtLengthReverse(track.curve, distance);
+
+            var signal = Instantiate(def, track.curve.transform, false);
+
+            signal.transform.position = point;
+            signal.transform.localRotation = Quaternion.LookRotation(dir ? forward : -forward);
+
+            return new DistantSignalController(junctionSignal, signal);
         }
 
         // Internal creation methods.

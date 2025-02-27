@@ -16,6 +16,7 @@ namespace Signals.Game.Aspects
 
         private SignalLight[] _on = null!;
         private SignalLight[] _blink = null!;
+        private SignalLightSequence[] _sequences = null!;
         private int? _animationId;
 
         public string Id => Definition.Id;
@@ -28,6 +29,7 @@ namespace Signals.Game.Aspects
 
             _on = definition.OnLights.Select(x => x.GetController()).ToArray();
             _blink = definition.BlinkingLights.Select(x => x.GetController()).ToArray();
+            _sequences = definition.LightSequences.Select(x => x.GetController()).ToArray();
 
             if (!string.IsNullOrEmpty(definition.AnimationName))
             {
@@ -58,6 +60,11 @@ namespace Signals.Game.Aspects
                 light.TurnOn(true);
             }
 
+            foreach (SignalLightSequence sequence in _sequences)
+            {
+                sequence.Activate();
+            }
+
             PlayAnimation();
             PlaySound();
         }
@@ -80,6 +87,11 @@ namespace Signals.Game.Aspects
             foreach (SignalLight light in _blink)
             {
                 light.TurnOff();
+            }
+
+            foreach (SignalLightSequence sequence in _sequences)
+            {
+                sequence.Deactivate();
             }
         }
 

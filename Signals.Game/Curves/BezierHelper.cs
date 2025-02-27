@@ -5,6 +5,8 @@ namespace Signals.Game.Curves
 {
     public static class BezierHelper
     {
+        private const float AproxStep = 0.02f;
+
         private static Dictionary<BezierCurve, Bounds> s_boundCache = new Dictionary<BezierCurve, Bounds>();
         private static Vector3 s_misalignedFix = Vector3.up * 0.5f;
 
@@ -129,6 +131,50 @@ namespace Signals.Game.Curves
             results[1].P0 = results[0].P3;
 
             return results;
+        }
+
+        public static (Vector3 Point, Vector3 Direction) GetAproxPointAtLength(BezierCurve curve, float length)
+        {
+            float total = 0;
+            Vector3 prev = curve.GetPointAt(0);
+            Vector3 next;
+
+            for (float f = 0; f < 1; f += AproxStep)
+            {
+                next = curve.GetPointAt(f);
+
+                if (total >= length)
+                {
+                    return (curve.GetPointAt(f), curve.GetTangentAt(f));
+                }
+
+                total += Vector3.Magnitude(next - prev);
+                prev = next;
+            }
+
+            return (curve.GetPointAt(1), curve.GetTangentAt(1));
+        }
+
+        public static (Vector3 Point, Vector3 Direction) GetAproxPointAtLengthReverse(BezierCurve curve, float length)
+        {
+            float total = 0;
+            Vector3 prev = curve.GetPointAt(1);
+            Vector3 next;
+
+            for (float f = 1; f > 0; f -= AproxStep)
+            {
+                next = curve.GetPointAt(f);
+
+                if (total >= length)
+                {
+                    return (curve.GetPointAt(f), curve.GetTangentAt(f));
+                }
+
+                total += Vector3.Magnitude(next - prev);
+                prev = next;
+            }
+
+            return (curve.GetPointAt(0), curve.GetTangentAt(0));
         }
     }
 }

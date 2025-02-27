@@ -14,6 +14,8 @@ namespace Signals.Game
             {
                 if (s_trackIdProperty == null)
                 {
+                    // Why is it private?
+                    // No really, why?
                     s_trackIdProperty = typeof(TrackID).GetProperty("TrimmedOrderNumber", PrivateFlags);
                 }
 
