@@ -1,4 +1,5 @@
 ﻿using DV.Localization;
+using DV.Signs;
 using DV.Utils;
 using Signals.Common;
 using Signals.Game.Controllers;
@@ -49,8 +50,8 @@ namespace Signals.Game
 
         private Dictionary<Junction, JunctionSignalPair> _junctionMap =
             new Dictionary<Junction, JunctionSignalPair>();
-        private Dictionary<BasicSignalController, DistantSignalController> _distantSignals =
-            new Dictionary<BasicSignalController, DistantSignalController>();
+        private List<DistantSignalController> _distantSignals =
+            new List<DistantSignalController>();
 
         public new static string AllowAutoCreate()
         {
@@ -61,6 +62,7 @@ namespace Signals.Game
         {
             base.OnDestroy();
             _junctionMap.Clear();
+            _distantSignals.Clear();
         }
 
         #region Mod Loading
@@ -191,7 +193,7 @@ namespace Signals.Game
             }
 
             sw.Stop();
-            SignalsMod.Log($"Finished creating {created} signal(s) ({sw.Elapsed.TotalSeconds:F4}s)");
+            SignalsMod.Log($"Finished creating signals for {created} junction(s) ({sw.Elapsed.TotalSeconds:F4}s)");
             sw.Restart();
 
             // Wish this could be done within the same loop but alas.
@@ -201,10 +203,10 @@ namespace Signals.Game
             SignalsMod.Log($"Merged {mergeCount} signal(s) ({sw.Elapsed.TotalSeconds:F4}s)");
             sw.Restart();
 
-            int distantCount = CreateDistantSignals(pack);
+            created = CreateDistantSignals(pack);
 
             sw.Stop();
-            SignalsMod.Log($"Finished creating {distantCount} distant signal(s) ({sw.Elapsed.TotalSeconds:F4}s)");
+            SignalsMod.Log($"Finished creating {created} distant signal(s) ({sw.Elapsed.TotalSeconds:F4}s)");
 
             TrackChecker.StartBuildingMap();
         }
@@ -217,16 +219,37 @@ namespace Signals.Game
 
             foreach (var junction in _junctionMap)
             {
-                foreach (var signal in junction.Value.AllSignals)
+                DistantSignalController? distant;
+
+                // Create a distant signal for the in branch.
+                var signal = junction.Value.OutBranchesSignal;
+
+                if (signal != null && (signal.Type == SignalType.Mainline || signal.Type == SignalType.IntoYard))
                 {
-                    if (signal.Type != SignalType.Mainline) continue;
+                    distant = CreateDistantSignalIn(signal, pack.DistantSignal, pack.DistantSignalDistance, pack.DistantSignalMinimumTrackLength);
 
-                    var distant = CreateDistantSignal(signal, pack.DistantSignal, pack.DistantSignalDistance);
+                    if (distant != null)
+                    {
+                        _distantSignals.Add(distant);
+                        count++;
+                    }
+                }
 
-                    if (distant == null) continue;
+                // Create a distant signal for each out branch.
+                signal = junction.Value.InBranchSignal;
 
-                    _distantSignals.Add(signal, distant);
-                    count++;
+                if (signal != null && (signal.Type == SignalType.Mainline || signal.Type == SignalType.IntoYard))
+                {
+                    for (int i = 0; i < junction.Key.outBranches.Count; i++)
+                    {
+                        distant = CreateDistantSignalOut(signal, pack.DistantSignal, i, pack.DistantSignalDistance, pack.DistantSignalMinimumTrackLength);
+
+                        if (distant != null)
+                        {
+                            _distantSignals.Add(distant);
+                            count++;
+                        }
+                    }
                 }
             }
 
@@ -348,17 +371,40 @@ namespace Signals.Game
             return signals;
         }
 
-        private static DistantSignalController? CreateDistantSignal(JunctionSignalController junctionSignal, SignalControllerDefinition def, float distance)
+        private static DistantSignalController? CreateDistantSignalIn(JunctionSignalController junctionSignal, SignalControllerDefinition def,
+            float distance, float minLength)
         {
-            if (!junctionSignal.Direction.IsOut()) return null;
-
             var track = junctionSignal.Junction.inBranch.track;
 
-            if (track.logicTrack.length < distance * 2) return null;
+            if (track.logicTrack.length < minLength) return null;
 
-            SignalsMod.LogVerbose($"Making distant signal for signal '{junctionSignal.Name}'");
+            SignalsMod.LogVerbose($"Making distant signal [in] for signal '{junctionSignal.Name}'");
 
             bool dir = track.inJunction == junctionSignal.Junction;
+
+            var (point, forward) = dir ?
+                BezierHelper.GetAproxPointAtLength(track.curve, distance) :
+                BezierHelper.GetAproxPointAtLengthReverse(track.curve, distance);
+
+            var signal = Instantiate(def, track.curve.transform, false);
+
+            signal.transform.position = point;
+            signal.transform.localRotation = Quaternion.LookRotation(dir ? forward : -forward);
+
+            return new DistantSignalController(junctionSignal, signal);
+        }
+
+        private static DistantSignalController? CreateDistantSignalOut(JunctionSignalController junctionSignal, SignalControllerDefinition def,
+            int branch, float distance, float minLength)
+        {
+            var branchTrack = junctionSignal.Junction.outBranches[branch].track;
+            var track = branchTrack.outBranch.track;
+
+            if (track.logicTrack.length < minLength) return null;
+
+            SignalsMod.LogVerbose($"Making distant signal [b:{branch}] for signal '{junctionSignal.Name}'");
+
+            bool dir = track.inBranch.track == branchTrack;
 
             var (point, forward) = dir ?
                 BezierHelper.GetAproxPointAtLength(track.curve, distance) :

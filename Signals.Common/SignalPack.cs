@@ -26,6 +26,8 @@ namespace Signals.Common
         public SignalControllerDefinition? DistantSignal;
         [Tooltip("The distance a Distant Signal must be from its corresponding signal"), Min(100.0f)]
         public float DistantSignalDistance = 300.0f;
+        [Tooltip("The minimum length of a track to be eligible for a distant signal\nShould be at least double the signal distance"), Min(200.0f)]
+        public float DistantSignalMinimumTrackLength = 600.0f;
         [Tooltip("Any additional signals included in this pack")]
         public SignalControllerDefinition[] OtherSignals = Array.Empty<SignalControllerDefinition>();
 

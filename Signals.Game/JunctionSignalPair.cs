@@ -17,6 +17,14 @@ namespace Signals.Game
             }
         }
 
+        public IEnumerable<JunctionSignalController> AllInSignals
+        {
+            get
+            {
+                if (InBranchSignal != null) yield return InBranchSignal;
+            }
+        }
+
         public JunctionSignalPair(JunctionSignalController? outSignal, JunctionSignalController? inSignal)
         {
             OutBranchesSignal = outSignal;
@@ -26,11 +34,6 @@ namespace Signals.Game
         public JunctionSignalController? GetSignal(TrackDirection direction)
         {
             return direction.IsOut() ? OutBranchesSignal : InBranchSignal;
-        }
-
-        public JunctionSignalPair Flip()
-        {
-            return new JunctionSignalPair(InBranchSignal, OutBranchesSignal);
         }
     }
 }

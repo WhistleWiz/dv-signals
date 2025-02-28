@@ -10,10 +10,16 @@ namespace Signals.Game.Controllers
 {
     public class BasicSignalController
     {
+        // Used to add artifical delays so that signals don't all update on the same frame.
+        private static System.Random s_random = new System.Random();
+
+        protected const float UpdateTime = 1.0f;
+        protected const float OptimiseDistanceSqr = 2500 * 2500;
         protected const int OffValue = -1;
 
         private int? _baseAnimation;
         private SignalHover _hover;
+        private Coroutine? _opCoro;
 
         protected Coroutine? AnimatorDisabler;
 
@@ -62,6 +68,8 @@ namespace Signals.Game.Controllers
             _hover = def.GetComponent<SignalHover>();
             _hover.Initialise(def.OffStateHUDSprite);
 
+            _opCoro = Definition.StartCoroutine(OptimiseRoutine());
+
             TrackChecker.OnMapBuilt += FixPositionDueToCrossing;
         }
 
@@ -83,6 +91,31 @@ namespace Signals.Game.Controllers
             }
         }
 
+        // Used to disable child objects of the signal to increase performance.
+        // The distance set is 2.5km, which is far enough that signals can realistically be seen,
+        // but still not too far that it is useless.
+        private System.Collections.IEnumerator OptimiseRoutine()
+        {
+            // Wait for the player to load.
+            while (PlayerManager.ActiveCamera == null) yield return null;
+
+            yield return GetStartDelay();
+
+            while (Exists)
+            {
+                yield return new WaitForSeconds(UpdateTime);
+
+                if (PlayerManager.ActiveCamera == null) continue;
+
+                bool active = GetCameraDistanceSqr() <= OptimiseDistanceSqr;
+
+                foreach (Transform t in Definition.transform)
+                {
+                    t.gameObject.SetActive(active);
+                }
+            }
+        }
+
         internal void DisableAnimator(float time)
         {
             if (Definition.Animator == null) return;
@@ -94,6 +127,14 @@ namespace Signals.Game.Controllers
 
             // Disable the animator after some time. Since the animations are instant
             AnimatorDisabler = Definition.StartCoroutine(Helpers.DisableBehaviour(Definition.Animator, time));
+        }
+
+        /// <summary>
+        /// Calculates the squared distance from the signal to the camera.
+        /// </summary>
+        protected float GetCameraDistanceSqr()
+        {
+            return Helpers.DistanceSqr(Definition.transform.position, PlayerManager.ActiveCamera.transform.position);
         }
 
         /// <summary>
@@ -206,6 +247,11 @@ namespace Signals.Game.Controllers
 
             // Turn off if no conditions are met.
             UpdateDisplays(TurnOff());
+        }
+
+        protected static WaitForSeconds GetStartDelay()
+        {
+            return new WaitForSeconds((float)(s_random.NextDouble() + 0.1));
         }
     }
 }

@@ -13,15 +13,10 @@ namespace Signals.Game.Controllers
     public class JunctionSignalController : BasicSignalController
     {
         // Signals at over this distance from the camera update at a slower rate.
-        // Can't completely stop updates or else signals reading states that are
-        // far may be stuck at the wrong state.
-        private const float OptimiseDistanceSqr = 1500 * 1500;
-        private const float SkipDistanceSqr = 5000 * 5000;
-        private const float UpdateTime = 1.0f;
+        private const float SlowUpdateDistanceSqr = 1500 * 1500;
+        private const float SkipUpdateDistanceSqr = 5000 * 5000;
+        // Maximum number of times the update can be delayed.
         private const int MaxUpdateDelay = 5;
-
-        // Used to add artifical delays so that signals don't all update on the same frame.
-        private static System.Random s_random = new System.Random();
 
         private int _updateDelay = 0;
 
@@ -55,13 +50,10 @@ namespace Signals.Game.Controllers
             TurnOff();
 
             // Wait for the player to load.
-            while (!StartingItemsController.Instance.itemsLoaded)
-            {
-                yield return null;
-            }
+            while (PlayerManager.ActiveCamera == null) yield return null;
 
             // Prevent cluttering log by setting states too early. Also add random delay to ungroup start times.
-            yield return new WaitForSeconds((float)(s_random.NextDouble() + 0.1));
+            yield return GetStartDelay();
 
             // Initial update.
             UpdateAspect();
@@ -78,16 +70,13 @@ namespace Signals.Game.Controllers
                 }
 
                 // No camera, no update.
-                if (PlayerManager.ActiveCamera == null)
-                {
-                    continue;
-                }
+                if (PlayerManager.ActiveCamera == null) continue;
 
-                var dist = GetCameraDistance();
+                var dist = GetCameraDistanceSqr();
 
                 // If the camera is too far from the signal, skip updating.
                 // If the camera is far, but the signal is relatively close, use a slowed update rate.
-                if (dist > SkipDistanceSqr || (dist > OptimiseDistanceSqr && _updateDelay < MaxUpdateDelay))
+                if (dist > SkipUpdateDistanceSqr || (dist > SlowUpdateDistanceSqr && _updateDelay < MaxUpdateDelay))
                 {
                     _updateDelay++;
                     continue;
@@ -96,11 +85,6 @@ namespace Signals.Game.Controllers
                 UpdateAspect();
                 _updateDelay = 0;
             }
-        }
-
-        private float GetCameraDistance()
-        {
-            return Helpers.DistanceSqr(Definition.transform.position, PlayerManager.ActiveCamera.transform.position);
         }
 
         /// <summary>
