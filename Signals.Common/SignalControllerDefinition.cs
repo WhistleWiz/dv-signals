@@ -10,18 +10,23 @@ namespace Signals.Common
 
         [Tooltip("Each possible state for the signal\n" +
             "Order is important, as conditions are checked from first to last\n" +
-            "Open state is used if none of these meet their condition")]
+            "The signal is turned off if none of these meet their conditions")]
         public AspectBaseDefinition[] Aspects = new AspectBaseDefinition[0];
+        public Sprite? OffStateHUDSprite;
 
         [Header("Optional")]
-        public Sprite? OffStateHUDSprite;
         [Tooltip("Used for mechanical signals")]
         public Animator? Animator;
         [Tooltip("Extra signal displays")]
         public InfoDisplayDefinition[] Displays = new InfoDisplayDefinition[0];
 
+        [SerializeField]
+        private bool _drawGuides = true;
+
         private void OnDrawGizmos()
         {
+            if (!_drawGuides) return;
+
             Vector3 offset = Vector3.right * HalfGauge;
 
             Gizmos.color = new Color(0.9f, 0.9f, 0.9f, 0.2f);

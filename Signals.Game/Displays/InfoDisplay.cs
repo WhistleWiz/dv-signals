@@ -23,8 +23,9 @@ namespace Signals.Game.Displays
         /// <summary>
         /// Checks and updates the displays.
         /// </summary>
+        /// <param name="aspectChanged">If the aspect of the signal changed.</param>
         /// <returns></returns>
-        public bool CheckAndUpdate()
+        public bool CheckAndUpdate(bool aspectChanged)
         {
             if (Definition.DisableWhenSignalIsOff && !Controller.IsOn)
             {
@@ -41,6 +42,11 @@ namespace Signals.Game.Displays
             {
                 Definition.gameObject.SetActive(true);
                 _off = false;
+            }
+
+            if (!aspectChanged && !Definition.AlwaysUpdate)
+            {
+                return false;
             }
 
             UpdateDisplay();

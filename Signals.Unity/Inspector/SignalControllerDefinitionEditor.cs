@@ -26,11 +26,11 @@ namespace Signals.Unity.Inspector
             };
 
             _displayList = EditorHelper.CreateReorderableList(serializedObject, serializedObject.FindProperty(nameof(SignalControllerDefinition.Displays)),
-                true, true, true, "Aspects");
+                true, true, true, "Displays");
 
             _displayList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
             {
-                var element = _aspectList.serializedProperty.GetArrayElementAtIndex(index);
+                var element = _displayList.serializedProperty.GetArrayElementAtIndex(index);
                 EditorGUI.ObjectField(rect, element, GUIContent.none);
             };
         }
@@ -46,9 +46,9 @@ namespace Signals.Unity.Inspector
                 {
                     case nameof(SignalControllerDefinition.Aspects):
                         EditorGUILayout.Space();
-                        _aspectList.DoLayoutList();
-
                         EditorGUILayout.HelpBox("Order is important, as conditions are checked from top to bottom", MessageType.Info);
+
+                        _aspectList.DoLayoutList();
 
                         if (GUILayout.Button("Get Aspects From Children"))
                         {

@@ -50,7 +50,7 @@ namespace Signals.Game.Controllers
 
         private void UpdateDisplaysFromHome(InfoDisplay[] obj)
         {
-            UpdateDisplays();
+            UpdateDisplays(true);
         }
     }
 }

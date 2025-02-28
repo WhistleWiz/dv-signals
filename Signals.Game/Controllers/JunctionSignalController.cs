@@ -47,7 +47,7 @@ namespace Signals.Game.Controllers
             // Force update the display because of junction branch updates even if
             // the state didn't change.
             UpdateAspect();
-            UpdateDisplays();
+            UpdateDisplays(true);
         }
 
         private System.Collections.IEnumerator UpdateRoutine()
@@ -71,7 +71,7 @@ namespace Signals.Game.Controllers
                 yield return new WaitForSeconds(UpdateTime);
 
                 // Instanced signal is gone, stop the routine.
-                if (Definition == null)
+                if (!Exists)
                 {
                     Junction.Switched -= JunctionSwitched;
                     yield break;

@@ -27,5 +27,7 @@ namespace Signals.Common.Displays
         public JunctionDisplayMode BranchDisplay = JunctionDisplayMode.Symbols;
         [Tooltip("If true, only displays if the signal is facing the branches")]
         public bool TowardsOnly = true;
+
+        public override bool AlwaysUpdate => true;
     }
 }

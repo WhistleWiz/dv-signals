@@ -7,7 +7,7 @@ namespace Signals.Common.Aspects
         [Tooltip("The ID of this aspect, so it can be detected from other aspects")]
         public string Id = string.Empty;
         [Tooltip("This is the sprite displayed on the HUD\n" +
-            "The maximum recommended size is 256x256px")]
+            "The recommended size is 256x256px")]
         public Sprite? HUDSprite;
 
         [Space]

@@ -15,5 +15,7 @@ namespace Signals.Common.Displays
         public TrackIdDisplayMode TrackIDMode = TrackIdDisplayMode.NumberOnly;
         [Tooltip("Displayed when the track ID is not available")]
         public string NoNumberValue = "-";
+
+        public override bool AlwaysUpdate => true;
     }
 }

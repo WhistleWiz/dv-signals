@@ -24,6 +24,8 @@ namespace Signals.Common.Displays
         [Tooltip("Optional world text object to assign the value of this display")]
         public TMP_Text? Text;
 
+        public virtual bool AlwaysUpdate => false;
+
         public string DisplayText
         {
             get => _displayText;

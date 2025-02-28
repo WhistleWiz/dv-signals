@@ -122,7 +122,6 @@ namespace Signals.Game.Controllers
             }
 
             CurrentAspectIndex = OffValue;
-            UpdateDisplays();
 
             OnAspectChanged?.Invoke(null);
             return true;
@@ -153,8 +152,7 @@ namespace Signals.Game.Controllers
             if (newAspect < 0)
             {
                 SignalsMod.LogVerbose($"Turning off signal '{Name}'");
-                TurnOff();
-                return true;
+                return TurnOff();
             }
 
             CurrentAspect?.Unapply();
@@ -162,7 +160,6 @@ namespace Signals.Game.Controllers
             SignalsMod.LogVerbose($"Setting signal '{Name}' to state '{AllAspects[newAspect].Definition.Id}'");
             CurrentAspectIndex = newAspect;
             AllAspects[newAspect].Apply();
-            UpdateDisplays();
 
             OnAspectChanged?.Invoke(AllAspects[newAspect]);
             return true;
@@ -181,11 +178,11 @@ namespace Signals.Game.Controllers
             }
         }
 
-        public void UpdateDisplays()
+        public void UpdateDisplays(bool aspectChanged)
         {
             foreach (var item in AllDisplays)
             {
-                item.CheckAndUpdate();
+                item.CheckAndUpdate(aspectChanged);
             }
 
             UpdateHoverDisplay();
@@ -202,13 +199,13 @@ namespace Signals.Game.Controllers
             {
                 if (AllAspects[i].MeetsConditions())
                 {
-                    ChangeAspect(i);
+                    UpdateDisplays(ChangeAspect(i));
                     return;
                 }
             }
 
             // Turn off if no conditions are met.
-            TurnOff();
+            UpdateDisplays(TurnOff());
         }
     }
 }
