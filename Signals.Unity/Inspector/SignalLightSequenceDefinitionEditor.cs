@@ -1,4 +1,5 @@
 ﻿using Signals.Common;
+using Signals.Unity.Utilities;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,6 +11,7 @@ namespace Signals.Unity.Inspector
         private SerializedProperty _lights = null!;
         private SerializedProperty _states = null!;
         private SerializedProperty _time = null!;
+        private SerializedProperty _step = null!;
 
         private GUIContent _stateContent = new GUIContent("State");
 
@@ -18,6 +20,7 @@ namespace Signals.Unity.Inspector
             _lights = serializedObject.FindProperty(nameof(SignalLightSequenceDefinition.Lights));
             _states = serializedObject.FindProperty(nameof(SignalLightSequenceDefinition.States));
             _time = serializedObject.FindProperty(nameof(SignalLightSequenceDefinition.Timing));
+            _step = serializedObject.FindProperty(nameof(SignalLightSequenceDefinition.Step));
         }
 
         public override void OnInspectorGUI()
@@ -29,6 +32,7 @@ namespace Signals.Unity.Inspector
                 EditorGUI.indentLevel++;
 
                 int length = EditorGUILayout.DelayedIntField("Size", _lights.arraySize);
+                int step = _step.intValue;
 
                 _lights.arraySize = length;
                 _states.arraySize = length;
@@ -43,13 +47,26 @@ namespace Signals.Unity.Inspector
                     EditorGUIUtility.labelWidth = 0;
 
                     EditorGUILayout.EndHorizontal();
+
+                    // Separate the lights by step groups.
+                    if (step != 1 && i != length - 1 && (i + 1) % step == 0)
+                    {
+                        EditorGUILayout.Space(4);
+                    }
                 }
 
+                EditorGUILayout.Space();
                 EditorGUI.indentLevel--;
             }
 
             EditorGUILayout.PropertyField(_time);
+            EditorGUILayout.PropertyField(_step);
             serializedObject.ApplyModifiedProperties();
+
+            if (GUILayout.Button("Preview"))
+            {
+                SequencePreview.ShowWindow((SignalLightSequenceDefinition)target);
+            }
         }
     }
 }

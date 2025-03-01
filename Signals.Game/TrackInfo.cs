@@ -13,8 +13,11 @@ namespace Signals.Game
         private RailTrack[] _tracks;
         private float? _distanceWalked;
         private float? _distanceWalkedWithoutStartingTrack;
-        private string? _nextYardTrackNumber;
-        private string? _nextYardTrackSign;
+        private string? _nextTrackNumber;
+        private string? _nextTrackNumberType;
+        private string? _nextTrackYardNumberType;
+        private string? _nextTrackYardNumber;
+        private string? _nextTrackYard;
 
         public RailTrack[] Tracks => _tracks;
         /// <summary>
@@ -29,6 +32,7 @@ namespace Signals.Game
         /// The next junction.
         /// </summary>
         public Junction? NextJunction { get; private set; }
+
         /// <summary>
         /// The total track length walked, including the starting track.
         /// </summary>
@@ -59,34 +63,65 @@ namespace Signals.Game
                 return _distanceWalkedWithoutStartingTrack!.Value;
             }
         }
+
         /// <summary>
-        /// The next yard track number. Is <see langword="null"/> if there is no yard track until the next signal.
+        /// The next yard track's number. Empty if not available.
         /// </summary>
-        public string NextYardTrackNumber
+        public string NextTrackNumber
         {
             get
             {
-                if (_nextYardTrackNumber == null)
-                {
-                    CalculateTrackNumber();
-                }
+                _nextTrackNumber ??= TrackUtils.NextTrackNumber(_tracks);
 
-                return _nextYardTrackNumber!;
+                return _nextTrackNumber;
             }
         }
         /// <summary>
-        /// The next yard track ID. Is <see langword="null"/> if there is no yard track until the next signal.
+        /// The next yard track's number and type. Empty if not available.
         /// </summary>
-        public string NextYardTrackSign
+        public string NextTrackNumberType
         {
             get
             {
-                if (_nextYardTrackSign == null)
-                {
-                    CalculateNextTrackSign();
-                }
+                _nextTrackNumberType ??= TrackUtils.NextTrackNumberType(_tracks);
 
-                return _nextYardTrackSign!;
+                return _nextTrackNumberType;
+            }
+        }
+        /// <summary>
+        /// The next yard track's yard, number and type. Empty if not available.
+        /// </summary>
+        public string NextTrackYardNumberType
+        {
+            get
+            {
+                _nextTrackYardNumberType ??= TrackUtils.NextTrackYardNumberType(_tracks);
+
+                return _nextTrackYardNumberType;
+            }
+        }
+        /// <summary>
+        /// The next yard track's yard and number. Empty if not available.
+        /// </summary>
+        public string NextTrackYardNumber
+        {
+            get
+            {
+                _nextTrackYardNumber ??= TrackUtils.NextTrackYardNumber(_tracks);
+
+                return _nextTrackYardNumber;
+            }
+        }
+        /// <summary>
+        /// The next yard track's yard. Empty if not available.
+        /// </summary>
+        public string NextTrackYard
+        {
+            get
+            {
+                _nextTrackYard ??= TrackUtils.NextTrackYard(_tracks);
+
+                return _nextTrackYard;
             }
         }
 
@@ -124,40 +159,6 @@ namespace Signals.Game
                 _distanceWalked = 0;
                 _distanceWalkedWithoutStartingTrack = 0;
             }
-        }
-
-        private void CalculateTrackNumber()
-        {
-            foreach (var track in _tracks)
-            {
-                if (track.logicTrack.ID.IsGeneric()) continue;
-
-                var number = ReflectionHelpers.GetTrimmedOrderNumber(track.logicTrack.ID);
-
-                if (!string.IsNullOrEmpty(number))
-                {
-                    _nextYardTrackNumber = number;
-                    return;
-                }
-            }
-
-            _nextYardTrackNumber = string.Empty;
-        }
-
-        private void CalculateNextTrackSign()
-        {
-            foreach (var track in _tracks)
-            {
-                if (track.logicTrack.ID.IsGeneric()) continue;
-
-                if (!string.IsNullOrEmpty(track.logicTrack.ID.SignIDTrackPart))
-                {
-                    _nextYardTrackSign = track.logicTrack.ID.SignIDTrackPart;
-                    return;
-                }
-            }
-
-            _nextYardTrackSign = string.Empty;
         }
 
         public static TrackInfo NextSignalTrackInfo(BasicSignalController controller)

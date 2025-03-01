@@ -30,6 +30,7 @@ namespace Signals.Game
         {
             int offset = 0;
             int length = _lights.Length;
+            int step = Definition.Step;
 
             while (true)
             {
@@ -49,7 +50,7 @@ namespace Signals.Game
                     }
                 }
 
-                offset = (offset + 1) % length;
+                offset = (offset + step) % length;
 
                 yield return new WaitForSeconds(Definition.Timing);
             }

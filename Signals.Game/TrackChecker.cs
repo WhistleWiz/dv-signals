@@ -75,7 +75,6 @@ namespace Signals.Game
             }
         }
 
-        private const float Distance = 0.01f;
         private const float DefaultPrecision = 0.5f;
 
         private static Dictionary<RailTrack, TrackIntersectionPoints> s_intersectionMap = new Dictionary<RailTrack, TrackIntersectionPoints>();
@@ -136,7 +135,7 @@ namespace Signals.Game
                     // Don't intersect with itself.
                     // Don't intersect if the tracks are from the same junction.
                     // Don't intersect if the tracks connect to eachother normally.
-                    if (track == other || AreTracksFromSameJunction(track, other) || AreTracksConnected(track, other)) continue;
+                    if (track == other || TrackUtils.AreTracksFromSameJunction(track, other) || TrackUtils.AreTracksConnected(track, other)) continue;
 
                     // Skip if no intersection was detected.
                     if (!BezierHelper.Intersects(track.curve, other.curve, DefaultPrecision, out var intersection)) continue;
@@ -197,7 +196,7 @@ namespace Signals.Game
                 // Don't intersect with itself.
                 // Don't intersect if the tracks are from the same junction.
                 // Don't intersect if the tracks connect to eachother normally.
-                if (track == other || AreTracksFromSameJunction(track, other) || AreTracksConnected(track, other)) continue;
+                if (track == other || TrackUtils.AreTracksFromSameJunction(track, other) || TrackUtils.AreTracksConnected(track, other)) continue;
 
                 // Skip if no intersection was detected.
                 if (!BezierHelper.Intersects(track.curve, other.curve, precision, out var intersection)) continue;
@@ -218,38 +217,6 @@ namespace Signals.Game
             }
 
             return result;
-        }
-
-        /// <summary>
-        /// Returns <see langword="true"/> if 2 tracks are directly connected, otherwise <see langword="false"/>.
-        /// </summary>
-        public static bool AreTracksConnected(RailTrack r1, RailTrack r2)
-        {
-            var bi = r1.GetAllInBranches();
-            var bo = r1.GetAllOutBranches();
-            return (bi != null && bi.Any(x => x.track == r2)) || (bo != null && bo.Any(x => x.track == r2));
-        }
-
-        /// <summary>
-        /// Returns <see langword="true"/> if 2 tracks are directly connected, otherwise <see langword="false"/>.
-        /// </summary>
-        /// <remarks>
-        /// Checks if the positions of the track ends match, instead of checking for logic connections.
-        /// </remarks>
-        public static bool AreTracksConnectedPosition(RailTrack r1, RailTrack r2)
-        {
-            return Helpers.DistanceSqr(r1.curve[0].position, r2.curve[0].position) < Distance ||
-                Helpers.DistanceSqr(r1.curve[0].position, r2.curve[r2.curve.pointCount - 1].position) < Distance ||
-                Helpers.DistanceSqr(r1.curve[r1.curve.pointCount - 1].position, r2.curve[0].position) < Distance ||
-                Helpers.DistanceSqr(r1.curve[r1.curve.pointCount - 1].position, r2.curve[r2.curve.pointCount - 1].position) < Distance;
-        }
-
-        /// <summary>
-        /// Returns <see langword="true"/> if 2 tracks are both out branches of the same junction, otherwise <see langword="false"/>.
-        /// </summary>
-        public static bool AreTracksFromSameJunction(RailTrack r1, RailTrack r2)
-        {
-            return r1.isJunctionTrack && r2.isJunctionTrack && r1.inJunction == r2.inJunction;
         }
     }
 }

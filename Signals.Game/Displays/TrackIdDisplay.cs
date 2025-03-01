@@ -14,23 +14,22 @@ namespace Signals.Game.Displays
 
         public override void UpdateDisplay()
         {
-            string text = Controller switch
-            {
-                JunctionSignalController junction => GetJunctionText(_fullDef, junction),
-                _ => string.Empty,
-            };
+            string text = GetText(_fullDef, Controller.TrackInfo);
 
-            DisplayText = string.IsNullOrEmpty(text) ?  _fullDef.NoNumberValue : text;
+            DisplayText = string.IsNullOrEmpty(text) ? _fullDef.NoValidResultValue : text;
         }
 
-        private static string GetJunctionText(TrackIdDisplayDefinition def, JunctionSignalController junction)
+        private static string GetText(TrackIdDisplayDefinition def, TrackInfo? info)
         {
-            if (junction.TrackInfo == null) return string.Empty;
+            if (info == null) return string.Empty;
 
             return def.TrackIDMode switch
             {
-                TrackIdDisplayDefinition.TrackIdDisplayMode.NumberOnly => junction.TrackInfo.NextYardTrackNumber,
-                TrackIdDisplayDefinition.TrackIdDisplayMode.NumberAndType => junction.TrackInfo.NextYardTrackSign,
+                TrackIdDisplayDefinition.TrackIdDisplayMode.NumberOnly => info.NextTrackNumber,
+                TrackIdDisplayDefinition.TrackIdDisplayMode.NumberAndType => info.NextTrackNumberType,
+                TrackIdDisplayDefinition.TrackIdDisplayMode.YardAndNumberAndType => info.NextTrackYardNumberType,
+                TrackIdDisplayDefinition.TrackIdDisplayMode.YardAndNumber => info.NextTrackYardNumber,
+                TrackIdDisplayDefinition.TrackIdDisplayMode.YardOnly => info.NextTrackYard,
                 _ => string.Empty,
             };
         }

@@ -5,26 +5,29 @@ namespace Signals.Common.Displays
 {
     public abstract class InfoDisplayDefinition : MonoBehaviour
     {
-        public enum DisplayMode
+        public enum UpdateMode
         {
-            Both,
-            HUDOnly,
-            WorldOnly
+            [Tooltip("Display is only updated once at the start\n" +
+                "It is also updated again if the signal is restarted and 'Disable When Signal Is Off' is true")]
+            AtStart,
+            [Tooltip("Display is updated when the signal aspect changes")]
+            AspectChanged,
+            [Tooltip("Display is updated when the signal is updated")]
+            Always
         }
 
         private string _displayText = string.Empty;
 
-        public DisplayMode Mode;
         [Tooltip("Disables this GO when the signal is turned off")]
         public bool DisableWhenSignalIsOff = false;
+        [Tooltip("How often this display is updated")]
+        public UpdateMode Mode = UpdateMode.AspectChanged;
         [Tooltip("The background of this display when hovered")]
         public Sprite HUDBackground = null!;
         [Tooltip("The colour of the text when hovered")]
         public Color HUDTextColour = Color.black;
         [Tooltip("Optional world text object to assign the value of this display")]
         public TMP_Text? Text;
-
-        public virtual bool AlwaysUpdate => false;
 
         public string DisplayText
         {

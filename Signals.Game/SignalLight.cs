@@ -33,8 +33,8 @@ namespace Signals.Game
             var indicator = def.gameObject.AddComponent<IndicatorEmission>();
             indicator.lag = def.Lag;
             indicator.lightIntensity = def.LightIntensity;
-            indicator.emissionColor = def.Color;
-            indicator.glareColor = def.Color;
+            indicator.emissionColor = def.Colour;
+            indicator.glareColor = def.Colour;
             indicator.renderers = def.Renderers;
 
             if (def.Glare != null)
