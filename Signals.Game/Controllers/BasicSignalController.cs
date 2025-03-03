@@ -31,6 +31,7 @@ namespace Signals.Game.Controllers
         public AspectBase[] AllAspects { get; private set; }
         public SignalLight[] AllLights { get; private set; }
         public InfoDisplay[] AllDisplays { get; private set; }
+        public AspectBase[] AllIndicators { get; private set; }
         public TrackInfo? TrackInfo { get; protected set; }
 
         public virtual string Name => NameOverride;
@@ -57,6 +58,9 @@ namespace Signals.Game.Controllers
 
             // Same as aspects but for displays.
             AllDisplays = def.Displays.Select(x => DisplayCreator.Create(this, x)).Where(x => x != null).ToArray()!;
+
+            // And finally the same for indicators.
+            AllIndicators = def.Indicators.Select(x => AspectCreator.Create(this, x)).Where(x => x != null).ToArray()!;
 
             // If there's an animator, set up the default state
             if (def.Animator != null)
@@ -148,6 +152,11 @@ namespace Signals.Game.Controllers
 
             CurrentAspect?.Unapply();
 
+            foreach (var item in AllIndicators)
+            {
+                item.Unapply();
+            }
+
             foreach (var item in AllLights)
             {
                 item.TurnOff();
@@ -231,22 +240,52 @@ namespace Signals.Game.Controllers
             OnDisplaysUpdated?.Invoke(AllDisplays);
         }
 
+        public void UpdateIndicators()
+        {
+            if (!IsOn) return;
+
+            // Turn off all indicators first. This needs 2 loops to prevent
+            // conflicts where one indicator turns another that was already
+            // on, off.
+            foreach (var item in AllIndicators)
+            {
+                item.Unapply();
+            }
+
+            foreach (var item in AllIndicators)
+            {
+                // Turn on the ones that meet conditions.
+                if (item.MeetsConditions())
+                {
+                    item.Apply();
+                }
+            }
+        }
+
         /// <summary>
         /// Update the signal automatically.
         /// </summary>
         public virtual void UpdateAspect()
         {
+            bool changed;
+
             for (int i = 0; i < AllAspects.Length; i++)
             {
                 if (AllAspects[i].MeetsConditions())
                 {
-                    UpdateDisplays(ChangeAspect(i));
-                    return;
+                    changed = ChangeAspect(i);
+                    goto Finalise;
                 }
             }
 
             // Turn off if no conditions are met.
-            UpdateDisplays(TurnOff());
+            changed = TurnOff();
+
+            Finalise:
+
+            // Update displays and indicators.
+            UpdateDisplays(changed);
+            UpdateIndicators();
         }
 
         protected static WaitForSeconds GetStartDelay()

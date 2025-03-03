@@ -18,7 +18,16 @@ namespace Signals.Game.Aspects
         {
             if (_junctionController == null) return false;
 
-            return _junctionController.Junction.selectedBranch == _fullDef.ActiveOnBranch;
+            return _fullDef.Mode switch
+            {
+                JunctionBranchAspectDefinition.JunctionAspectMode.ActiveOnThrough =>
+                    _junctionController.Junction.IsSetToThrough(),
+                JunctionBranchAspectDefinition.JunctionAspectMode.ActiveOnDiverging =>
+                    !_junctionController.Junction.IsSetToThrough(),
+                JunctionBranchAspectDefinition.JunctionAspectMode.ActiveOnBranch =>
+                    _junctionController.Junction.selectedBranch == _fullDef.ActiveOnBranch,
+                _ => false,
+            };
         }
     }
 }

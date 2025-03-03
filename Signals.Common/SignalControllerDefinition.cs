@@ -19,6 +19,8 @@ namespace Signals.Common
         public Animator? Animator;
         [Tooltip("Extra signal displays")]
         public InfoDisplayDefinition[] Displays = new InfoDisplayDefinition[0];
+        [Tooltip("Extra indicators")]
+        public AspectBaseDefinition[] Indicators = new AspectBaseDefinition[0];
 
         [SerializeField]
         private bool _drawGuides = true;
