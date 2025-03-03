@@ -2,7 +2,7 @@
 {
     public enum CrossingCheckMode
     {
-        None,
+        Ignore,
         WholeTrack,
         IntersectionOnly
     }

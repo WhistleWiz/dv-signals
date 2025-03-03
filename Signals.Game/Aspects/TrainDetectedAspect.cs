@@ -3,13 +3,13 @@ using Signals.Game.Controllers;
 
 namespace Signals.Game.Aspects
 {
-    internal class ClosedAspect : AspectBase
+    internal class TrainDetectedAspect : AspectBase
     {
-        private ClosedAspectDefinition _fullDef;
+        private TrainDetectedAspectDefinition _fullDef;
 
-        public ClosedAspect(AspectBaseDefinition definition, BasicSignalController controller) : base(definition, controller)
+        public TrainDetectedAspect(AspectBaseDefinition definition, BasicSignalController controller) : base(definition, controller)
         {
-            _fullDef = (ClosedAspectDefinition)definition;
+            _fullDef = (TrainDetectedAspectDefinition)definition;
         }
 
         public override bool MeetsConditions()

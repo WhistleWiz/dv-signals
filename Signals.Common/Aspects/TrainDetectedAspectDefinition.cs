@@ -2,7 +2,7 @@
 
 namespace Signals.Common.Aspects
 {
-    public class ClosedAspectDefinition : AspectBaseDefinition
+    public class TrainDetectedAspectDefinition : AspectBaseDefinition
     {
         [Space]
         [Tooltip("How tracks should be checked at diamond crossings\n" +
