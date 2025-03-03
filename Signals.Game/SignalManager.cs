@@ -18,6 +18,7 @@ namespace Signals.Game
             None,
             Mainline,
             IntoYard,
+            IntoYardReverse,
             Shunting
         }
 
@@ -183,6 +184,9 @@ namespace Signals.Game
                     case SignalCreationMode.IntoYard:
                         signals = CreateIntoYardSignals(pack, junction);
                         break;
+                    case SignalCreationMode.IntoYardReverse:
+                        signals = CreateIntoYardReverseSignals(pack, junction);
+                        break;
                     default:
                         continue;
                 }
@@ -196,7 +200,7 @@ namespace Signals.Game
             sw.Restart();
 
             // Wish this could be done within the same loop but alas.
-            int mergeCount = MergeCloseSignals();
+            int mergeCount = MergeCloseSignals(pack);
 
             sw.Stop();
             SignalsMod.Log($"Merged {mergeCount} signal(s) ({sw.Elapsed.TotalSeconds:F4}s)");
@@ -289,7 +293,7 @@ namespace Signals.Game
                     // If this yard track goes to a non yard track...
                     if (!outName.StartsWith(YardNameStart))
                     {
-                        return SignalCreationMode.IntoYard;
+                        return SignalCreationMode.IntoYardReverse;
                     }
                 }
 
@@ -370,6 +374,24 @@ namespace Signals.Game
             return signals;
         }
 
+        private static JunctionSignalPair CreateIntoYardReverseSignals(SignalPack pack, Junction junction)
+        {
+            var signals = CreateJunctionSignals(pack.Signal, pack.IntoYardSignal, junction);
+
+            foreach (var signal in signals.AllSignals)
+            {
+                signal.Type = SignalType.Mainline;
+            }
+
+            // The signal facing the in branch does not point to the yard.
+            if (signals.InBranchSignal != null)
+            {
+                signals.InBranchSignal.Type = SignalType.IntoYard;
+            }
+
+            return signals;
+        }
+
         private static DistantSignalController? CreateDistantSignalIn(JunctionSignalController junctionSignal, SignalControllerDefinition def,
             float distance, float minLength)
         {
@@ -424,14 +446,24 @@ namespace Signals.Game
             return CreateDoubleJunctionSignals(signal, signal, junction);
         }
 
-        private static JunctionSignalPair CreateJunctionSignals(SignalControllerDefinition? outSignal, SignalControllerDefinition inSignal, Junction junction)
+        private static JunctionSignalPair CreateJunctionSignals(SignalControllerDefinition? outSignal, SignalControllerDefinition? inSignal, Junction junction)
         {
             if (outSignal != null)
             {
-                return CreateDoubleJunctionSignals(outSignal, inSignal, junction);
+                if (inSignal != null)
+                {
+                    return CreateDoubleJunctionSignals(outSignal, inSignal, junction);
+                }
+
+                return CreateSingleJunctionSignalReverse(outSignal, junction);
             }
 
-            return CreateSingleJunctionSignal(inSignal, junction);
+            if (inSignal != null)
+            {
+                return CreateSingleJunctionSignal(inSignal, junction);
+            }
+
+            throw new System.Exception("Tried creating JunctionSignalPair from 2 nulls, this cannot work!");
         }
 
         private static JunctionSignalPair CreateDoubleJunctionSignals(SignalControllerDefinition outSignal, SignalControllerDefinition inSignal, Junction junction)
@@ -478,9 +510,27 @@ namespace Signals.Game
             return new JunctionSignalPair(null, new JunctionSignalController(from, junction, TrackDirection.In));
         }
 
+        private static JunctionSignalPair CreateSingleJunctionSignalReverse(SignalControllerDefinition outSignal, Junction junction)
+        {
+            SignalsMod.LogVerbose($"Making junction signals for track '{junction.inBranch.track.name}'");
+
+            var outTrack = junction.outBranches[0].track;
+
+            // Similar to the previous method, but only creates a single signal (the one facing the out branch).
+            var point = outTrack.curve.GetAnchorPoints()[0];
+            var backward = -point.handle2.normalized;
+
+            var to = Instantiate(outSignal, point.transform, false);
+
+            to.transform.localPosition = backward;
+            to.transform.localRotation = Quaternion.LookRotation(-point.handle2);
+
+            return new JunctionSignalPair(new JunctionSignalController(to, junction, TrackDirection.Out), null);
+        }
+
         // Post processing.
 
-        private int MergeCloseSignals()
+        private int MergeCloseSignals(SignalPack pack)
         {
             HashSet<Junction> merged = new HashSet<Junction>();
             var pairs = _junctionMap.ToList();
@@ -505,7 +555,7 @@ namespace Signals.Game
                 // Already merged.
                 if (merged.Contains(other)) continue;
 
-                Merge(item.Value, _junctionMap[other]);
+                Merge(item.Value, _junctionMap[other], pack);
 
                 merged.Add(item.Key);
             }
@@ -513,10 +563,21 @@ namespace Signals.Game
             return merged.Count;
         }
 
-        private static void Merge(JunctionSignalPair p1, JunctionSignalPair p2, TrackDirection direction = TrackDirection.Out)
+        private static void Merge(JunctionSignalPair p1, JunctionSignalPair p2, SignalPack pack, TrackDirection direction = TrackDirection.Out)
         {
             if (direction.IsOut())
             {
+                // Replace the signal type if needed.
+                if (p1.InBranchSignal != null && p2.OutBranchesSignal != null && p1.InBranchSignal.Type != p2.OutBranchesSignal.Type)
+                {
+                    p1.InBranchSignal = Replace(p1.InBranchSignal, pack.GetForType(p2.OutBranchesSignal.Type));
+                }
+
+                if (p2.InBranchSignal != null && p1.OutBranchesSignal != null && p2.InBranchSignal.Type != p1.OutBranchesSignal.Type)
+                {
+                    p2.InBranchSignal = Replace(p2.InBranchSignal, pack.GetForType(p1.OutBranchesSignal.Type));
+                }
+
                 Destroy(p1.OutBranchesSignal?.Definition.gameObject);
                 Destroy(p2.OutBranchesSignal?.Definition.gameObject);
                 p1.OutBranchesSignal = null;
@@ -524,11 +585,38 @@ namespace Signals.Game
             }
             else
             {
+                if (p1.OutBranchesSignal != null && p2.InBranchSignal != null && p1.OutBranchesSignal.Type != p2.InBranchSignal.Type)
+                {
+                    p1.OutBranchesSignal = Replace(p1.OutBranchesSignal, pack.GetForType(p2.InBranchSignal.Type));
+                }
+
+                if (p2.OutBranchesSignal != null && p1.InBranchSignal != null && p2.OutBranchesSignal.Type != p1.InBranchSignal.Type)
+                {
+                    p2.OutBranchesSignal = Replace(p2.OutBranchesSignal, pack.GetForType(p1.InBranchSignal.Type));
+                }
+
                 Destroy(p1.InBranchSignal?.Definition.gameObject);
                 Destroy(p2.InBranchSignal?.Definition.gameObject);
                 p1.InBranchSignal = null;
                 p2.InBranchSignal = null;
             }
+        }
+
+        private static JunctionSignalController? Replace(JunctionSignalController? original, SignalControllerDefinition? replacement)
+        {
+            if (original == null || replacement == null) return null;
+
+            var instanced = Instantiate(replacement, original.Definition.transform.parent, false);
+
+            var instT = instanced.transform;
+            var origT = original.Definition.transform;
+
+            instT.localPosition = origT.localPosition;
+            instT.localRotation = origT.localRotation;
+
+            Destroy(original.Definition.gameObject);
+
+            return new JunctionSignalController(instanced, original.Junction, original.Direction);
         }
 
         #endregion

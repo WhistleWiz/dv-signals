@@ -27,6 +27,8 @@ namespace Signals.Game.Controllers
 
             _home.OnAspectChanged += UpdateFromHome;
             _home.OnDisplaysUpdated += UpdateDisplaysFromHome;
+
+            Type = SignalType.Distant;
         }
 
         public override void UpdateAspect()

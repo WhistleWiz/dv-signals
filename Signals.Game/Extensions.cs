@@ -40,6 +40,23 @@ namespace Signals.Game
             return controller;
         }
 
+        public static SignalControllerDefinition? GetForType(this SignalPack pack, SignalType type)
+        {
+            switch (type)
+            {
+                case SignalType.Mainline:
+                    return pack.Signal;
+                case SignalType.IntoYard:
+                    return pack.IntoYardSignal;
+                case SignalType.Shunting:
+                    return pack.ShuntingSignal;
+                case SignalType.Distant:
+                    return pack.DistantSignal;
+                default:
+                    return null;
+            }
+        }
+
         #endregion
 
         #region Track

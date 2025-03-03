@@ -6,6 +6,7 @@
         Mainline,
         IntoYard,
         Shunting,
+        Distant,
         Other
     }
 }
