@@ -33,8 +33,10 @@ namespace Signals.Game.Controllers
             Junction = junction;
             Direction = direction;
 
-            Definition.StartCoroutine(UpdateRoutine());
+            SignalManager.Instance.RegisterSignal(this);
             Junction.Switched += JunctionSwitched;
+
+            OnDestroyed += (x) => Junction.Switched -= JunctionSwitched;
         }
 
         private void JunctionSwitched(Junction.SwitchMode mode, int branch)
@@ -45,46 +47,20 @@ namespace Signals.Game.Controllers
             UpdateDisplays(true);
         }
 
-        private System.Collections.IEnumerator UpdateRoutine()
+        public override bool ShouldSkipUpdate()
         {
-            TurnOff();
+            var dist = GetCameraDistanceSqr();
 
-            // Wait for the player to load.
-            while (PlayerManager.ActiveCamera == null) yield return null;
-
-            // Prevent cluttering log by setting states too early. Also add random delay to ungroup start times.
-            yield return GetStartDelay();
-
-            // Initial update.
-            UpdateAspect();
-
-            while (true)
+            // If the camera is too far from the signal, skip updating.
+            // If the camera is far, but the signal is relatively close, use a slowed update rate.
+            if (dist > SkipUpdateDistanceSqr || (dist > SlowUpdateDistanceSqr && _updateDelay < MaxUpdateDelay))
             {
-                yield return new WaitForSeconds(UpdateTime);
-
-                // Instanced signal is gone, stop the routine.
-                if (!Exists)
-                {
-                    Junction.Switched -= JunctionSwitched;
-                    yield break;
-                }
-
-                // No camera, no update.
-                if (PlayerManager.ActiveCamera == null) continue;
-
-                var dist = GetCameraDistanceSqr();
-
-                // If the camera is too far from the signal, skip updating.
-                // If the camera is far, but the signal is relatively close, use a slowed update rate.
-                if (dist > SkipUpdateDistanceSqr || (dist > SlowUpdateDistanceSqr && _updateDelay < MaxUpdateDelay))
-                {
-                    _updateDelay++;
-                    continue;
-                }
-
-                UpdateAspect();
-                _updateDelay = 0;
+                _updateDelay++;
+                return true;
             }
+
+            _updateDelay = 0;
+            return false;
         }
 
         /// <summary>

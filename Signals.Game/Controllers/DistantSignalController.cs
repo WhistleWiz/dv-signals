@@ -21,6 +21,7 @@ namespace Signals.Game.Controllers
             }
         }
         public float Distance { get; private set; }
+        public override string Name => string.IsNullOrEmpty(NameOverride) ? $"{Home.Name}-D" : NameOverride;
 
         public DistantSignalController(BasicSignalController home, SignalControllerDefinition def, float distance) : base(def)
         {

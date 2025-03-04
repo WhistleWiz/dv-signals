@@ -19,7 +19,6 @@ namespace Signals.Game.Controllers
 
         private int? _baseAnimation;
         private SignalHover _hover;
-        private Coroutine? _opCoro;
 
         protected Coroutine? AnimatorDisabler;
 
@@ -44,6 +43,7 @@ namespace Signals.Game.Controllers
 
         public Action<AspectBase?>? OnAspectChanged;
         public Action<InfoDisplay[]>? OnDisplaysUpdated;
+        public Action<BasicSignalController>? OnDestroyed;
 
         public BasicSignalController(SignalControllerDefinition def)
         {
@@ -72,8 +72,6 @@ namespace Signals.Game.Controllers
             _hover = def.GetComponent<SignalHover>();
             _hover.Initialise(def.OffStateHUDSprite);
 
-            _opCoro = Definition.StartCoroutine(OptimiseRoutine());
-
             TrackChecker.OnMapBuilt += FixPositionDueToCrossing;
         }
 
@@ -98,25 +96,15 @@ namespace Signals.Game.Controllers
         // Used to disable child objects of the signal to increase performance.
         // The distance set is 2.5km, which is far enough that signals can realistically be seen,
         // but still not too far that it is useless.
-        private System.Collections.IEnumerator OptimiseRoutine()
+        internal void Optimise()
         {
-            // Wait for the player to load.
-            while (PlayerManager.ActiveCamera == null) yield return null;
+            if (PlayerManager.ActiveCamera == null) return;
 
-            yield return GetStartDelay();
+            bool active = GetCameraDistanceSqr() <= OptimiseDistanceSqr;
 
-            while (Exists)
+            foreach (Transform t in Definition.transform)
             {
-                yield return new WaitForSeconds(UpdateTime);
-
-                if (PlayerManager.ActiveCamera == null) continue;
-
-                bool active = GetCameraDistanceSqr() <= OptimiseDistanceSqr;
-
-                foreach (Transform t in Definition.transform)
-                {
-                    t.gameObject.SetActive(active);
-                }
+                t.gameObject.SetActive(active);
             }
         }
 
@@ -139,6 +127,33 @@ namespace Signals.Game.Controllers
         protected float GetCameraDistanceSqr()
         {
             return Helpers.DistanceSqr(Definition.transform.position, PlayerManager.ActiveCamera.transform.position);
+        }
+
+        /// <summary>
+        /// Checks if it is safe to continue using this signal instance.
+        /// </summary>
+        /// <returns>
+        /// <see langword="true"/> if further processing can be done, otherwise <see langword="false"/>.
+        /// </returns>
+        /// <remarks>
+        /// If <see langword="false"/> is returned, this signal should be discarded and all further processing
+        /// stopped. It is likely the instanced object assigned to it has been destroyed.
+        /// </remarks>
+        public bool SafetyCheck()
+        {
+            if (Exists)
+            {
+                return true;
+            }
+
+            Destroy();
+            return false;
+        }
+
+        public void Destroy()
+        {
+            SignalManager.Instance.UnregisterSignal(this);
+            OnDestroyed?.Invoke(this);
         }
 
         /// <summary>
@@ -260,6 +275,11 @@ namespace Signals.Game.Controllers
                     item.Apply();
                 }
             }
+        }
+
+        public virtual bool ShouldSkipUpdate()
+        {
+            return false;
         }
 
         /// <summary>

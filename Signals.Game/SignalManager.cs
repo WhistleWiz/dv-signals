@@ -26,6 +26,7 @@ namespace Signals.Game
         private const int LaserPointerTargetLayer = 15;
         private const float DeadEndThreshold = 100.0f;
         private const float ClosenessThreshold = 25.0f;
+        private const float UpdateTime = 1.0f;
 
         private static Transform? _holder;
 
@@ -52,6 +53,10 @@ namespace Signals.Game
             new Dictionary<Junction, JunctionSignalPair>();
         private List<DistantSignalController> _distantSignals =
             new List<DistantSignalController>();
+        private List<BasicSignalController> _signalRegister =
+            new List<BasicSignalController>();
+
+        private Coroutine? _updateCoro;
 
         public new static string AllowAutoCreate()
         {
@@ -61,8 +66,11 @@ namespace Signals.Game
         protected override void OnDestroy()
         {
             base.OnDestroy();
+
             _junctionMap.Clear();
             _distantSignals.Clear();
+
+            StopCoroutine(_updateCoro);
         }
 
         #region Mod Loading
@@ -212,6 +220,8 @@ namespace Signals.Game
             SignalsMod.Log($"Finished creating {created} distant signal(s) ({sw.Elapsed.TotalSeconds:F4}s)");
 
             TrackChecker.StartBuildingMap();
+
+            StartCoroutine(UpdateRoutine());
         }
 
         private int CreateDistantSignals(SignalPack pack)
@@ -618,6 +628,62 @@ namespace Signals.Game
         }
 
         #endregion
+
+        // Update all signals from here.
+        private System.Collections.IEnumerator UpdateRoutine()
+        {
+            while (PlayerManager.ActiveCamera == null) yield return null;
+
+            yield return new WaitForSeconds(UpdateTime);
+
+            while (true)
+            {
+                // Check how many signals to update per frame so they all update roughly once a second.
+                int count = Mathf.CeilToInt(_signalRegister.Count * Time.fixedDeltaTime);
+
+                // Loop through all registered signals.
+                for (int start = 0; start < _signalRegister.Count; start += count)
+                {
+                    // Loop through a batch of signals. Updates are distributed so they don't all update
+                    // at once, but batched so timing is consistent.
+                    for (int current = start; current < start + count && current < _signalRegister.Count; current++)
+                    {
+                        // Stop updating if camera is gone.
+                        while (PlayerManager.ActiveCamera == null) yield return new WaitForSeconds(UpdateTime);
+
+                        var signal = _signalRegister[current];
+
+                        // Check if it can be updated.
+                        if (!signal.SafetyCheck())
+                        {
+                            current--;
+                            continue;
+                        }
+
+                        // Distance optimisation.
+                        signal.Optimise();
+
+                        // Skip updating if not needed.
+                        if (signal.ShouldSkipUpdate()) continue;
+
+                        // Actually update.
+                        signal.UpdateAspect();
+                    }
+
+                    yield return new WaitForFixedUpdate();
+                }
+            }
+        }
+
+        public void RegisterSignal(BasicSignalController signal)
+        {
+            _signalRegister.Add(signal);
+        }
+
+        public bool UnregisterSignal(BasicSignalController signal)
+        {
+            return _signalRegister.Remove(signal);
+        }
 
         internal bool TryGetSignals(Junction junction, out JunctionSignalPair pair)
         {

@@ -1,4 +1,10 @@
 ﻿namespace Signals.Common.Displays
 {
-    public class DistanceToNextDisplayDefinition : InfoDisplayDefinition { }
+    public class DistanceToNextDisplayDefinition : InfoDisplayDefinition
+    {
+        private void Reset()
+        {
+            Mode = UpdateMode.AtStart;
+        }
+    }
 }
