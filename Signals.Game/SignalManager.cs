@@ -229,7 +229,7 @@ namespace Signals.Game
 
                 if (signal != null && (signal.Type == SignalType.Mainline || signal.Type == SignalType.IntoYard))
                 {
-                    distant = CreateDistantSignalIn(signal, pack.DistantSignal, pack.DistantSignalDistance, pack.DistantSignalMinimumTrackLength);
+                    distant = CreateDistantSignalIn(signal, pack);
 
                     if (distant != null)
                     {
@@ -245,7 +245,7 @@ namespace Signals.Game
                 {
                     for (int i = 0; i < junction.Key.outBranches.Count; i++)
                     {
-                        distant = CreateDistantSignalOut(signal, pack.DistantSignal, i, pack.DistantSignalDistance, pack.DistantSignalMinimumTrackLength);
+                        distant = CreateDistantSignalOut(signal, pack, i);
 
                         if (distant != null)
                         {
@@ -392,51 +392,49 @@ namespace Signals.Game
             return signals;
         }
 
-        private static DistantSignalController? CreateDistantSignalIn(JunctionSignalController junctionSignal, SignalControllerDefinition def,
-            float distance, float minLength)
+        private static DistantSignalController? CreateDistantSignalIn(JunctionSignalController junctionSignal, SignalPack pack)
         {
             var track = junctionSignal.Junction.inBranch.track;
 
-            if (track.logicTrack.length < minLength) return null;
+            if (track.logicTrack.length < pack.DistantSignalMinimumTrackLength) return null;
 
             SignalsMod.LogVerbose($"Making distant signal [in] for signal '{junctionSignal.Name}'");
 
             bool dir = track.inJunction == junctionSignal.Junction;
 
-            var (point, forward) = dir ?
-                BezierHelper.GetAproxPointAtLength(track.curve, distance) :
-                BezierHelper.GetAproxPointAtLengthReverse(track.curve, distance);
+            var (point, forward, distance) = dir ?
+                BezierHelper.GetAproxPointAtLength(track.curve, pack.DistantSignalDistance) :
+                BezierHelper.GetAproxPointAtLengthReverse(track.curve, pack.DistantSignalDistance);
 
-            var signal = Instantiate(def, track.curve.transform, false);
+            var signal = Instantiate(pack.DistantSignal!, track.curve.transform, false);
 
             signal.transform.position = point;
             signal.transform.localRotation = Quaternion.LookRotation(dir ? forward : -forward);
 
-            return new DistantSignalController(junctionSignal, signal);
+            return new DistantSignalController(junctionSignal, signal, distance);
         }
 
-        private static DistantSignalController? CreateDistantSignalOut(JunctionSignalController junctionSignal, SignalControllerDefinition def,
-            int branch, float distance, float minLength)
+        private static DistantSignalController? CreateDistantSignalOut(JunctionSignalController junctionSignal, SignalPack pack, int branch)
         {
             var branchTrack = junctionSignal.Junction.outBranches[branch].track;
             var track = branchTrack.outBranch.track;
 
-            if (track.logicTrack.length < minLength) return null;
+            if (track.logicTrack.length < pack.DistantSignalMinimumTrackLength) return null;
 
             SignalsMod.LogVerbose($"Making distant signal [b:{branch}] for signal '{junctionSignal.Name}'");
 
             bool dir = track.inBranch.track == branchTrack;
 
-            var (point, forward) = dir ?
-                BezierHelper.GetAproxPointAtLength(track.curve, distance) :
-                BezierHelper.GetAproxPointAtLengthReverse(track.curve, distance);
+            var (point, forward, distance) = dir ?
+                BezierHelper.GetAproxPointAtLength(track.curve, pack.DistantSignalDistance) :
+                BezierHelper.GetAproxPointAtLengthReverse(track.curve, pack.DistantSignalDistance);
 
-            var signal = Instantiate(def, track.curve.transform, false);
+            var signal = Instantiate(pack.DistantSignal!, track.curve.transform, false);
 
             signal.transform.position = point;
             signal.transform.localRotation = Quaternion.LookRotation(dir ? forward : -forward);
 
-            return new DistantSignalController(junctionSignal, signal);
+            return new DistantSignalController(junctionSignal, signal, distance);
         }
 
         // Internal creation methods.

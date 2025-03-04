@@ -20,9 +20,11 @@ namespace Signals.Game.Controllers
                 _home = value;
             }
         }
+        public float Distance { get; private set; }
 
-        public DistantSignalController(BasicSignalController home, SignalControllerDefinition def) : base(def)
+        public DistantSignalController(BasicSignalController home, SignalControllerDefinition def, float distance) : base(def)
         {
+            Distance = distance;
             _home = home;
 
             _home.OnAspectChanged += UpdateFromHome;

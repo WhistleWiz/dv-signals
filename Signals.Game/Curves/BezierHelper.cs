@@ -133,7 +133,7 @@ namespace Signals.Game.Curves
             return results;
         }
 
-        public static (Vector3 Point, Vector3 Direction) GetAproxPointAtLength(BezierCurve curve, float length)
+        public static (Vector3 Point, Vector3 Direction, float Distance) GetAproxPointAtLength(BezierCurve curve, float length)
         {
             float total = 0;
             Vector3 prev = curve.GetPointAt(0);
@@ -145,17 +145,17 @@ namespace Signals.Game.Curves
 
                 if (total >= length)
                 {
-                    return (curve.GetPointAt(f), curve.GetTangentAt(f));
+                    return (curve.GetPointAt(f), curve.GetTangentAt(f), total);
                 }
 
                 total += Vector3.Magnitude(next - prev);
                 prev = next;
             }
 
-            return (curve.GetPointAt(1), curve.GetTangentAt(1));
+            return (curve.GetPointAt(1), curve.GetTangentAt(1), total);
         }
 
-        public static (Vector3 Point, Vector3 Direction) GetAproxPointAtLengthReverse(BezierCurve curve, float length)
+        public static (Vector3 Point, Vector3 Direction, float Distance) GetAproxPointAtLengthReverse(BezierCurve curve, float length)
         {
             float total = 0;
             Vector3 prev = curve.GetPointAt(1);
@@ -167,14 +167,14 @@ namespace Signals.Game.Curves
 
                 if (total >= length)
                 {
-                    return (curve.GetPointAt(f), curve.GetTangentAt(f));
+                    return (curve.GetPointAt(f), curve.GetTangentAt(f), total);
                 }
 
                 total += Vector3.Magnitude(next - prev);
                 prev = next;
             }
 
-            return (curve.GetPointAt(0), curve.GetTangentAt(0));
+            return (curve.GetPointAt(0), curve.GetTangentAt(0), total);
         }
     }
 }
