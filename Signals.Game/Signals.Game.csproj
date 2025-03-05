@@ -11,7 +11,6 @@
 	<ItemGroup>
 		<Reference Include="Assembly-CSharp" />
 		<Reference Include="UnityModManager" />
-		<Reference Include="0Harmony" />
 		<Reference Include="UnityEngine" />
 		<Reference Include="UnityEngine.AnimationModule" />
 		<Reference Include="UnityEngine.AssetBundleModule" />

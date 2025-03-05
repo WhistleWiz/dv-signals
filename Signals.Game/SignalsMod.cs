@@ -1,6 +1,4 @@
-﻿using HarmonyLib;
-using System.Reflection;
-using UnityModManagerNet;
+﻿using UnityModManagerNet;
 
 namespace Signals.Game
 {
@@ -20,18 +18,28 @@ namespace Signals.Game
 
             if (SignalManager.DefaultPack == null)
             {
-                throw new System.Exception("Failed to load default pack, mod won't load!");
+                Error("Failed to load default pack, mod won't load!");
+                return false;
             }
 
             Instance.OnGUI += Settings.Draw;
             Instance.OnSaveGUI += Settings.Save;
+            Instance.OnUnload += Unload;
+
+            ScanMods();
 
             UnityModManager.toggleModsListen += HandleModToggled;
-
-            var harmony = new Harmony(modEntry.Info.Id);
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
-
             WorldStreamingInit.LoadingStatusChanged += SignalManager.CheckStartCreation;
+
+            return true;
+        }
+
+        private static bool Unload(UnityModManager.ModEntry modEntry)
+        {
+            UnityModManager.toggleModsListen -= HandleModToggled;
+            WorldStreamingInit.LoadingStatusChanged -= SignalManager.CheckStartCreation;
+            SignalManager.InstalledPacks.Clear();
+            SignalManager.DefaultPack = null!;
 
             return true;
         }
@@ -45,6 +53,17 @@ namespace Signals.Game
             else
             {
                 SignalManager.UnloadSignals(modEntry);
+            }
+        }
+
+        private static void ScanMods()
+        {
+            foreach (var mod in UnityModManager.modEntries)
+            {
+                if (mod.Active)
+                {
+                    SignalManager.LoadSignals(mod);
+                }
             }
         }
 
