@@ -1,4 +1,5 @@
-﻿using DV.Localization;
+﻿using DV;
+using DV.Localization;
 using DV.Utils;
 using Signals.Common;
 using Signals.Game.Controllers;
@@ -177,14 +178,13 @@ namespace Signals.Game
 
             var sw = System.Diagnostics.Stopwatch.StartNew();
             int created = 0;
-            var pack = GetCurrentPack();
+            var pack = GetCurrentPack();            
 
-            foreach (var track in RailTrackRegistry.Instance.AllTracks)
+            foreach (var junction in WorldData.Instance.OrderedJunctions)
             {
                 JunctionSignalPair signals;
-                var junction = track.inJunction;
 
-                switch (ShouldMakeSignal(track))
+                switch (ShouldMakeSignal(junction))
                 {
                     case SignalCreationMode.Mainline:
                         signals = CreateMainlineSignals(pack, junction);
@@ -271,15 +271,14 @@ namespace Signals.Game
 
         // Creation testing.
 
-        private SignalCreationMode ShouldMakeSignal(RailTrack track)
+        private SignalCreationMode ShouldMakeSignal(Junction junction)
         {
             // Signals only at juntions, don't duplicate junctions, don't make them at short dead ends.
-            if (!track.isJunctionTrack || _junctionMap.ContainsKey(track.inJunction) || InIsShortDeadEnd(track.inJunction))
+            if (_junctionMap.ContainsKey(junction) || InIsShortDeadEnd(junction))
             {
                 return SignalCreationMode.None;
             }
 
-            var junction = track.inJunction;
             var inName = junction.inBranch.track.name;
             SignalsMod.LogVerbose($"Testing track '{inName}' for signals...");
 
