@@ -14,6 +14,7 @@ namespace Signals.Common.Aspects
         private void Reset()
         {
             Id = "TRAIN_DETECTED";
+            DisallowPassing = true;
         }
     }
 }

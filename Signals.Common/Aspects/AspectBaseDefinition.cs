@@ -11,6 +11,10 @@ namespace Signals.Common.Aspects
         public Sprite? HUDSprite;
 
         [Space]
+        public bool DisallowPassing = false;
+        public bool RequireAcknowledging = false;
+
+        [Space]
         public SignalLightDefinition[] OnLights = new SignalLightDefinition[0];
         public SignalLightDefinition[] BlinkingLights = new SignalLightDefinition[0];
         public SignalLightSequenceDefinition[] LightSequences = new SignalLightSequenceDefinition[0];

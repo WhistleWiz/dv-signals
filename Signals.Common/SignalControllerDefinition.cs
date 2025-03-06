@@ -15,12 +15,11 @@ namespace Signals.Common
         public Sprite? OffStateHUDSprite;
 
         [Header("Optional")]
-        [Tooltip("Used for mechanical signals")]
-        public Animator? Animator;
         [Tooltip("Extra signal displays")]
         public InfoDisplayDefinition[] Displays = new InfoDisplayDefinition[0];
         [Tooltip("Extra indicators")]
         public AspectBaseDefinition[] Indicators = new AspectBaseDefinition[0];
+        public Animator? Animator;
 
         [SerializeField]
         private bool _drawGuides = true;

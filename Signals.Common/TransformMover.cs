@@ -82,11 +82,11 @@ namespace Signals.Common
                 // If the difference is positive, the normal process can still be used.
                 if (UseAbsoluteValue && Mathf.Sign(dif = target - _current) < 0)
                 {
-                    t = 1 - Tweening.Ease(1 + dif, Mode, CustomCurve);
+                    t = 1 - Tweening.Interpolate(1 + dif, Mode, CustomCurve);
                 }
                 else
                 {
-                    t = Tweening.Ease(_current, Mode, CustomCurve);
+                    t = Tweening.Interpolate(_current, Mode, CustomCurve);
                 }
 
                 transform.localPosition = Vector3.LerpUnclamped(OriginalPosition, TransformedPosition, t);
