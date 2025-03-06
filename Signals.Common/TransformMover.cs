@@ -5,12 +5,6 @@ namespace Signals.Common
 {
     public class TransformMover : MonoBehaviour
     {
-        public enum MoveMode
-        {
-            Linear,
-            Smooth
-        }
-
         [Header("Original")]
         public Vector3 OriginalPosition = Vector3.zero;
         public Vector3 OriginalRotation = Vector3.zero;
@@ -21,10 +15,12 @@ namespace Signals.Common
         public Vector3 TransformedRotation = Vector3.zero;
         public Vector3 TransformedScale = Vector3.one;
 
-        [Space]
-        public MoveMode Mode = MoveMode.Linear;
+        [Header("Interpolation Settings")]
+        public Tweening.EasingMode Mode = Tweening.EasingMode.Linear;
         [Min(0.0f)]
         public float Duration = 1.0f;
+        public bool UseAbsoluteValue = true;
+        public AnimationCurve CustomCurve = AnimationCurve.Linear(0, 0, 1, 1);
 
         private float _current = 0.0f;
         private float _target = 0.0f;
@@ -66,34 +62,41 @@ namespace Signals.Common
 
         private IEnumerator MoveRoutine()
         {
+            // Delay the start a frame to prevent setting and unsetting.
+            yield return null;
+
             // Eh this optimisation isn't really needed.
             //bool pos = OriginalPosition != TransformedPosition;
             //bool rot = OriginalRotation != TransformedRotation;
             //bool scale = OriginalScale != TransformedScale;
 
-            while (_current != _target)
-            {
-                _current = Mathf.MoveTowards(_current, _target, Time.deltaTime / Duration);
+            float target = _target;
+            float t;
+            float dif;
 
-                transform.localPosition = Lerp(OriginalPosition, TransformedPosition, _current, Mode);
-                transform.localRotation = Quaternion.Euler(Lerp(OriginalRotation, TransformedRotation, _current, Mode));
-                transform.localScale = Lerp(OriginalScale, TransformedScale, _current, Mode);
+            while (_current != target)
+            {
+                _current = Duration == 0 ? target : Mathf.MoveTowards(_current, target, Time.deltaTime / Duration);
+
+                // For absolute values, use the difference between the current value and the target.
+                // If the difference is positive, the normal process can still be used.
+                if (UseAbsoluteValue && Mathf.Sign(dif = target - _current) < 0)
+                {
+                    t = 1 - Tweening.Ease(1 + dif, Mode, CustomCurve);
+                }
+                else
+                {
+                    t = Tweening.Ease(_current, Mode, CustomCurve);
+                }
+
+                transform.localPosition = Vector3.LerpUnclamped(OriginalPosition, TransformedPosition, t);
+                transform.localRotation = Quaternion.Euler(Vector3.LerpUnclamped(OriginalRotation, TransformedRotation, t));
+                transform.localScale = Vector3.LerpUnclamped(OriginalScale, TransformedScale, t);
 
                 yield return null;
             }
 
-            _moveCoro = null;
-        }
-
-        // Only designed to work in [0..1], clamping not used for performance.
-        private static Vector3 Lerp(Vector3 a, Vector3 b, float t, MoveMode mode)
-        {
-            return mode switch
-            {
-                MoveMode.Linear => a + (b - a) * t,
-                MoveMode.Smooth => a + (b - a) * (t * t * (3.0f - 2.0f * t)),
-                _ => t > 0 ? b : a,
-            };
+            _moveCoro = _target != target ? StartCoroutine(MoveRoutine()) : null;
         }
     }
 }
