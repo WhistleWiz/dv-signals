@@ -16,6 +16,9 @@ namespace Signals.Common.Aspects
         public SignalLightSequenceDefinition[] LightSequences = new SignalLightSequenceDefinition[0];
 
         [Space]
+        public TransformMover[] Movers = new TransformMover[0];
+
+        [Space]
         public string? AnimationName;
         public float AnimationTime = 1.0f;
         [Tooltip("Disables the animator after changing the signal state to this\n" +

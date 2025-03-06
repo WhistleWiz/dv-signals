@@ -65,6 +65,11 @@ namespace Signals.Game.Aspects
                 sequence.Activate();
             }
 
+            foreach (var t in Definition.Movers)
+            {
+                t.ToTransformed();
+            }
+
             PlayAnimation();
             PlaySound();
         }
@@ -92,6 +97,11 @@ namespace Signals.Game.Aspects
             foreach (SignalLightSequence sequence in _sequences)
             {
                 sequence.Deactivate();
+            }
+
+            foreach (var t in Definition.Movers)
+            {
+                t.ToOriginal();
             }
         }
 
