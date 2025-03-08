@@ -21,6 +21,8 @@ namespace Signals.Game.Aspects
 
         public string Id => Definition.Id;
         public TrackInfo? ControllerTrackInfo => Controller.TrackInfo;
+        public bool Active { get; private set; }
+        public bool ShouldDisplayHUD => Active && Definition.HUDSprite != null;
 
         public AspectBase(AspectBaseDefinition definition, BasicSignalController controller)
         {
@@ -35,6 +37,8 @@ namespace Signals.Game.Aspects
             {
                 _animationId = Animator.StringToHash(definition.AnimationName);
             }
+
+            Active = false;
         }
 
         /// <summary>
@@ -72,6 +76,8 @@ namespace Signals.Game.Aspects
 
             PlayAnimation();
             PlaySound();
+
+            Active = true;
         }
 
         /// <summary>
@@ -103,6 +109,8 @@ namespace Signals.Game.Aspects
             {
                 t.ToOriginal();
             }
+
+            Active = false;
         }
 
         private void PlayAnimation()

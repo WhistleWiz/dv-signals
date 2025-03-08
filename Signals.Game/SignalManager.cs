@@ -26,7 +26,7 @@ namespace Signals.Game
         private const string YardNameStart = "[Y]";
         private const int LaserPointerTargetLayer = 15;
         private const float DeadEndThreshold = 100.0f;
-        private const float ClosenessThreshold = 25.0f;
+        private const float ClosenessThreshold = 50.0f;
         private const float UpdateTime = 1.0f;
 
         private static Transform? _holder;
@@ -623,7 +623,10 @@ namespace Signals.Game
 
             Destroy(original.Definition.gameObject);
 
-            return new JunctionSignalController(instanced, original.Junction, original.Direction);
+            return new JunctionSignalController(instanced, original.Junction, original.Direction)
+            {
+                Type = original.Type
+            };
         }
 
         #endregion
@@ -688,6 +691,16 @@ namespace Signals.Game
         {
             return _junctionMap.TryGetValue(junction, out pair);
         }
+
+        //private JunctionSignalPair? GetFromId(int id)
+        //{
+        //    var junction = WorldData.Junctions.FirstOrDefault(x => x.junctionData.junctionId == id);
+
+        //    if (junction == null) return null;
+
+        //    TryGetSignals(junction, out var pair);
+        //    return pair;
+        //}
 
         /// <summary>
         /// Tries to find a signal at a junction.

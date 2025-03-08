@@ -10,9 +10,6 @@ namespace Signals.Game.Controllers
 {
     public class BasicSignalController
     {
-        // Used to add artifical delays so that signals don't all update on the same frame.
-        private static System.Random s_random = new System.Random();
-
         protected const float UpdateTime = 1.0f;
         protected const float OptimiseDistanceSqr = 2500 * 2500;
         protected const int OffValue = -1;
@@ -24,6 +21,7 @@ namespace Signals.Game.Controllers
 
         public SignalType Type = SignalType.NotSet;
         public string NameOverride = string.Empty;
+        public bool ManualOperationOnly = false;
 
         public SignalControllerDefinition Definition { get; private set; }
         public int CurrentAspectIndex { get; private set; }
@@ -40,6 +38,7 @@ namespace Signals.Game.Controllers
         /// Returns <see langword="null"/> if the signal is off.
         /// </summary>
         public AspectBase? CurrentAspect => IsOn ? AllAspects[CurrentAspectIndex] : null;
+        public Vector3 Position => Definition.transform.position;
 
         public Action<AspectBase?>? OnAspectChanged;
         public Action<InfoDisplay[]>? OnDisplaysUpdated;
@@ -279,7 +278,7 @@ namespace Signals.Game.Controllers
 
         public virtual bool ShouldSkipUpdate()
         {
-            return false;
+            return ManualOperationOnly;
         }
 
         /// <summary>
@@ -306,11 +305,6 @@ namespace Signals.Game.Controllers
             // Update displays and indicators.
             UpdateDisplays(changed);
             UpdateIndicators();
-        }
-
-        protected static WaitForSeconds GetStartDelay()
-        {
-            return new WaitForSeconds((float)(s_random.NextDouble() + 0.1));
         }
     }
 }

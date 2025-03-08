@@ -49,6 +49,8 @@ namespace Signals.Game.Controllers
 
         public override bool ShouldSkipUpdate()
         {
+            if (ManualOperationOnly) return true;
+
             var dist = GetCameraDistanceSqr();
 
             // If the camera is too far from the signal, skip updating.

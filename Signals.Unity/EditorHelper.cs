@@ -17,5 +17,10 @@ namespace Signals.Unity
                 }
             };
         }
+        public static void DrawHeader(string title)
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+        }
     }
 }

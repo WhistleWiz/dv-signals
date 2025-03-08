@@ -85,6 +85,19 @@ namespace Signals.Game
                 });
             }
 
+            foreach (var item in controller.AllIndicators)
+            {
+                if (item == null || !item.ShouldDisplayHUD) continue;
+
+                var go = GetPrefabFromSprite(item.Definition.HUDSprite);
+
+                signTypes.Add(new SignDisplay.SignDisplayInstance()
+                {
+                    prefab = go,
+                    text = BlankSpace
+                });
+            }
+
             // Refresh if the current hovered thing is this.
             var (type, obj) = NonVRHoverManager.Instance.CurrentlyHovered;
             if (type == NonVRHoverManager.HoverType.Sign && ((SignHover)obj) == this)

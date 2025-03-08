@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
+using JData = Junction.JunctionData;
+
 namespace Signals.Game
 {
     public static class TrackUtils
@@ -147,6 +149,25 @@ namespace Signals.Game
             }
 
             return string.Empty;
+        }
+
+        public static string Station(Junction junction)
+        {
+            var id = junction.junctionData.junctionIdLong;
+
+            if (!id.StartsWith(JData.ID_MARKER_STATION))
+            {
+                return string.Empty;
+            }
+
+            var split = id.Split('-');
+
+            if (split.Length != 3)
+            {
+                return string.Empty;
+            }
+
+            return split[2];
         }
     }
 }

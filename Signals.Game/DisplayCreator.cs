@@ -21,7 +21,8 @@ namespace Signals.Game
                 { typeof(SignalNameDisplayDefinition), (x, y) => new SignalNameDisplay(x, y) },
                 { typeof(JunctionBranchDisplayDefinition), (x, y) => new JunctionBranchDisplay(x, y) },
                 { typeof(TrackIdDisplayDefinition), (x, y) => new TrackIdDisplay(x, y) },
-                { typeof(DistanceToNextDisplayDefinition), (x, y) => new DistanceToNextDisplay(x, y) }
+                { typeof(DistanceToNextDisplayDefinition), (x, y) => new DistanceToNextDisplay(x, y) },
+                { typeof(StaticDisplayDefinition), (x, y) => new StaticDisplay(x, y) }
             };
 
             s_defaultTypes = CreatorFunctions.Keys.ToArray();

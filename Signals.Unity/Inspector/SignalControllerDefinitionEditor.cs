@@ -57,6 +57,7 @@ namespace Signals.Unity.Inspector
                         }
                         break;
                     case nameof(SignalControllerDefinition.Displays):
+                        EditorHelper.DrawHeader("Optional");
                         _displayList.DoLayoutList();
 
                         if (GUILayout.Button("Get Displays From Children"))
