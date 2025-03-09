@@ -162,10 +162,17 @@ namespace Signals.Game.Controllers
             return false;
         }
 
+        /// <summary>
+        /// Destroys this signal (controller and game object).
+        /// </summary>
         public void Destroy()
         {
+            if (Definition != null)
+            {
+                UnityEngine.Object.Destroy(Definition.gameObject);
+            }
+
             SignalManager.Instance.UnregisterSignal(this);
-            UnityEngine.Object.Destroy(Definition.gameObject);
             Destroyed?.Invoke(this);
         }
 
