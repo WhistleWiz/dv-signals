@@ -33,10 +33,8 @@ namespace Signals.Game.Controllers
             Junction = junction;
             Direction = direction;
 
-            SignalManager.Instance.RegisterSignal(this);
             Junction.Switched += JunctionSwitched;
-
-            OnDestroyed += (x) => Junction.Switched -= JunctionSwitched;
+            Destroyed += (x) => Junction.Switched -= JunctionSwitched;
         }
 
         private void JunctionSwitched(Junction.SwitchMode mode, int branch)
@@ -49,8 +47,6 @@ namespace Signals.Game.Controllers
 
         public override bool ShouldSkipUpdate()
         {
-            if (ManualOperationOnly) return true;
-
             var dist = GetCameraDistanceSqr();
 
             // If the camera is too far from the signal, skip updating.
@@ -65,9 +61,6 @@ namespace Signals.Game.Controllers
             return false;
         }
 
-        /// <summary>
-        /// Updates the current aspect based on the conditions of <see cref="AllAspects"/>.
-        /// </summary>
         public override void UpdateAspect()
         {
             // Precompute this information so each state doesn't have to call the same functions

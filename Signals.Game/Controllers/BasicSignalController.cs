@@ -20,7 +20,13 @@ namespace Signals.Game.Controllers
         protected Coroutine? AnimatorDisabler;
 
         public SignalType Type = SignalType.NotSet;
+        /// <summary>
+        /// Override the name of this signal.
+        /// </summary>
         public string NameOverride = string.Empty;
+        /// <summary>
+        /// The signal will not self update if this is true. Optimisation routines still execute.
+        /// </summary>
         public bool ManualOperationOnly = false;
 
         public SignalControllerDefinition Definition { get; private set; }
@@ -32,17 +38,23 @@ namespace Signals.Game.Controllers
         public TrackInfo? TrackInfo { get; protected set; }
 
         public virtual string Name => NameOverride;
+        /// <summary>
+        /// Is <see langword="true"/> if this signal exists in the world.
+        /// </summary>
         public bool Exists => Definition != null;
         public bool IsOn => CurrentAspectIndex >= 0;
         /// <summary>
-        /// Returns <see langword="null"/> if the signal is off.
+        /// Is <see langword="null"/> if the signal is off.
         /// </summary>
         public AspectBase? CurrentAspect => IsOn ? AllAspects[CurrentAspectIndex] : null;
+        /// <summary>
+        /// The position in the world of this signal.
+        /// </summary>
         public Vector3 Position => Definition.transform.position;
 
-        public Action<AspectBase?>? OnAspectChanged;
-        public Action<InfoDisplay[]>? OnDisplaysUpdated;
-        public Action<BasicSignalController>? OnDestroyed;
+        public Action<AspectBase?>? AspectChanged;
+        public Action<InfoDisplay[]>? DisplaysUpdated;
+        public Action<BasicSignalController>? Destroyed;
 
         public BasicSignalController(SignalControllerDefinition def)
         {
@@ -72,6 +84,7 @@ namespace Signals.Game.Controllers
             _hover.Initialise(def.OffStateHUDSprite);
 
             TrackChecker.OnMapBuilt += FixPositionDueToCrossing;
+            SignalManager.Instance.RegisterSignal(this);
         }
 
         private void FixPositionDueToCrossing(Dictionary<RailTrack, TrackChecker.TrackIntersectionPoints> junctionMap)
@@ -152,7 +165,8 @@ namespace Signals.Game.Controllers
         public void Destroy()
         {
             SignalManager.Instance.UnregisterSignal(this);
-            OnDestroyed?.Invoke(this);
+            UnityEngine.Object.Destroy(Definition.gameObject);
+            Destroyed?.Invoke(this);
         }
 
         /// <summary>
@@ -160,6 +174,7 @@ namespace Signals.Game.Controllers
         /// </summary>
         /// <param name="keep">If true, keeps the signal off.</param>
         /// <returns><see langword="true"/> if the signal was turned off successfuly, <see langword="false"/> otherwise.</returns>
+        /// <remarks>In case the aspect was turned off successfully, <see cref="AspectChanged"/> will be called.</remarks>
         public bool TurnOff()
         {
             if (!IsOn) return false;
@@ -187,7 +202,7 @@ namespace Signals.Game.Controllers
 
             CurrentAspectIndex = OffValue;
 
-            OnAspectChanged?.Invoke(null);
+            AspectChanged?.Invoke(null);
             return true;
         }
 
@@ -196,7 +211,7 @@ namespace Signals.Game.Controllers
         /// </summary>
         /// <param name="newAspect">The index of the new aspect. Negative values turn off the signal.</param>
         /// <returns><see langword="true"/> if the aspect changed, <see langword="false"/> otherwise.</returns>
-        /// <remarks>Does nothing if the aspect is the same.</remarks>
+        /// <remarks>In case the aspect is successfully changed, <see cref="AspectChanged"/> will be called.</remarks>
         public bool ChangeAspect(int newAspect)
         {
             // Check if the state changes. All negative numbers are treated as off.
@@ -225,7 +240,7 @@ namespace Signals.Game.Controllers
             CurrentAspectIndex = newAspect;
             AllAspects[newAspect].Apply();
 
-            OnAspectChanged?.Invoke(AllAspects[newAspect]);
+            AspectChanged?.Invoke(AllAspects[newAspect]);
             return true;
         }
 
@@ -251,7 +266,7 @@ namespace Signals.Game.Controllers
 
             UpdateHoverDisplay();
 
-            OnDisplaysUpdated?.Invoke(AllDisplays);
+            DisplaysUpdated?.Invoke(AllDisplays);
         }
 
         public void UpdateIndicators()
@@ -276,13 +291,17 @@ namespace Signals.Game.Controllers
             }
         }
 
+        /// <summary>
+        /// Whether the normal update cycle should be skipped or not.
+        /// </summary>
+        /// <returns></returns>
         public virtual bool ShouldSkipUpdate()
         {
             return ManualOperationOnly;
         }
 
         /// <summary>
-        /// Update the signal automatically.
+        /// Updates the current aspect based on the conditions of <see cref="AllAspects"/>.
         /// </summary>
         public virtual void UpdateAspect()
         {

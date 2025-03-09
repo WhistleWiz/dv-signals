@@ -13,10 +13,10 @@ namespace Signals.Game.Controllers
             get => _home;
             protected set
             {
-                _home.OnAspectChanged -= UpdateFromHome;
-                _home.OnDisplaysUpdated -= UpdateDisplaysFromHome;
-                value.OnAspectChanged += UpdateFromHome;
-                value.OnDisplaysUpdated += UpdateDisplaysFromHome;
+                _home.AspectChanged -= UpdateFromHome;
+                _home.DisplaysUpdated -= UpdateDisplaysFromHome;
+                value.AspectChanged += UpdateFromHome;
+                value.DisplaysUpdated += UpdateDisplaysFromHome;
                 _home = value;
             }
         }
@@ -28,8 +28,8 @@ namespace Signals.Game.Controllers
             Distance = distance;
             _home = home;
 
-            _home.OnAspectChanged += UpdateFromHome;
-            _home.OnDisplaysUpdated += UpdateDisplaysFromHome;
+            _home.AspectChanged += UpdateFromHome;
+            _home.DisplaysUpdated += UpdateDisplaysFromHome;
 
             Type = SignalType.Distant;
         }

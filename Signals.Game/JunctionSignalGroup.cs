@@ -3,10 +3,12 @@ using System.Collections.Generic;
 
 namespace Signals.Game
 {
-    internal class JunctionSignalPair
+    internal class JunctionSignalGroup
     {
         public JunctionSignalController? OutBranchesSignal;
         public JunctionSignalController? InBranchSignal;
+
+        public Junction Junction { get; private set; }
 
         public IEnumerable<JunctionSignalController> AllSignals
         {
@@ -25,8 +27,9 @@ namespace Signals.Game
             }
         }
 
-        public JunctionSignalPair(JunctionSignalController? outSignal, JunctionSignalController? inSignal)
+        public JunctionSignalGroup(Junction junction, JunctionSignalController? outSignal, JunctionSignalController? inSignal)
         {
+            Junction = junction;
             OutBranchesSignal = outSignal;
             InBranchSignal = inSignal;
         }

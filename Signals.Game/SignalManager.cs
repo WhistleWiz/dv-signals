@@ -1,5 +1,4 @@
 ﻿using DV;
-using DV.Localization;
 using DV.Utils;
 using Signals.Common;
 using Signals.Game.Controllers;
@@ -30,6 +29,7 @@ namespace Signals.Game
         private const float UpdateTime = 1.0f;
 
         private static Transform? _holder;
+        private static bool _loaded = false;
 
         internal static SignalPack DefaultPack = null!;
         internal static Dictionary<string, SignalPack> InstalledPacks = new Dictionary<string, SignalPack>();
@@ -50,14 +50,16 @@ namespace Signals.Game
             }
         }
 
-        private Dictionary<Junction, JunctionSignalPair> _junctionMap =
-            new Dictionary<Junction, JunctionSignalPair>();
+        private Dictionary<Junction, JunctionSignalGroup> _junctionSignals =
+            new Dictionary<Junction, JunctionSignalGroup>();
         private List<DistantSignalController> _distantSignals =
             new List<DistantSignalController>();
         private List<BasicSignalController> _signalRegister =
             new List<BasicSignalController>();
 
         private Coroutine? _updateCoro;
+
+        public List<BasicSignalController> AllSignals => _signalRegister;
 
         public new static string AllowAutoCreate()
         {
@@ -68,7 +70,7 @@ namespace Signals.Game
         {
             base.OnDestroy();
 
-            _junctionMap.Clear();
+            _junctionSignals.Clear();
             _distantSignals.Clear();
 
             StopCoroutine(_updateCoro);
@@ -154,10 +156,18 @@ namespace Signals.Game
 
         internal static void CheckStartCreation(string msg, bool isError, float percent)
         {
-            if (msg != LocalizationAPI.L(WorldStreamingInit.INFO_GAME_CONTENT)) return;
+            // Reset for reloads.
+            if (percent < 60)
+            {
+                _loaded = false;
+                return;
+            }
+
+            if (_loaded) return;
 
             DisplayLoadingThingy();
             Instance.CreateSignals();
+            _loaded = true;
         }
 
         private static void DisplayLoadingThingy()
@@ -168,7 +178,7 @@ namespace Signals.Game
             if (info != null)
             {
                 info.loadProgressTMP.richText = true;
-                info.loadProgressTMP.text += "\ncreating <color=#FF2200>si</color><color=#FFDD22>gna</color><color=#22FF44>ls</color>";
+                info.loadProgressTMP.text += "\ncreating <color=#FF3333>si</color><color=#FFCC00>gna</color><color=#33FF77>ls</color>";
             }
         }
 
@@ -177,51 +187,47 @@ namespace Signals.Game
             SignalsMod.Log("Started creating signals...");
 
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            int created = 0;
+            int count = 0;
             var pack = GetCurrentPack();            
 
-            foreach (var junction in WorldData.Instance.OrderedJunctions)
+            foreach (var junction in WorldData.Junctions)
             {
-                JunctionSignalPair signals;
-
                 switch (ShouldMakeSignal(junction))
                 {
                     case SignalCreationMode.Mainline:
-                        signals = CreateMainlineSignals(pack, junction);
+                        _junctionSignals.Add(junction, CreateMainlineSignals(pack, junction));
                         break;
                     case SignalCreationMode.IntoYard:
-                        signals = CreateIntoYardSignals(pack, junction);
+                        _junctionSignals.Add(junction, CreateIntoYardSignals(pack, junction));
                         break;
                     case SignalCreationMode.IntoYardReverse:
-                        signals = CreateIntoYardReverseSignals(pack, junction);
+                        _junctionSignals.Add(junction, CreateIntoYardReverseSignals(pack, junction));
                         break;
                     default:
                         continue;
                 }
-
-                _junctionMap.Add(junction, signals);
-                created++;
             }
 
             sw.Stop();
-            SignalsMod.Log($"Finished creating signals for {created} junction(s) ({sw.Elapsed.TotalSeconds:F4}s)");
+            SignalsMod.Log($"Finished creating signals for {_junctionSignals.Count} junction(s) ({sw.Elapsed.TotalSeconds:F4}s)");
             sw.Restart();
 
             // Wish this could be done within the same loop but alas.
-            int mergeCount = MergeCloseSignals(pack);
+            count = MergeCloseSignals(pack);
 
             sw.Stop();
-            SignalsMod.Log($"Merged {mergeCount} signal(s) ({sw.Elapsed.TotalSeconds:F4}s)");
+            SignalsMod.Log($"Merged {count} signal(s) ({sw.Elapsed.TotalSeconds:F4}s)");
             sw.Restart();
 
-            created = CreateDistantSignals(pack);
+            count = CreateDistantSignals(pack);
 
             sw.Stop();
-            SignalsMod.Log($"Finished creating {created} distant signal(s) ({sw.Elapsed.TotalSeconds:F4}s)");
+            SignalsMod.Log($"Finished creating {count} distant signal(s) ({sw.Elapsed.TotalSeconds:F4}s)");
+            SignalsMod.Log($"Total signal count: {_signalRegister.Count}");
 
             TrackChecker.StartBuildingMap();
 
-            StartCoroutine(UpdateRoutine());
+            _updateCoro = StartCoroutine(UpdateRoutine());
         }
 
         private int CreateDistantSignals(SignalPack pack)
@@ -230,7 +236,7 @@ namespace Signals.Game
 
             int count = 0;
 
-            foreach (var junction in _junctionMap)
+            foreach (var junction in _junctionSignals)
             {
                 DistantSignalController? distant;
 
@@ -269,12 +275,12 @@ namespace Signals.Game
             return count;
         }
 
-        // Creation testing.
+        #region Creation testing
 
         private SignalCreationMode ShouldMakeSignal(Junction junction)
         {
             // Signals only at juntions, don't duplicate junctions, don't make them at short dead ends.
-            if (_junctionMap.ContainsKey(junction) || InIsShortDeadEnd(junction))
+            if (_junctionSignals.ContainsKey(junction) || InIsShortDeadEnd(junction))
             {
                 return SignalCreationMode.None;
             }
@@ -307,7 +313,7 @@ namespace Signals.Game
                 }
 
                 // Switch branches stay in the same yard, no signal needed.
-                return SignalCreationMode.Shunting;
+                return ShuntingSignalReturn();
             }
 
             // In case we are in a mainline, check all out branches for yards.
@@ -351,9 +357,15 @@ namespace Signals.Game
             return branch == null;
         }
 
-        // Main creation methods.
+        private static SignalCreationMode ShuntingSignalReturn() => SignalsMod.Settings.GenerateShuntingSignals ?
+            SignalCreationMode.Shunting :
+            SignalCreationMode.None;
 
-        private static JunctionSignalPair CreateMainlineSignals(SignalPack pack, Junction junction)
+        #endregion
+
+        #region Main creation methods
+
+        private static JunctionSignalGroup CreateMainlineSignals(SignalPack pack, Junction junction)
         {
             var signals = CreateJunctionSignals(pack.Signal, junction);
 
@@ -365,7 +377,7 @@ namespace Signals.Game
             return signals;
         }
 
-        private static JunctionSignalPair CreateIntoYardSignals(SignalPack pack, Junction junction)
+        private static JunctionSignalGroup CreateIntoYardSignals(SignalPack pack, Junction junction)
         {
             var signals = CreateJunctionSignals(pack.IntoYardSignal, pack.Signal, junction);
 
@@ -383,7 +395,7 @@ namespace Signals.Game
             return signals;
         }
 
-        private static JunctionSignalPair CreateIntoYardReverseSignals(SignalPack pack, Junction junction)
+        private static JunctionSignalGroup CreateIntoYardReverseSignals(SignalPack pack, Junction junction)
         {
             var signals = CreateJunctionSignals(pack.Signal, pack.IntoYardSignal, junction);
 
@@ -446,14 +458,16 @@ namespace Signals.Game
             return new DistantSignalController(junctionSignal, signal, distance);
         }
 
-        // Internal creation methods.
+        #endregion
 
-        private static JunctionSignalPair CreateJunctionSignals(SignalControllerDefinition signal, Junction junction)
+        #region Internal creation methods
+
+        private static JunctionSignalGroup CreateJunctionSignals(SignalControllerDefinition signal, Junction junction)
         {
             return CreateDoubleJunctionSignals(signal, signal, junction);
         }
 
-        private static JunctionSignalPair CreateJunctionSignals(SignalControllerDefinition? outSignal, SignalControllerDefinition? inSignal, Junction junction)
+        private static JunctionSignalGroup CreateJunctionSignals(SignalControllerDefinition? outSignal, SignalControllerDefinition? inSignal, Junction junction)
         {
             if (outSignal != null)
             {
@@ -473,7 +487,7 @@ namespace Signals.Game
             throw new System.Exception("Tried creating JunctionSignalPair from 2 nulls, this cannot work!");
         }
 
-        private static JunctionSignalPair CreateDoubleJunctionSignals(SignalControllerDefinition outSignal, SignalControllerDefinition inSignal, Junction junction)
+        private static JunctionSignalGroup CreateDoubleJunctionSignals(SignalControllerDefinition outSignal, SignalControllerDefinition inSignal, Junction junction)
         {
             SignalsMod.LogVerbose($"Making junction signals for track '{junction.inBranch.track.name}'");
 
@@ -494,12 +508,12 @@ namespace Signals.Game
             to.transform.localRotation = Quaternion.LookRotation(-point.handle2);
             from.transform.localRotation = Quaternion.LookRotation(point.handle2);
 
-            return new JunctionSignalPair(
+            return new JunctionSignalGroup(junction,
                 new JunctionSignalController(to, junction, TrackDirection.Out),
                 new JunctionSignalController(from, junction, TrackDirection.In));
         }
 
-        private static JunctionSignalPair CreateSingleJunctionSignal(SignalControllerDefinition inSignal, Junction junction)
+        private static JunctionSignalGroup CreateSingleJunctionSignal(SignalControllerDefinition inSignal, Junction junction)
         {
             SignalsMod.LogVerbose($"Making junction signals for track '{junction.inBranch.track.name}'");
 
@@ -514,10 +528,10 @@ namespace Signals.Game
             from.transform.localPosition = -4.0f * backward;
             from.transform.localRotation = Quaternion.LookRotation(point.handle2);
 
-            return new JunctionSignalPair(null, new JunctionSignalController(from, junction, TrackDirection.In));
+            return new JunctionSignalGroup(junction, null, new JunctionSignalController(from, junction, TrackDirection.In));
         }
 
-        private static JunctionSignalPair CreateSingleJunctionSignalReverse(SignalControllerDefinition outSignal, Junction junction)
+        private static JunctionSignalGroup CreateSingleJunctionSignalReverse(SignalControllerDefinition outSignal, Junction junction)
         {
             SignalsMod.LogVerbose($"Making junction signals for track '{junction.inBranch.track.name}'");
 
@@ -532,15 +546,17 @@ namespace Signals.Game
             to.transform.localPosition = backward;
             to.transform.localRotation = Quaternion.LookRotation(-point.handle2);
 
-            return new JunctionSignalPair(new JunctionSignalController(to, junction, TrackDirection.Out), null);
+            return new JunctionSignalGroup(junction, new JunctionSignalController(to, junction, TrackDirection.Out), null);
         }
 
-        // Post processing.
+        #endregion
+
+        #region Post processing
 
         private int MergeCloseSignals(SignalPack pack)
         {
             HashSet<Junction> merged = new HashSet<Junction>();
-            var pairs = _junctionMap.ToList();
+            var pairs = _junctionSignals.ToList();
 
             foreach (var item in pairs)
             {
@@ -562,7 +578,7 @@ namespace Signals.Game
                 // Already merged.
                 if (merged.Contains(other)) continue;
 
-                Merge(item.Value, _junctionMap[other], pack);
+                Merge(item.Value, _junctionSignals[other], pack);
 
                 merged.Add(item.Key);
             }
@@ -570,7 +586,7 @@ namespace Signals.Game
             return merged.Count;
         }
 
-        private static void Merge(JunctionSignalPair p1, JunctionSignalPair p2, SignalPack pack, TrackDirection direction = TrackDirection.Out)
+        private static void Merge(JunctionSignalGroup p1, JunctionSignalGroup p2, SignalPack pack, TrackDirection direction = TrackDirection.Out)
         {
             if (direction.IsOut())
             {
@@ -585,8 +601,8 @@ namespace Signals.Game
                     p2.InBranchSignal = Replace(p2.InBranchSignal, pack.GetForType(p1.OutBranchesSignal.Type));
                 }
 
-                Destroy(p1.OutBranchesSignal?.Definition.gameObject);
-                Destroy(p2.OutBranchesSignal?.Definition.gameObject);
+                p1.OutBranchesSignal?.Destroy();
+                p2.OutBranchesSignal?.Destroy();
                 p1.OutBranchesSignal = null;
                 p2.OutBranchesSignal = null;
             }
@@ -602,8 +618,8 @@ namespace Signals.Game
                     p2.OutBranchesSignal = Replace(p2.OutBranchesSignal, pack.GetForType(p1.InBranchSignal.Type));
                 }
 
-                Destroy(p1.InBranchSignal?.Definition.gameObject);
-                Destroy(p2.InBranchSignal?.Definition.gameObject);
+                p1.InBranchSignal?.Destroy();
+                p2.InBranchSignal?.Destroy();
                 p1.InBranchSignal = null;
                 p2.InBranchSignal = null;
             }
@@ -628,6 +644,8 @@ namespace Signals.Game
                 Type = original.Type
             };
         }
+
+        #endregion
 
         #endregion
 
@@ -666,7 +684,7 @@ namespace Signals.Game
                         signal.Optimise();
 
                         // Skip updating if not needed.
-                        if (signal.ShouldSkipUpdate()) continue;
+                        if (signal.ManualOperationOnly || signal.ShouldSkipUpdate()) continue;
 
                         // Actually update.
                         signal.UpdateAspect();
@@ -687,20 +705,10 @@ namespace Signals.Game
             return _signalRegister.Remove(signal);
         }
 
-        internal bool TryGetSignals(Junction junction, out JunctionSignalPair pair)
+        internal bool TryGetSignals(Junction junction, out JunctionSignalGroup pair)
         {
-            return _junctionMap.TryGetValue(junction, out pair);
+            return _junctionSignals.TryGetValue(junction, out pair);
         }
-
-        //private JunctionSignalPair? GetFromId(int id)
-        //{
-        //    var junction = WorldData.Junctions.FirstOrDefault(x => x.junctionData.junctionId == id);
-
-        //    if (junction == null) return null;
-
-        //    TryGetSignals(junction, out var pair);
-        //    return pair;
-        //}
 
         /// <summary>
         /// Tries to find a signal at a junction.
