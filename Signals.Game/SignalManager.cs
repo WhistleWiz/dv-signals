@@ -27,7 +27,7 @@ namespace Signals.Game
         private const float DeadEndThreshold = 100.0f;
         private const float ClosenessThreshold = 50.0f;
         private const float UpdateTime = 1.0f;
-
+        
         private static Transform? _holder;
         private static bool _loaded = false;
 
@@ -203,13 +203,16 @@ namespace Signals.Game
                     case SignalCreationMode.IntoYardReverse:
                         _junctionSignals.Add(junction, CreateIntoYardReverseSignals(pack, junction));
                         break;
+                    case SignalCreationMode.Shunting:
+                        count += CreateShuntingSignals(pack, junction);
+                        break;
                     default:
                         continue;
                 }
             }
 
             sw.Stop();
-            SignalsMod.Log($"Finished creating signals for {_junctionSignals.Count} junction(s) ({sw.Elapsed.TotalSeconds:F4}s)");
+            SignalsMod.Log($"Finished creating signals for {_junctionSignals.Count} junction(s), and {count} shunting signal pair(s) ({sw.Elapsed.TotalSeconds:F4}s)");
             sw.Restart();
 
             // Wish this could be done within the same loop but alas.
@@ -458,6 +461,27 @@ namespace Signals.Game
             return new DistantSignalController(junctionSignal, signal, distance);
         }
 
+        private static int CreateShuntingSignals(SignalPack pack, Junction junction)
+        {
+            if (pack.ShuntingSignal == null) return 0;
+
+            int count = 0;
+
+            foreach (var branch in junction.outBranches)
+            {
+                if (branch.track == null ||
+                    branch.track.outBranch == null ||
+                    branch.track.outBranch.track == null ||
+                    branch.track.outBranch.track.logicTrack.length < 25) continue;
+
+                CreateSignalAtPoint(pack.ShuntingSignal, branch.track.curve.Last(), TrackDirection.In, -17);
+                CreateSignalAtPoint(pack.ShuntingSignal, branch.track.curve.Last(), TrackDirection.Out, -16);
+                count++;
+            }
+
+            return count;
+        }
+
         #endregion
 
         #region Internal creation methods
@@ -497,7 +521,7 @@ namespace Signals.Game
             // in the pack, and then backwards by a few metres to look better. Also keeps it out of the way from
             // switch stands this way. It'll block the stand from the branches side but that is fine. This does
             // however mean that if the track length is very short, it can look odd.
-            var point = outTrack.curve.GetAnchorPoints()[0];
+            var point = outTrack.curve[0];
             var backward = -point.handle2.normalized;
 
             var to = Instantiate(outSignal, point.transform, false);
@@ -520,7 +544,7 @@ namespace Signals.Game
             var outTrack = junction.outBranches[0].track;
 
             // Similar to the previous method, but only creates a single signal (the one facing the in branch, so "out" of the yard).
-            var point = outTrack.curve.GetAnchorPoints()[0];
+            var point = outTrack.curve[0];
             var backward = -point.handle2.normalized;
 
             var from = Instantiate(inSignal, point.transform, false);
@@ -538,7 +562,7 @@ namespace Signals.Game
             var outTrack = junction.outBranches[0].track;
 
             // Similar to the previous method, but only creates a single signal (the one facing the out branch).
-            var point = outTrack.curve.GetAnchorPoints()[0];
+            var point = outTrack.curve[0];
             var backward = -point.handle2.normalized;
 
             var to = Instantiate(outSignal, point.transform, false);
@@ -547,6 +571,17 @@ namespace Signals.Game
             to.transform.localRotation = Quaternion.LookRotation(-point.handle2);
 
             return new JunctionSignalGroup(junction, new JunctionSignalController(to, junction, TrackDirection.Out), null);
+        }
+
+        private static BasicSignalController CreateSignalAtPoint(SignalControllerDefinition def, BezierPoint point, TrackDirection dir, float offset)
+        {
+            var backward = point.handle1.normalized;
+            var signal = Instantiate(def, point.transform, false);
+
+            signal.transform.localPosition = backward * offset;
+            signal.transform.localRotation = Quaternion.LookRotation(dir.IsOut() ? point.handle1 : -point.handle1);
+
+            return new BasicSignalController(signal);
         }
 
         #endregion
