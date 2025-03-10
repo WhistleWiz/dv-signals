@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityModManagerNet;
+using static Junction;
 
 namespace Signals.Game
 {
@@ -212,7 +213,7 @@ namespace Signals.Game
             }
 
             sw.Stop();
-            SignalsMod.Log($"Finished creating signals for {_junctionSignals.Count} junction(s), and {count} shunting signal pair(s) ({sw.Elapsed.TotalSeconds:F4}s)");
+            SignalsMod.Log($"Finished creating signals for {_junctionSignals.Count} junction(s), and {count} shunting signal(s) ({sw.Elapsed.TotalSeconds:F4}s)");
             sw.Restart();
 
             // Wish this could be done within the same loop but alas.
@@ -463,21 +464,22 @@ namespace Signals.Game
 
         private static int CreateShuntingSignals(SignalPack pack, Junction junction)
         {
-            if (pack.ShuntingSignal == null) return 0;
+            if (pack.ShuntingSignal == null || junction.outBranches.Count < 1) return 0;
 
             int count = 0;
 
             foreach (var branch in junction.outBranches)
             {
-                if (branch.track == null ||
-                    branch.track.outBranch == null ||
-                    branch.track.outBranch.track == null ||
-                    branch.track.outBranch.track.logicTrack.length < 25) continue;
+                if (branch.track == null || branch.track.outBranch == null || branch.track.outBranch.track == null) continue;
 
-                CreateSignalAtPoint(pack.ShuntingSignal, branch.track.curve.Last(), TrackDirection.In, -17);
-                CreateSignalAtPoint(pack.ShuntingSignal, branch.track.curve.Last(), TrackDirection.Out, -16);
+                if (branch.track.outBranch.track.logicTrack.length < 25) break;
+
+                CreateSignalAtPoint(pack.ShuntingSignal, branch.track.curve.Last(), TrackDirection.In, -16f);
                 count++;
             }
+
+            CreateSignalAtPoint(pack.ShuntingSignal, junction.outBranches[0].track.curve[0], TrackDirection.Out, -4);
+            count++;
 
             return count;
         }
