@@ -18,7 +18,9 @@ namespace Signals.Game
         private string? _nextTrackYardNumberType;
         private string? _nextTrackYardNumber;
         private string? _nextTrackYard;
+        private string? _nextStation;
 
+        public TrackDirection? LastDirection { get; private set; }
         public RailTrack[] Tracks => _tracks;
         /// <summary>
         /// The next mainline (non shunting) signal.
@@ -124,6 +126,19 @@ namespace Signals.Game
                 return _nextTrackYard;
             }
         }
+        /// <summary>
+        /// The next station. Empty if not available.
+        /// </summary>
+        public string NextStation
+        {
+            get
+            {
+                _nextStation ??= TrackUtils.NextStation(_tracks);
+
+                return _nextStation;
+            }
+        }
+        public RailTrack LastTrack => _tracks[_tracks.Length - 1];
 
         /// <summary>
         /// Creates a complete WalkInfo.
@@ -131,11 +146,13 @@ namespace Signals.Game
         /// <param name="tracks"></param>
         /// <param name="nextMainlineSignal"></param>
         /// <param name="nextShuntingSignal"></param>
-        public TrackInfo(IEnumerable<RailTrack>? tracks = null, BasicSignalController? nextMainlineSignal = null, BasicSignalController? nextShuntingSignal = null,
+        public TrackInfo(IEnumerable<RailTrack>? tracks = null, TrackDirection? lastDirection = null,
+            BasicSignalController? nextMainlineSignal = null, BasicSignalController? nextShuntingSignal = null,
             Junction? nextJunction = null)
         {
             _tracks = tracks == null ? Array.Empty<RailTrack>() : tracks.ToArray();
 
+            LastDirection = lastDirection;
             NextMainlineSignal = nextMainlineSignal;
             NextShuntingSignal = nextShuntingSignal;
             NextJunction = nextJunction;
@@ -159,6 +176,18 @@ namespace Signals.Game
                 _distanceWalked = 0;
                 _distanceWalkedWithoutStartingTrack = 0;
             }
+        }
+
+        public void ClearCachedData()
+        {
+            _distanceWalked = null;
+            _distanceWalkedWithoutStartingTrack = null;
+            _nextTrackNumber = null;
+            _nextTrackNumberType = null;
+            _nextTrackYardNumberType = null;
+            _nextTrackYardNumber = null;
+            _nextTrackYard = null;
+            _nextStation = null;
         }
 
         public static TrackInfo NextSignalTrackInfo(BasicSignalController controller)

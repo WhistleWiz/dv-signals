@@ -137,7 +137,7 @@ namespace Signals.Game
 
             ExitLoop:
 
-            return new TrackInfo(ordered, mainlineSignal, shuntingSignal, nextJunction);
+            return new TrackInfo(ordered, direction, mainlineSignal, shuntingSignal, nextJunction);
         }
 
         private static bool ContainsTrack(RailTrack from, Branch branch, TrackDirection direction)
@@ -164,6 +164,64 @@ namespace Signals.Game
             }
 
             return false;
+        }
+
+        public static IEnumerable<RailTrack> Walk(JunctionSignalController controller)
+        {
+            return Walk(controller.Junction, controller.Direction);
+        }
+
+        public static IEnumerable<RailTrack> Walk(Junction from, TrackDirection direction)
+        {
+            return Walk(from, direction, from.selectedBranch);
+        }
+
+        public static IEnumerable<RailTrack> Walk(Junction from, TrackDirection direction, int branch)
+        {
+            var track = direction.IsOut() ? from.outBranches[branch].track : from.inBranch.track;
+            return Walk(track, track.inJunction == from ? TrackDirection.Out : TrackDirection.In);
+        }
+
+        public static IEnumerable<RailTrack> Walk(RailTrack track, TrackDirection direction)
+        {
+            int depth = 0;
+            HashSet<RailTrack> visited = new HashSet<RailTrack>();
+
+            // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
+            while (depth++ < MaxDepth && track != null && !visited.Contains(track))
+            {
+                visited.Add(track);
+
+                Junction? junction = direction.IsOut() ? track.outJunction : track.inJunction;
+                Branch? branch;
+
+                if (junction != null)
+                {
+                    branch = junction.inBranch.track == track ?
+                        junction.outBranches[junction.selectedBranch] :
+                        junction.inBranch;
+                }
+                else
+                {
+                    // If there's no junction just use the track branch directly.
+                    branch = direction.IsOut() ? track.outBranch : track.inBranch;
+                }
+
+                // No branch means we have no track to go, stop looping.
+                if (branch == null || branch.track == null)
+                {
+                    break;
+                }
+
+                // Check if the current track is the next track of the next branch.
+                if (ContainsTrack(track, branch, direction))
+                {
+                    direction = direction.Flipped();
+                }
+
+                track = branch.track;
+                yield return track;
+            }
         }
     }
 }

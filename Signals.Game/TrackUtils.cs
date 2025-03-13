@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using DV.Logic.Job;
+using System.Collections.Generic;
 using System.Linq;
 
 using JData = Junction.JunctionData;
@@ -151,7 +152,24 @@ namespace Signals.Game
             return string.Empty;
         }
 
-        public static string Station(Junction junction)
+        public static string NextStation(IEnumerable<RailTrack> tracks)
+        {
+            foreach (var track in tracks)
+            {
+                if (track.logicTrack.ID.IsGeneric()) continue;
+
+                var text = track.logicTrack.ID.yardId;
+
+                if (!string.IsNullOrEmpty(text))
+                {
+                    return text;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        public static string JunctionStation(Junction junction)
         {
             var id = junction.junctionData.junctionIdLong;
 

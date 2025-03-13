@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityModManagerNet;
-using static Junction;
 
 namespace Signals.Game
 {
