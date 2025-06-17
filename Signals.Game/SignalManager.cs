@@ -1,5 +1,4 @@
-﻿using DV;
-using DV.Utils;
+﻿using DV.Utils;
 using Signals.Common;
 using Signals.Game.Controllers;
 using Signals.Game.Curves;
@@ -190,7 +189,7 @@ namespace Signals.Game
             int count = 0;
             var pack = GetCurrentPack();            
 
-            foreach (var junction in WorldData.Junctions)
+            foreach (var junction in RailTrackRegistryBase.Junctions)
             {
                 switch (ShouldMakeSignal(junction))
                 {
@@ -204,7 +203,7 @@ namespace Signals.Game
                         _junctionSignals.Add(junction, CreateIntoYardReverseSignals(pack, junction));
                         break;
                     case SignalCreationMode.Shunting:
-                        count += CreateShuntingSignals(pack, junction);
+                        //count += CreateShuntingSignals(pack, junction);
                         break;
                     default:
                         continue;
@@ -348,7 +347,7 @@ namespace Signals.Game
         {
             var track = junction.inBranch.track;
 
-            if (track.logicTrack.length > DeadEndThreshold)
+            if (track.GetLength() > DeadEndThreshold)
             {
                 return false;
             }
@@ -358,6 +357,11 @@ namespace Signals.Game
                 track.GetInBranch();
 
             return branch == null;
+        }
+
+        private static bool IsPartOfYard(RailTrack track)
+        {
+            return track.name.StartsWith(YardNameStart);
         }
 
         private static SignalCreationMode ShuntingSignalReturn() => SignalsMod.Settings.GenerateShuntingSignals ?
@@ -420,7 +424,8 @@ namespace Signals.Game
         {
             var track = junctionSignal.Junction.inBranch.track;
 
-            if (track.logicTrack.length < pack.DistantSignalMinimumTrackLength) return null;
+            if (track.GetLength() < pack.DistantSignalMinimumTrackLength) return null;
+            if (IsPartOfYard(track)) return null;
 
             SignalsMod.LogVerbose($"Making distant signal [in] for signal '{junctionSignal.Name}'");
 
@@ -443,11 +448,13 @@ namespace Signals.Game
             var branchTrack = junctionSignal.Junction.outBranches[branch].track;
             var track = branchTrack.outBranch.track;
 
-            if (track.logicTrack.length < pack.DistantSignalMinimumTrackLength) return null;
+            if (track.GetLength() < pack.DistantSignalMinimumTrackLength) return null;
+            if (IsPartOfYard(track)) return null;
 
             SignalsMod.LogVerbose($"Making distant signal [b:{branch}] for signal '{junctionSignal.Name}'");
 
-            bool dir = track.inBranch.track == branchTrack;
+            // Always false on null in branches.
+            bool dir = track.inBranch != null && track.inBranch.track == branchTrack;
 
             var (point, forward, distance) = dir ?
                 BezierHelper.GetAproxPointAtLength(track.curve, pack.DistantSignalDistance) :
@@ -471,14 +478,14 @@ namespace Signals.Game
             {
                 if (branch.track == null || branch.track.outBranch == null || branch.track.outBranch.track == null) continue;
 
-                if (branch.track.outBranch.track.logicTrack.length < 25) break;
+                if (branch.track.outBranch.track.GetLength() < 25) break;
 
                 CreateSignalAtPoint(pack.ShuntingSignal, branch.track.curve.Last(), TrackDirection.In, -16f);
                 count++;
             }
 
-            CreateSignalAtPoint(pack.ShuntingSignal, junction.outBranches[0].track.curve[0], TrackDirection.Out, -4);
-            count++;
+            //CreateSignalAtPoint(pack.ShuntingSignal, junction.outBranches[0].track.curve[0], TrackDirection.Out, -4);
+            //count++;
 
             return count;
         }
@@ -600,7 +607,7 @@ namespace Signals.Game
 
                 // If the track is large enough, don't merge. Only the in track (not on branching side)
                 // matters, as you always want a signal for the single exit.
-                if (track.logicTrack.length > ClosenessThreshold) continue;
+                if (track.GetLength() > ClosenessThreshold) continue;
 
                 // Junction at the other end of the track.
                 var other = track.outJunction == item.Key ?

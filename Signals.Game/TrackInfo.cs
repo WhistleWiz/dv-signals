@@ -162,13 +162,13 @@ namespace Signals.Game
         {
             if (Tracks.Length > 0)
             {
-                _distanceWalked = (float)Tracks[0].logicTrack.length;
+                _distanceWalked = (float)Tracks[0].GetLength();
                 _distanceWalkedWithoutStartingTrack = 0.0f;
 
                 for (int i = 0; i < Tracks.Length; i++)
                 {
-                    _distanceWalked += (float)Tracks[i].logicTrack.length;
-                    _distanceWalkedWithoutStartingTrack = (float)Tracks[0].logicTrack.length;
+                    _distanceWalked += (float)Tracks[i].GetLength();
+                    _distanceWalkedWithoutStartingTrack = (float)Tracks[0].GetLength();
                 }
             }
             else

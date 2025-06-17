@@ -1,4 +1,5 @@
-﻿using Signals.Common;
+﻿using DV.Logic.Job;
+using Signals.Common;
 using System.Linq;
 using UnityEngine;
 
@@ -60,7 +61,17 @@ namespace Signals.Game
 
         public static bool HasBogies(this RailTrack track)
         {
-            return track.onTrackBogies.Count() > 0;
+            return track.BogiesOnTrack().Count() > 0;
+        }
+
+        public static double GetLength(this RailTrack track)
+        {
+            return RailTrackRegistry.RailTrackToLogicTrack[track].length;
+        }
+
+        public static TrackID GetID(this RailTrack track)
+        {
+            return RailTrackRegistry.RailTrackToLogicTrack[track].ID;
         }
 
         #endregion

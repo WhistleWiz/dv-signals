@@ -1,5 +1,4 @@
 ﻿using Signals.Common;
-using UnityEngine;
 
 namespace Signals.Game.Controllers
 {

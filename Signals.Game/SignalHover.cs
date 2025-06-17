@@ -1,5 +1,5 @@
-﻿using DV.Hovering;
-using DV.HUD.Signs;
+﻿using DV.Common;
+using DV.Hovering;
 using DV.Signs;
 using DV.UI.LocoHUD;
 using Signals.Game.Controllers;
@@ -17,8 +17,8 @@ namespace Signals.Game
         private static Vector2 s_size = new Vector2(120, 120);
         private static Dictionary<Sprite, GameObject> s_sprites = new Dictionary<Sprite, GameObject>();
         private static ContentSizeFitter? s_sizeFitter;
-        private static SignDisplayElement? s_template;
-        private static SignDisplayElement Template
+        private static ASignDisplayElement? s_template;
+        private static ASignDisplayElement Template
         {
             get
             {
@@ -40,14 +40,14 @@ namespace Signals.Game
 
         public void Initialise(Sprite? offSprite)
         {
-            signTypes = new List<SignDisplay.SignDisplayInstance>();
+            signTypes = new List<SignDisplayInstance>();
 
             if (offSprite == null)
             {
                 return;
             }
 
-            signTypes.Add(new SignDisplay.SignDisplayInstance()
+            signTypes.Add(new SignDisplayInstance()
             {
                 prefab = GetPrefabFromSprite(offSprite)
             });
@@ -59,7 +59,7 @@ namespace Signals.Game
 
             if (sprite != null)
             {
-                signTypes.Add(new SignDisplay.SignDisplayInstance()
+                signTypes.Add(new SignDisplayInstance()
                 {
                     prefab = GetPrefabFromSprite(sprite),
                     text = BlankSpace
@@ -78,7 +78,7 @@ namespace Signals.Game
                     text.color = item.Definition.HUDTextColour;
                 }
 
-                signTypes.Add(new SignDisplay.SignDisplayInstance()
+                signTypes.Add(new SignDisplayInstance()
                 {
                     prefab = go,
                     text = item.DisplayText
@@ -91,7 +91,7 @@ namespace Signals.Game
 
                 var go = GetPrefabFromSprite(item.Definition.HUDSprite);
 
-                signTypes.Add(new SignDisplay.SignDisplayInstance()
+                signTypes.Add(new SignDisplayInstance()
                 {
                     prefab = go,
                     text = BlankSpace
@@ -116,6 +116,7 @@ namespace Signals.Game
             if (!found || go == null)
             {
                 var display = Instantiate(Template, SignalManager.Holder);
+                display.name = sprite.name;
                 var rect = display.GetComponentInChildren<RectTransform>();
                 rect.sizeDelta = GetSize(sprite);
                 var img = display.GetComponentInChildren<Image>();

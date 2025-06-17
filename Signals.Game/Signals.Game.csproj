@@ -19,10 +19,13 @@
 		<Reference Include="UnityEngine.PhysicsModule" />
     <Reference Include="UnityEngine.UI" />
     <Reference Include="Unity.TextMeshPro" />
+		<Reference Include="DV.Common" />
 		<Reference Include="DV.Interaction" />
 		<Reference Include="DV.Localization" />
 		<Reference Include="DV.NAudio" />
+		<Reference Include="DV.RailTrack" />
 		<Reference Include="DV.PointSet" />
+		<Reference Include="DV.SignPlacer" />
 		<Reference Include="DV.Simulation" />
 		<Reference Include="DV.ThingTypes" />
 		<Reference Include="DV.UI" />

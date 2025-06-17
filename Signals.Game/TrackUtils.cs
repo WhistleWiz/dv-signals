@@ -51,9 +51,9 @@ namespace Signals.Game
         {
             foreach (var track in tracks)
             {
-                if (track.logicTrack.ID.IsGeneric()) continue;
+                if (track.GetID().IsGeneric()) continue;
 
-                var text = ReflectionHelpers.GetTrimmedOrderNumber(track.logicTrack.ID);
+                var text = ReflectionHelpers.GetTrimmedOrderNumber(track.GetID());
 
                 if (!string.IsNullOrEmpty(text))
                 {
@@ -73,9 +73,9 @@ namespace Signals.Game
         {
             foreach (var track in tracks)
             {
-                if (track.logicTrack.ID.IsGeneric()) continue;
+                if (track.GetID().IsGeneric()) continue;
 
-                var text = track.logicTrack.ID.SignIDTrackPart;
+                var text = track.GetID().SignIDTrackPart;
 
                 if (!string.IsNullOrEmpty(text))
                 {
@@ -95,9 +95,9 @@ namespace Signals.Game
         {
             foreach (var track in tracks)
             {
-                if (track.logicTrack.ID.IsGeneric()) continue;
+                if (track.GetID().IsGeneric()) continue;
 
-                var text = track.logicTrack.ID.TrackPartOnly;
+                var text = track.GetID().TrackPartOnly;
 
                 if (!string.IsNullOrEmpty(text))
                 {
@@ -117,9 +117,9 @@ namespace Signals.Game
         {
             foreach (var track in tracks)
             {
-                if (track.logicTrack.ID.IsGeneric()) continue;
+                if (track.GetID().IsGeneric()) continue;
 
-                var text = track.logicTrack.ID.SignIDSubYardPart + ReflectionHelpers.GetTrimmedOrderNumber(track.logicTrack.ID);
+                var text = track.GetID().SignIDSubYardPart + ReflectionHelpers.GetTrimmedOrderNumber(track.GetID());
 
                 if (!string.IsNullOrEmpty(text))
                 {
@@ -139,9 +139,9 @@ namespace Signals.Game
         {
             foreach (var track in tracks)
             {
-                if (track.logicTrack.ID.IsGeneric()) continue;
+                if (track.GetID().IsGeneric()) continue;
 
-                var text = track.logicTrack.ID.SignIDSubYardPart;
+                var text = track.GetID().SignIDSubYardPart;
 
                 if (!string.IsNullOrEmpty(text))
                 {
@@ -156,9 +156,9 @@ namespace Signals.Game
         {
             foreach (var track in tracks)
             {
-                if (track.logicTrack.ID.IsGeneric()) continue;
+                if (track.GetID().IsGeneric()) continue;
 
-                var text = track.logicTrack.ID.yardId;
+                var text = track.GetID().yardId;
 
                 if (!string.IsNullOrEmpty(text))
                 {
