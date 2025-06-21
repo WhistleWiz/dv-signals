@@ -41,12 +41,12 @@ namespace Signals.Game
             return controller;
         }
 
-        public static SignalControllerDefinition? GetForType(this SignalPack pack, SignalType type) => type switch
+        public static SignalControllerDefinition? GetForType(this SignalPack pack, SignalType type, bool old) => type switch
         {
-            SignalType.Mainline => pack.Signal,
-            SignalType.IntoYard => pack.IntoYardSignal,
-            SignalType.Shunting => pack.ShuntingSignal,
-            SignalType.Distant => pack.DistantSignal,
+            SignalType.Mainline => old ? pack.OldSignal : pack.Signal,
+            SignalType.IntoYard => old ? pack.OldIntoYardSignal : pack.IntoYardSignal,
+            SignalType.Shunting => old ? pack.OldShuntingSignal : pack.ShuntingSignal,
+            SignalType.Distant => old ? pack.OldDistantSignal : pack.DistantSignal,
             _ => null,
         };
 

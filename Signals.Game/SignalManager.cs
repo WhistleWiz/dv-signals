@@ -184,6 +184,7 @@ namespace Signals.Game
         private void CreateSignals()
         {
             SignalsMod.Log("Started creating signals...");
+            //OldAreaCalculator.DebugCreateDummies();
 
             var sw = System.Diagnostics.Stopwatch.StartNew();
             int count = 0;
@@ -374,11 +375,13 @@ namespace Signals.Game
 
         private static JunctionSignalGroup CreateMainlineSignals(SignalPack pack, Junction junction)
         {
-            var signals = CreateJunctionSignals(pack.Signal, junction);
+            bool old = pack.OldSignal != null && OldAreaCalculator.IsWithinOldArea(junction.position);
+            var signals = CreateJunctionSignals(old ? pack.OldSignal! : pack.Signal, junction);
 
             foreach (var signal in signals.AllSignals)
             {
                 signal.Type = SignalType.Mainline;
+                signal.IsOld = old;
             }
 
             return signals;
@@ -386,11 +389,16 @@ namespace Signals.Game
 
         private static JunctionSignalGroup CreateIntoYardSignals(SignalPack pack, Junction junction)
         {
-            var signals = CreateJunctionSignals(pack.IntoYardSignal, pack.Signal, junction);
+            bool old = pack.OldSignal != null && pack.OldIntoYardSignal != null && OldAreaCalculator.IsWithinOldArea(junction.position);
+            var signals = CreateJunctionSignals(
+                old ? pack.OldIntoYardSignal : pack.IntoYardSignal,
+                old ? pack.OldSignal : pack.Signal,
+                junction);
 
             foreach (var signal in signals.AllSignals)
             {
                 signal.Type = SignalType.IntoYard;
+                signal.IsOld = old;
             }
 
             // The signal facing the in branch does not point to the yard.
@@ -404,11 +412,16 @@ namespace Signals.Game
 
         private static JunctionSignalGroup CreateIntoYardReverseSignals(SignalPack pack, Junction junction)
         {
-            var signals = CreateJunctionSignals(pack.Signal, pack.IntoYardSignal, junction);
+            bool old = pack.OldSignal != null && pack.OldIntoYardSignal != null && OldAreaCalculator.IsWithinOldArea(junction.position);
+            var signals = CreateJunctionSignals(
+                old ? pack.OldSignal : pack.Signal,
+                old ? pack.OldIntoYardSignal : pack.IntoYardSignal,
+                junction);
 
             foreach (var signal in signals.AllSignals)
             {
                 signal.Type = SignalType.Mainline;
+                signal.IsOld = old;
             }
 
             // The signal facing the in branch does not point to the yard.
@@ -424,6 +437,7 @@ namespace Signals.Game
         {
             var track = junctionSignal.Junction.inBranch.track;
 
+            if (pack.DistantSignal == null) return null;
             if (track.GetLength() < pack.DistantSignalMinimumTrackLength) return null;
             if (IsPartOfYard(track)) return null;
 
@@ -435,7 +449,8 @@ namespace Signals.Game
                 BezierHelper.GetAproxPointAtLength(track.curve, pack.DistantSignalDistance) :
                 BezierHelper.GetAproxPointAtLengthReverse(track.curve, pack.DistantSignalDistance);
 
-            var signal = Instantiate(pack.DistantSignal!, track.curve.transform, false);
+            bool old = junctionSignal.IsOld && pack.OldDistantSignal != null;
+            var signal = Instantiate(old ? pack.OldDistantSignal! : pack.DistantSignal, track.curve.transform, false);
 
             signal.transform.position = point;
             signal.transform.localRotation = Quaternion.LookRotation(dir ? forward : -forward);
@@ -448,6 +463,7 @@ namespace Signals.Game
             var branchTrack = junctionSignal.Junction.outBranches[branch].track;
             var track = branchTrack.outBranch.track;
 
+            if (pack.DistantSignal == null) return null;
             if (track.GetLength() < pack.DistantSignalMinimumTrackLength) return null;
             if (IsPartOfYard(track)) return null;
 
@@ -460,7 +476,8 @@ namespace Signals.Game
                 BezierHelper.GetAproxPointAtLength(track.curve, pack.DistantSignalDistance) :
                 BezierHelper.GetAproxPointAtLengthReverse(track.curve, pack.DistantSignalDistance);
 
-            var signal = Instantiate(pack.DistantSignal!, track.curve.transform, false);
+            bool old = junctionSignal.IsOld && pack.OldDistantSignal != null;
+            var signal = Instantiate(old ? pack.OldDistantSignal! : pack.DistantSignal, track.curve.transform, false);
 
             signal.transform.position = point;
             signal.transform.localRotation = Quaternion.LookRotation(dir ? forward : -forward);
@@ -636,12 +653,12 @@ namespace Signals.Game
                 // Replace the signal type if needed.
                 if (p1.InBranchSignal != null && p2.OutBranchesSignal != null && p1.InBranchSignal.Type != p2.OutBranchesSignal.Type)
                 {
-                    p1.InBranchSignal = Replace(p1.InBranchSignal, pack.GetForType(p2.OutBranchesSignal.Type));
+                    p1.InBranchSignal = Replace(p1.InBranchSignal, pack.GetForType(p2.OutBranchesSignal.Type, p2.OutBranchesSignal.IsOld));
                 }
 
                 if (p2.InBranchSignal != null && p1.OutBranchesSignal != null && p2.InBranchSignal.Type != p1.OutBranchesSignal.Type)
                 {
-                    p2.InBranchSignal = Replace(p2.InBranchSignal, pack.GetForType(p1.OutBranchesSignal.Type));
+                    p2.InBranchSignal = Replace(p2.InBranchSignal, pack.GetForType(p1.OutBranchesSignal.Type, p1.OutBranchesSignal.IsOld));
                 }
 
                 p1.OutBranchesSignal?.Destroy();
@@ -653,12 +670,12 @@ namespace Signals.Game
             {
                 if (p1.OutBranchesSignal != null && p2.InBranchSignal != null && p1.OutBranchesSignal.Type != p2.InBranchSignal.Type)
                 {
-                    p1.OutBranchesSignal = Replace(p1.OutBranchesSignal, pack.GetForType(p2.InBranchSignal.Type));
+                    p1.OutBranchesSignal = Replace(p1.OutBranchesSignal, pack.GetForType(p2.InBranchSignal.Type, p2.InBranchSignal.IsOld));
                 }
 
                 if (p2.OutBranchesSignal != null && p1.InBranchSignal != null && p2.OutBranchesSignal.Type != p1.InBranchSignal.Type)
                 {
-                    p2.OutBranchesSignal = Replace(p2.OutBranchesSignal, pack.GetForType(p1.InBranchSignal.Type));
+                    p2.OutBranchesSignal = Replace(p2.OutBranchesSignal, pack.GetForType(p1.InBranchSignal.Type, p1.InBranchSignal.IsOld));
                 }
 
                 p1.InBranchSignal?.Destroy();

@@ -28,6 +28,18 @@ namespace Signals.Common
         public float DistantSignalDistance = 300.0f;
         [Tooltip("The minimum length of a track to be eligible for a distant signal\nShould be at least double the signal distance"), Min(200.0f)]
         public float DistantSignalMinimumTrackLength = 600.0f;
+
+        [Header("Optional Alternate Versions")]
+        [Tooltip("Used on all junctions in mainlines")]
+        public SignalControllerDefinition? OldSignal;
+        [Tooltip("Used on junctions that enter/change yards")]
+        public SignalControllerDefinition? OldIntoYardSignal;
+        [Tooltip("Used on junctions inside yards")]
+        public SignalControllerDefinition? OldShuntingSignal;
+        [Tooltip("Used on mainline tracks that meet certain conditions")]
+        public SignalControllerDefinition? OldDistantSignal;
+
+        [Header("Extras")]
         [Tooltip("Any additional signals included in this pack")]
         public SignalControllerDefinition[] OtherSignals = Array.Empty<SignalControllerDefinition>();
 
@@ -56,6 +68,11 @@ namespace Signals.Common
                 {
                     if (item != null) yield return item;
                 }
+
+                if (OldSignal != null) yield return OldSignal;
+                if (OldIntoYardSignal != null) yield return OldIntoYardSignal;
+                if (OldShuntingSignal != null) yield return OldShuntingSignal;
+                if (OldDistantSignal != null) yield return OldDistantSignal;
             }
         }
     }

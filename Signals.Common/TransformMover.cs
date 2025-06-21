@@ -39,12 +39,28 @@ namespace Signals.Common
 
         public void ToTransformed()
         {
-            SetTargetAndStart(1.0f);
+            // Inactive gameobjects cannot run coroutines.
+            if (gameObject.activeInHierarchy)
+            {
+                SetTargetAndStart(1.0f);
+            }
+            else
+            {
+                SetEnd(true);
+            }
         }
 
         public void ToOriginal()
         {
-            SetTargetAndStart(0.0f);
+            // Inactive gameobjects cannot run coroutines.
+            if (gameObject.activeInHierarchy)
+            {
+                SetTargetAndStart(0.0f);
+            }
+            else
+            {
+                SetEnd(false);
+            }
         }
 
         private void SetTargetAndStart(float value)
@@ -97,6 +113,15 @@ namespace Signals.Common
             }
 
             _moveCoro = _target != target ? StartCoroutine(MoveRoutine()) : null;
+        }
+
+        private void SetEnd(bool transformed)
+        {
+            transform.localPosition = transformed ? TransformedPosition : OriginalPosition;
+            transform.localRotation = Quaternion.Euler(transformed ? TransformedRotation : OriginalRotation);
+            transform.localScale = transformed ? TransformedScale : OriginalScale;
+            _current = transformed ? 1.0f : 0.0f;
+            _target = transformed ? 1.0f : 0.0f;
         }
     }
 }

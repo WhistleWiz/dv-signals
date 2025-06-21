@@ -20,6 +20,7 @@ namespace Signals.Game.Controllers
         protected Coroutine? AnimatorDisabler;
 
         public SignalType Type = SignalType.NotSet;
+        public bool IsOld;
         /// <summary>
         /// Override the name of this signal.
         /// </summary>
