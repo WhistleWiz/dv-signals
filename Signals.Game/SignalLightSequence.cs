@@ -52,7 +52,7 @@ namespace Signals.Game
 
                 offset = (offset + step) % length;
 
-                yield return new WaitForSeconds(Definition.Timing);
+                yield return WaitFor.Seconds(Definition.Timing);
             }
         }
 

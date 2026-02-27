@@ -155,6 +155,8 @@ namespace Signals.Game
 
         internal static void CheckStartCreation(string msg, bool isError, float percent)
         {
+            if (!SignalsMod.Instance.Active) return;
+
             // Reset for reloads.
             if (percent < 60)
             {
@@ -714,7 +716,7 @@ namespace Signals.Game
         {
             while (PlayerManager.ActiveCamera == null) yield return null;
 
-            yield return new WaitForSeconds(UpdateTime);
+            yield return WaitFor.Seconds(UpdateTime);
 
             while (true)
             {
@@ -729,7 +731,7 @@ namespace Signals.Game
                     for (int current = start; current < start + count && current < _signalRegister.Count; current++)
                     {
                         // Stop updating if camera is gone.
-                        while (PlayerManager.ActiveCamera == null) yield return new WaitForSeconds(UpdateTime);
+                        while (PlayerManager.ActiveCamera == null) yield return WaitFor.Seconds(UpdateTime);
 
                         var signal = _signalRegister[current];
 
@@ -750,7 +752,7 @@ namespace Signals.Game
                         signal.UpdateAspect();
                     }
 
-                    yield return new WaitForFixedUpdate();
+                    yield return WaitFor.FixedUpdate;
                 }
             }
         }
