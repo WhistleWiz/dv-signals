@@ -14,17 +14,9 @@ namespace Signals.Game.Aspects
 
         public override bool MeetsConditions()
         {
-            if (ControllerTrackInfo == null) return false;
+            var block = ControllerTrackBlock;
 
-            foreach (var item in ControllerTrackInfo.Tracks)
-            {
-                if (item.IsOccupied(_fullDef.CrossingCheckMode))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return block != null && block.IsOccupied(_fullDef.CrossingCheckMode);
         }
     }
 }

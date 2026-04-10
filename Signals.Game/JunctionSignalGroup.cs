@@ -3,40 +3,82 @@ using System.Collections.Generic;
 
 namespace Signals.Game
 {
-    internal class JunctionSignalGroup
+    public class JunctionSignalGroup
     {
-        public JunctionSignalController? OutBranchesSignal;
-        public JunctionSignalController? InBranchSignal;
+        private string? _stationId;
 
         public Junction Junction { get; private set; }
+        public JunctionSignalController? JunctionSignal;
+        public TrackSignalController? ReverseJunctionSignal;
+        public List<TrackSignalController> BranchSignals;
 
-        public IEnumerable<JunctionSignalController> AllSignals
+        public string Station
         {
             get
             {
-                if (OutBranchesSignal != null) yield return OutBranchesSignal;
-                if (InBranchSignal != null) yield return InBranchSignal;
+                _stationId ??= TrackUtils.JunctionStation(Junction);
+
+                return _stationId;
             }
         }
 
-        public IEnumerable<JunctionSignalController> AllInSignals
+        public IEnumerable<TrackSignalController> AllSignals
         {
             get
             {
-                if (InBranchSignal != null) yield return InBranchSignal;
+                if (JunctionSignal != null) yield return JunctionSignal;
+                if (ReverseJunctionSignal != null) yield return ReverseJunctionSignal;
+
+                foreach (var item in BranchSignals)
+                {
+                    yield return item;
+                }
             }
         }
 
-        public JunctionSignalGroup(Junction junction, JunctionSignalController? outSignal, JunctionSignalController? inSignal)
+        public JunctionSignalGroup(Junction junction)
         {
             Junction = junction;
-            OutBranchesSignal = outSignal;
-            InBranchSignal = inSignal;
+            BranchSignals = new List<TrackSignalController>();
         }
 
-        public JunctionSignalController? GetSignal(TrackDirection direction)
+        public JunctionSignalGroup(Junction junction, JunctionSignalController? junctionSignal, List<TrackSignalController> branchSignals)
         {
-            return direction.IsOut() ? OutBranchesSignal : InBranchSignal;
+            Junction = junction;
+            JunctionSignal = junctionSignal;
+            BranchSignals = branchSignals;
+
+            AssignSelfToSignals();
+        }
+
+        public JunctionSignalGroup(Junction junction, JunctionSignalController? junctionSignal, TrackSignalController? reverseJunctionSignal)
+        {
+            Junction = junction;
+            JunctionSignal = junctionSignal;
+            ReverseJunctionSignal = reverseJunctionSignal;
+            BranchSignals = new List<TrackSignalController>();
+
+            AssignSelfToSignals();
+        }
+
+        private void AssignSelfToSignals()
+        {
+            if (JunctionSignal != null) JunctionSignal.Group = this;
+            if (ReverseJunctionSignal != null) ReverseJunctionSignal.Group = this;
+
+            BranchSignals.ForEach(x => x.Group = this);
+        }
+
+        /// <summary>
+        /// Checks if there is a signal at the specified junction branch track.
+        /// </summary>
+        /// <param name="track"></param>
+        /// <param name="signal"></param>
+        /// <returns></returns>
+        public bool TryGetSignalForTrack(RailTrack track, out TrackSignalController signal)
+        {
+            signal = BranchSignals.Find(x => x.StartingTrack == track);
+            return signal != null;
         }
     }
 }

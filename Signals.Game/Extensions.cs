@@ -1,4 +1,5 @@
 ﻿using DV.Logic.Job;
+using DV.PointSet;
 using Signals.Common;
 using System.Linq;
 using UnityEngine;
@@ -14,6 +15,8 @@ namespace Signals.Game
         public static bool IsOut(this TrackDirection direction) => direction == TrackDirection.Out;
 
         public static TrackDirection Flipped(this TrackDirection direction) => direction == TrackDirection.Out ? TrackDirection.In : TrackDirection.Out;
+
+        public static bool IsFullyManual(this SignalOperationMode mode) => mode == SignalOperationMode.FullManual;
 
         #endregion
 
@@ -74,6 +77,20 @@ namespace Signals.Game
             return RailTrackRegistry.RailTrackToLogicTrack[track].ID;
         }
 
+        public static EquiPointSet.Point GetPointAt(this RailTrack track, float distance, bool reverse)
+        {
+            var set = track.GetKinkedPointSet();
+
+            if (reverse)
+            {
+                distance = (float)(set.span - distance);
+            }
+
+            var index = Mathf.Clamp(Mathf.RoundToInt(distance * 2), 0, set.points.Length - 1);
+
+            return set.points[index];
+        }
+
         #endregion
 
         #region Junctions
@@ -83,9 +100,19 @@ namespace Signals.Game
             return junction.outBranches[junction.selectedBranch];
         }
 
+        public static Branch GetDefaultBranch(this Junction junction)
+        {
+            return junction.outBranches[junction.defaultSelectedBranch];
+        }
+
         public static bool IsSetToThrough(this Junction junction)
         {
             return junction.GetCurrentBranch().track.name == "[track through]";
+        }
+
+        public static RailTrack[] GetAllTracks(this Junction junction)
+        {
+            return junction.outBranches.Select(x => x.track).ToArray();
         }
 
         #endregion
@@ -102,6 +129,16 @@ namespace Signals.Game
         {
             var size = bounds.size;
             return size.x * size.z;
+        }
+
+        public static int GetIndex(this EquiPointSet set, int index, TrackDirection direction)
+        {
+            return direction.IsOut() ? Helpers.ClampBounds(index, set.points) : Helpers.ClampBounds(set.points.Length - index - 1, set.points);
+        }
+
+        public static double GetSpan(this EquiPointSet set, double span, TrackDirection direction)
+        {
+            return Helpers.ClampD(direction.IsOut() ? span : set.span - span, 0, set.span);
         }
 
         #endregion

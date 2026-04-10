@@ -18,11 +18,11 @@ namespace Signals.Game.Displays
         {
             if (_junctionController == null) return;
 
-            if (_fullDef.TowardsOnly && !_junctionController.Direction.IsOut())
-            {
-                DisplayText = string.Empty;
-                return;
-            }
+            //if (_fullDef.TowardsOnly && !_junctionController.Direction.IsOut())
+            //{
+            //    DisplayText = string.Empty;
+            //    return;
+            //}
 
             DisplayText = GetBranchDisplay(_junctionController.Junction, _fullDef.BranchDisplay);
         }

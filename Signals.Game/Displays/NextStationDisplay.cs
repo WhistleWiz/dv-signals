@@ -6,6 +6,17 @@ namespace Signals.Game.Displays
     internal class NextStationDisplay : InfoDisplay
     {
         private NextStationDisplayDefinition _fullDef;
+        private string? _startingStation;
+
+        private string StartingStation
+        {
+            get
+            {
+                _startingStation ??= Controller.Group != null ? TrackUtils.JunctionStation(Controller.Group.Junction) : string.Empty;
+
+                return _startingStation;
+            }
+        }
 
         public NextStationDisplay(InfoDisplayDefinition definition, BasicSignalController controller) : base(definition, controller)
         {
@@ -14,24 +25,28 @@ namespace Signals.Game.Displays
 
         public override void UpdateDisplay()
         {
-            if (Controller.TrackInfo == null)
+            var nextSignal = Controller.GetNextSignalCondition(x =>
+            {
+                if (x.Group == null) return false;
+
+                var station = TrackUtils.JunctionStation(x.Group.Junction);
+
+                return station != StartingStation && !string.IsNullOrEmpty(station);
+            });
+
+            if (nextSignal == null || nextSignal.Group == null)
             {
                 DisplayText = _fullDef.NoValidResultValue;
+                return;
             }
-            else
+
+            var name = TrackUtils.JunctionStation(nextSignal.Group.Junction);
+
+            DisplayText = _fullDef.DisplayMode switch
             {
-                var info = Controller.TrackInfo;
-                var text = Controller.TrackInfo.NextStation;
-
-                if (_fullDef.SearchMode == NextStationDisplayDefinition.StationSearchMode.UntilFound &&
-                    string.IsNullOrEmpty(text) &&
-                    info.LastDirection.HasValue)
-                {
-                    text = TrackUtils.NextStation(TrackWalker.Walk(info.LastTrack, info.LastDirection.Value));
-                }
-
-                DisplayText = string.IsNullOrEmpty(text) ? _fullDef.NoValidResultValue : text;
-            }
+                NextStationDisplayDefinition.StationDisplayMode.FirstLetter => name.Substring(0, 1),
+                _ => name,
+            };
         }
     }
 }

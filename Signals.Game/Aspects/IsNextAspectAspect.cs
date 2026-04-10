@@ -14,16 +14,14 @@ namespace Signals.Game.Aspects
 
         public override bool MeetsConditions()
         {
-            if (ControllerTrackInfo == null || ControllerTrackInfo.NextMainlineSignal == null) return false;
+            var next = Controller.GetNextSignal();
 
-            var state = ControllerTrackInfo.NextMainlineSignal.CurrentAspect;
+            if (next == null) return false;
 
-            if (state == null)
-            {
-                return false;
-            }
+            var state = next.CurrentAspect;
 
-            return state.Id == _fullDef.NextId;
+            // Turned off signal can never meet conditions.
+            return state != null && state.Id == _fullDef.NextId;
         }
     }
 }

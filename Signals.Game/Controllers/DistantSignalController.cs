@@ -15,47 +15,31 @@ namespace Signals.Game.Controllers
             {
                 _home.AspectChanged -= UpdateFromHome;
                 _home.DisplaysUpdated -= UpdateDisplaysFromHome;
-                value.AspectChanged += UpdateFromHome;
-                value.DisplaysUpdated += UpdateDisplaysFromHome;
                 _home = value;
+                _home.AspectChanged += UpdateFromHome;
+                _home.DisplaysUpdated += UpdateDisplaysFromHome;
             }
         }
         public float Distance { get; private set; }
         public override string Name => string.IsNullOrEmpty(NameOverride) ? $"{Home.Name}-D" : NameOverride;
 
-        public DistantSignalController(BasicSignalController home, SignalControllerDefinition def, float distance) : base(def)
+        public DistantSignalController(SignalControllerDefinition def, BasicSignalController home,
+            SignalPlacementInfo info, float distance) : base(def, info)
         {
-            Distance = distance;
             _home = home;
 
             _home.AspectChanged += UpdateFromHome;
             _home.DisplaysUpdated += UpdateDisplaysFromHome;
 
+            Distance = distance;
             Type = SignalType.Distant;
+            Block = TrackBlock.CreateForDistant(home, distance);
         }
 
-        public override void UpdateAspect()
-        {
-            if (Home is JunctionSignalController junctionSignal)
-            {
-                TrackInfo = TrackInfo.NextSignalTrackInfo(Home, junctionSignal.Junction);
-            }
-            else
-            {
-                TrackInfo = TrackInfo.NextSignalTrackInfo(Home);
-            }
+        public override bool ShouldUpdate() => false;
 
-            base.UpdateAspect();
-        }
+        private void UpdateFromHome(AspectBase? aspect) => UpdateAspect(false);
 
-        private void UpdateFromHome(AspectBase? aspect)
-        {
-            UpdateAspect();
-        }
-
-        private void UpdateDisplaysFromHome(InfoDisplay[] obj)
-        {
-            UpdateDisplays(true);
-        }
+        private void UpdateDisplaysFromHome(InfoDisplay[] obj) => UpdateDisplays(true);
     }
 }

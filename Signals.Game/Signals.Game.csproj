@@ -30,6 +30,9 @@
 		<Reference Include="DV.ThingTypes" />
 		<Reference Include="DV.UI" />
 		<Reference Include="DV.Utils" />
+    <Reference Include="WorldStreamer" />
 		<Reference Include="BezierCurves" />
+    <Reference Include="CommandTerminal" />
+		<Reference Include="net.smkd.vector3d" />
 	</ItemGroup>
 </Project>

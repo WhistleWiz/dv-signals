@@ -8,7 +8,7 @@ namespace Signals.Game
     {
         public static System.Collections.IEnumerator DisableBehaviour(Behaviour behaviour, float time)
         {
-            yield return new WaitForSeconds(time);
+            yield return WaitFor.Seconds(time);
             behaviour.enabled = false;
         }
 
@@ -49,6 +49,30 @@ namespace Signals.Game
         public static float DistanceSqr(Vector3 v1, Vector3 v2)
         {
             return (v2 - v1).sqrMagnitude;
+        }
+
+        public static int ClampBounds<T>(int index, T[] array)
+        {
+            return Mathf.Clamp(index, 0, array.Length - 1);
+        }
+
+        public static double ClampD(double value, double min, double max)
+        {
+            if (value < min)
+            {
+                value = min;
+            }
+            else if (value > max)
+            {
+                value = max;
+            }
+
+            return value;
+        }
+
+        public static Quaternion FlattenLook(Vector3 direction)
+        {
+            return Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
         }
     }
 }

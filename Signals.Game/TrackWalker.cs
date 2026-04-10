@@ -6,143 +6,33 @@ using Branch = Junction.Branch;
 
 namespace Signals.Game
 {
-    public enum TrackDirection
-    {
-        Out,
-        In
-    }
-
     /// <summary>
     /// Helper class to traverse tracks.
     /// </summary>
     public static class TrackWalker
     {
+        public class JunctionInfo
+        {
+            public Junction? Junction;
+            public TrackDirection JunctionDirection;
+        }
+
+        public class SignalInfo
+        {
+            public BasicSignalController? Signal;
+            public TrackDirection SignalDirection;
+        }
+
         public const int MaxDepth = 64;
 
-        /// <summary>
-        /// Returns all tracks after a signal until another signal is found.
-        /// </summary>
-        /// <param name="controller">The <see cref="SignalController"/> from where to start.</param>
-        public static TrackInfo WalkUntilNextSignal(JunctionSignalController controller)
+        private static bool ShuntingCheck(bool include, BasicSignalController signal)
         {
-            return WalkUntilNextSignal(controller.Junction, controller.Direction);
-        }
-
-        /// <summary>
-        /// Returns all tracks after a junction until a signal is found.
-        /// </summary>
-        /// <param name="from">The <see cref="Junction"/> where to start.</param>
-        /// <param name="direction">The search direction. <see langword="true"/> for the outbound tracks, <see langword="false"/> for the inbound track.</param>
-        /// <remarks>Uses the currently selected branch.</remarks>
-        public static TrackInfo WalkUntilNextSignal(Junction from, TrackDirection direction)
-        {
-            return WalkUntilNextSignal(from, direction, from.selectedBranch);
-        }
-
-        /// <summary>
-        /// Returns all tracks after a junction until a signal is found.
-        /// </summary>
-        /// <param name="from">The <see cref="Junction"/> where to start.</param>
-        /// <param name="direction">The search direction. <see langword="true"/> for the outbound tracks, <see langword="false"/> for the inbound track.</param>
-        /// <param name="branch">The junction branch to follow.</param>
-        /// <returns></returns>
-        public static TrackInfo WalkUntilNextSignal(Junction from, TrackDirection direction, int branch)
-        {
-            var track = direction.IsOut() ? from.outBranches[branch].track : from.inBranch.track;
-            return WalkUntilNextSignal(track, track.inJunction == from ? TrackDirection.Out : TrackDirection.In);
-        }
-
-        /// <summary>
-        /// Performs a search starting from <paramref name="track"/> in <paramref name="direction"/> until the next junction signal is found.
-        /// </summary>
-        /// <param name="track">The track to start on.</param>
-        /// <param name="direction">The direction to search in. <see langword="true"/> for the out branch, <see langword="false"/> for the in branch.</param>
-        /// <returns></returns>
-        public static TrackInfo WalkUntilNextSignal(RailTrack track, TrackDirection direction)
-        {
-            int depth = 0;
-            HashSet<RailTrack> visited = new HashSet<RailTrack>();
-            List<RailTrack> ordered = new List<RailTrack>();
-            JunctionSignalController? mainlineSignal = null;
-            JunctionSignalController? shuntingSignal = null;
-            Junction? nextJunction = null;
-
-            // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
-            while (depth++ < MaxDepth && track != null && !visited.Contains(track))
-            {
-                visited.Add(track);
-                ordered.Add(track);
-
-                Junction? junction = direction.IsOut() ? track.outJunction : track.inJunction;
-                Branch? branch;
-
-                if (junction != null)
-                {
-                    bool junctionDir = junction.inBranch.track == track;
-
-                    if (nextJunction == null)
-                    {
-                        nextJunction = junction;
-                    }
-
-                    // If the junction has a signal for the current direction, stop the loop.
-                    if (SignalManager.Instance.TryGetSignals(junction, out var signals))
-                    {
-                        mainlineSignal = signals.GetSignal(junctionDir ? TrackDirection.Out : TrackDirection.In);
-
-                        if (mainlineSignal != null)
-                        {
-                            switch (mainlineSignal.Type)
-                            {
-                                case SignalType.Mainline:
-                                case SignalType.IntoYard:
-                                    goto ExitLoop;
-                                case SignalType.Shunting:
-                                    shuntingSignal ??= mainlineSignal;
-                                    goto default;
-                                default:
-                                    mainlineSignal = null;
-                                    break;
-                            }
-                        }
-                    }
-
-                    // Otherwise, take the branch from the junction.
-                    // Out branch if the current track is the in branch,
-                    // and vice versa.
-                    branch = junctionDir ?
-                        junction.outBranches[junction.selectedBranch] :
-                        junction.inBranch;
-                }
-                else
-                {
-                    // If there's no junction just use the track branch directly.
-                    branch = direction.IsOut() ? track.outBranch : track.inBranch;
-                }
-
-                // No branch means we have no track to go, stop looping.
-                if (branch == null || branch.track == null)
-                {
-                    break;
-                }
-
-                // Check if the current track is the next track of the next branch.
-                if (ContainsTrack(track, branch, direction))
-                {
-                    direction = direction.Flipped();
-                }
-
-                track = branch.track;
-            }
-
-            ExitLoop:
-
-            return new TrackInfo(ordered, direction, mainlineSignal, shuntingSignal, nextJunction);
+            return include || signal.Type != SignalType.Shunting;
         }
 
         private static bool ContainsTrack(RailTrack from, Branch branch, TrackDirection direction)
         {
-            var nextBranch = direction.IsOut() ? branch.track.outBranch : branch.track.inBranch;
+            var nextBranch = direction.IsOut() ? branch.track.GetOutBranch() : branch.track.GetInBranch();
 
             // If the next visited track was going to be track we came from, we must go the other way.
             if (nextBranch != null && nextBranch.track == from)
@@ -166,26 +56,12 @@ namespace Signals.Game
             return false;
         }
 
-        public static IEnumerable<RailTrack> Walk(JunctionSignalController controller)
-        {
-            return Walk(controller.Junction, controller.Direction);
-        }
-
-        public static IEnumerable<RailTrack> Walk(Junction from, TrackDirection direction)
-        {
-            return Walk(from, direction, from.selectedBranch);
-        }
-
-        public static IEnumerable<RailTrack> Walk(Junction from, TrackDirection direction, int branch)
-        {
-            var track = direction.IsOut() ? from.outBranches[branch].track : from.inBranch.track;
-            return Walk(track, track.inJunction == from ? TrackDirection.Out : TrackDirection.In);
-        }
-
-        public static IEnumerable<RailTrack> Walk(RailTrack track, TrackDirection direction)
+        public static List<RailTrack> GetTracksUntilJunction(RailTrack track, TrackDirection direction, bool includeFinalBranchTracks, out JunctionInfo info)
         {
             int depth = 0;
             HashSet<RailTrack> visited = new HashSet<RailTrack>();
+            List<RailTrack> tracks = new List<RailTrack>();
+            info = new JunctionInfo();
 
             // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
             while (depth++ < MaxDepth && track != null && !visited.Contains(track))
@@ -195,33 +71,119 @@ namespace Signals.Game
                 Junction? junction = direction.IsOut() ? track.outJunction : track.inJunction;
                 Branch? branch;
 
+                // Found junction, stop looping.
                 if (junction != null)
                 {
-                    branch = junction.inBranch.track == track ?
-                        junction.outBranches[junction.selectedBranch] :
-                        junction.inBranch;
-                }
-                else
-                {
-                    // If there's no junction just use the track branch directly.
-                    branch = direction.IsOut() ? track.outBranch : track.inBranch;
-                }
-
-                // No branch means we have no track to go, stop looping.
-                if (branch == null || branch.track == null)
-                {
+                    info.Junction = junction;
+                    info.JunctionDirection = track.isJunctionTrack ? TrackDirection.In : TrackDirection.Out;
                     break;
                 }
+
+                branch = direction.IsOut() ? track.GetOutBranch() : track.GetInBranch();
+
+                // No branch means we have no track to go, stop looping.
+                if (branch == null || branch.track == null) break;
 
                 // Check if the current track is the next track of the next branch.
                 if (ContainsTrack(track, branch, direction))
                 {
+                    // Direction must be flipped.
                     direction = direction.Flipped();
                 }
 
                 track = branch.track;
-                yield return track;
+
+                // If the track is a junction branch and branches are included,
+                // stop looping before adding it to the list.
+                if (!includeFinalBranchTracks && track.isJunctionTrack)
+                {
+                    info.Junction = track.inJunction;
+                    info.JunctionDirection = TrackDirection.In;
+                    break;
+                }
+
+                tracks.Add(track);
             }
+
+            return tracks;
+        }
+
+        public static List<RailTrack> GetTracksUntilSignal(RailTrack track, TrackDirection direction, bool includeShunting,
+            out SignalInfo info)
+        {
+            return GetTracksUntilSignal(track, direction, includeShunting, null, out info);
+        }
+
+        public static List<RailTrack> GetTracksUntilSignal(RailTrack track, TrackDirection direction, bool includeShunting,
+            BasicSignalController? ignore, out SignalInfo info)
+        {
+            int depth = 0;
+            HashSet<RailTrack> visited = new HashSet<RailTrack>();
+            List<RailTrack> tracks = new List<RailTrack>();
+            info = new SignalInfo();
+
+            // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
+            while (depth++ < MaxDepth && track != null && !visited.Contains(track))
+            {
+                visited.Add(track);
+
+                Junction? junction = direction.IsOut() ? track.outJunction : track.inJunction;
+                Branch? branch;
+
+                // Found junction, check signal.
+                if (junction != null && SignalManager.Instance.TryGetJunctionGroup(junction, out var group))
+                {
+                    if (track.isJunctionTrack)
+                    {
+                        var found = group.ReverseJunctionSignal;
+
+                        if (found != null && found != ignore && ShuntingCheck(includeShunting, found))
+                        {
+                            info.Signal = found;
+                            info.SignalDirection = TrackDirection.In;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        var found = group.JunctionSignal;
+
+                        if (found != null && found != ignore && ShuntingCheck(includeShunting, found))
+                        {
+                            info.Signal = found;
+                            info.SignalDirection = TrackDirection.Out;
+                            break;
+                        }
+                    }
+                }
+
+                branch = direction.IsOut() ? track.GetOutBranch() : track.GetInBranch();
+
+                // No branch means we have no track to go, stop looping.
+                if (branch == null || branch.track == null) break;
+
+                // Check if the current track is the next track of the next branch.
+                if (ContainsTrack(track, branch, direction))
+                {
+                    // Direction must be flipped.
+                    direction = direction.Flipped();
+                }
+
+                track = branch.track;
+
+                // If the next track is a junction branch, check if there's a signal there before actually going into it.
+                if (track.isJunctionTrack && SignalManager.Instance.TryGetJunctionGroup(track.inJunction, out group) &&
+                    !direction.IsOut() && group.TryGetSignalForTrack(track, out var match) && match != ignore && ShuntingCheck(includeShunting, match))
+                {
+                    info.Signal = match;
+                    info.SignalDirection = TrackDirection.In;
+                    break;
+                }
+
+                tracks.Add(track);
+            }
+
+            return tracks;
         }
     }
 }
