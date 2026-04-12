@@ -1,6 +1,8 @@
 ﻿using Signals.Common;
 using Signals.Game.Aspects;
 using Signals.Game.Displays;
+using Signals.Game.Railway;
+using Signals.Game.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +35,9 @@ namespace Signals.Game.Controllers
 
         private int? _baseAnimation;
         private SignalHover _hover;
-        private DebugComp? _debugComp;
+        private SignalDefinitionToController? _comp;
+
+        internal Renderer[] HighlightRenderers;
 
         protected Coroutine? AnimatorDisabler;
         protected string InternalName = string.Empty;
@@ -71,6 +75,9 @@ namespace Signals.Game.Controllers
         /// Information about where this signal was placed.
         /// </summary>
         public SignalPlacementInfo? PlacementInfo { get; private set; }
+        /// <summary>
+        /// The group of tracks this signal works with.
+        /// </summary>
         public TrackBlock? Block { get; set; }
         /// <summary>
         /// The junction group this signal belongs to.
@@ -79,13 +86,13 @@ namespace Signals.Game.Controllers
 
         public virtual string Name => string.IsNullOrEmpty(NameOverride) ? InternalName : NameOverride;
         /// <summary>
-        /// Is <see langword="true"/> if this signal exists in the world.
+        /// <see langword="true"/> if this signal exists in the world.
         /// </summary>
         public bool Exists => Definition != null;
         public bool IsOn => CurrentAspectIndex >= 0;
         public bool HasUpdatesQueued => UpdateRequested > 0;
         /// <summary>
-        /// Is <see langword="null"/> if the signal is off.
+        /// <see langword="null"/> if the signal is off.
         /// </summary>
         public AspectBase? CurrentAspect => IsOn ? AllAspects[CurrentAspectIndex] : null;
         /// <summary>
@@ -104,6 +111,7 @@ namespace Signals.Game.Controllers
             Definition = def;
             CurrentAspectIndex = OffValue;
             PlacementInfo = placementInfo;
+            HighlightRenderers = def.GetComponentsInChildren<MeshRenderer>(true);
 
             if (def.Aspects.Any(x => x == null)) SignalsMod.Error($"Null aspect in {def.name}");
             if (def.Displays.Any(x => x == null)) SignalsMod.Error($"Null display in {def.name}");
@@ -133,7 +141,7 @@ namespace Signals.Game.Controllers
 
             TrackChecker.OnMapBuilt += FixPositionDueToCrossing;
             SignalManager.Instance.RegisterSignal(this);
-            _debugComp = DebugComp.AddToDef(this);
+            _comp = SignalDefinitionToController.AddToDef(this);
         }
 
         private void FixPositionDueToCrossing(Dictionary<RailTrack, TrackChecker.TrackIntersectionPoints> junctionMap)
@@ -306,6 +314,7 @@ namespace Signals.Game.Controllers
             }
 
             TrackChecker.OnMapBuilt -= FixPositionDueToCrossing;
+            TrackReserver.ClearFromSignal(this);
             SignalManager.Instance.UnregisterSignal(this);
             Destroyed?.Invoke(this);
         }

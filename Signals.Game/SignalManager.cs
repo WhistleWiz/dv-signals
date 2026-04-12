@@ -2,6 +2,8 @@
 using DV.Utils;
 using Signals.Common;
 using Signals.Game.Controllers;
+using Signals.Game.Railway;
+using Signals.Game.Util;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -88,6 +90,7 @@ namespace Signals.Game
 
             StopCoroutine(_updateCoro);
             Camera.onPostRender -= DebugRender;
+            TrackReserver.ClearAll();
         }
 
         private void DebugRender(Camera cam)
@@ -585,8 +588,8 @@ namespace Signals.Game
                 // If this non yard track goes to a yard track...
                 if (outName.StartsWith(YardNameStart))
                 {
-                    // If we want to make special signals for passenger tracks.
-                    if (SignalsMod.Settings.PaxSignals && junction.outBranches.Any(x => IsPaxTrack(x.track.outBranch.track)))
+                    // Special signals for passenger tracks.
+                    if (junction.outBranches.Any(x => IsPaxTrack(x.track.outBranch.track)))
                     {
                         return SignalCreationMode.IntoPax;
                     }

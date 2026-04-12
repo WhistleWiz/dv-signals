@@ -3,7 +3,7 @@ using Signals.Game.Controllers;
 
 namespace Signals.Game.Aspects
 {
-    internal class IsNextAspectAspect : AspectBase
+    public class IsNextAspectAspect : AspectBase
     {
         private IsNextAspectAspectDefinition _fullDef;
 

@@ -13,8 +13,6 @@ namespace Signals.Game
     {
         [Draw("Custom Pack", Tooltip = "The mod ID of a custom signals pack")]
         public string CustomPack = string.Empty;
-        [Draw("Better Signals On Passenger Tracks")]
-        public bool PaxSignals = true;
         [Draw("Use Verbose Logging", Tooltip = "Logs a lot more information\n" +
             "Useful if you are experiencing bugs")]
         public bool UseVerboseLogging = false;

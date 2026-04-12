@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Signals.Game.Util;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Signals.Game.Curves

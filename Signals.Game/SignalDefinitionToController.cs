@@ -3,11 +3,11 @@ using UnityEngine;
 
 namespace Signals.Game
 {
-    internal class DebugComp : MonoBehaviour
+    internal class SignalDefinitionToController : MonoBehaviour
     {
-        public BasicSignalController? Controller;
+        public BasicSignalController Controller = null!;
 
-        public static DebugComp? AddToDef(BasicSignalController controller)
+        public static SignalDefinitionToController? AddToDef(BasicSignalController controller)
         {
             var def = controller.Definition;
 
@@ -17,7 +17,7 @@ namespace Signals.Game
                 return null;
             }
 
-            var comp = def.gameObject.AddComponent<DebugComp>();
+            var comp = def.gameObject.AddComponent<SignalDefinitionToController>();
             comp.Controller = controller;
             return comp;
         }

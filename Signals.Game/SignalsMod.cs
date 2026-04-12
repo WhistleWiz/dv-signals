@@ -1,4 +1,6 @@
-﻿using UnityModManagerNet;
+﻿using HarmonyLib;
+using System.Reflection;
+using UnityModManagerNet;
 
 namespace Signals.Game
 {
@@ -30,6 +32,9 @@ namespace Signals.Game
 
             UnityModManager.toggleModsListen += HandleModToggled;
             WorldStreamingInit.LoadingStatusChanged += SignalManager.CheckStartCreation;
+
+            var harmony = new Harmony(modEntry.Info.Id);
+            harmony.PatchAll(Assembly.GetExecutingAssembly());
 
             return true;
         }

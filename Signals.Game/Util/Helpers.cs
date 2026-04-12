@@ -2,7 +2,7 @@
 using System.Linq;
 using UnityEngine;
 
-namespace Signals.Game
+namespace Signals.Game.Util
 {
     internal class Helpers
     {

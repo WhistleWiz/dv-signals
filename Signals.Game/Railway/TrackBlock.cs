@@ -3,7 +3,7 @@ using Signals.Game.Controllers;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Signals.Game
+namespace Signals.Game.Railway
 {
     public class TrackBlock
     {
@@ -78,6 +78,19 @@ namespace Signals.Game
                 _trackType ??= TrackUtils.NextTrackType(Tracks);
 
                 return _trackType;
+            }
+        }
+
+        /// <summary>
+        /// Includes both <see cref="Tracks"/> and <see cref="ExtraTracks"/>, without duplicates.
+        /// </summary>
+        public IEnumerable<RailTrack> AllTracks
+        {
+            get
+            {
+                var tracks = Tracks.ToHashSet();
+                tracks.UnionWith(ExtraTracks);
+                return tracks;
             }
         }
 

@@ -1,6 +1,9 @@
 ﻿using DV.Logic.Job;
 using DV.PointSet;
 using Signals.Common;
+using Signals.Game.Controllers;
+using Signals.Game.Railway;
+using Signals.Game.Util;
 using System.Linq;
 using UnityEngine;
 
@@ -44,27 +47,23 @@ namespace Signals.Game
             return controller;
         }
 
-        public static SignalControllerDefinition? GetForType(this SignalPack pack, SignalType type, bool old) => type switch
-        {
-            SignalType.Mainline => old ? pack.OldSignal : pack.Signal,
-            SignalType.IntoYard => old ? pack.OldIntoYardSignal : pack.IntoYardSignal,
-            SignalType.Shunting => old ? pack.OldShuntingSignal : pack.ShuntingSignal,
-            SignalType.Distant => old ? pack.OldDistantSignal : pack.DistantSignal,
-            _ => null,
-        };
-
         #endregion
 
         #region Track
 
-        public static bool IsOccupied(this RailTrack track, CrossingCheckMode check)
+        public static bool IsOccupied(this RailTrack track, CrossingCheckMode crossingMode)
         {
-            return TrackChecker.IsOccupied(track, check);
+            return TrackChecker.IsOccupied(track, crossingMode);
         }
 
         public static bool HasBogies(this RailTrack track)
         {
             return track.BogiesOnTrack().Count() > 0;
+        }
+
+        public static bool IsReservedByAnother(this RailTrack track, BasicSignalController signal, CrossingCheckMode crossingMode)
+        {
+            return TrackChecker.IsReservedByAnother(track, signal, crossingMode);
         }
 
         public static double GetLength(this RailTrack track)
@@ -75,20 +74,6 @@ namespace Signals.Game
         public static TrackID GetID(this RailTrack track)
         {
             return RailTrackRegistry.RailTrackToLogicTrack[track].ID;
-        }
-
-        public static EquiPointSet.Point GetPointAt(this RailTrack track, float distance, bool reverse)
-        {
-            var set = track.GetKinkedPointSet();
-
-            if (reverse)
-            {
-                distance = (float)(set.span - distance);
-            }
-
-            var index = Mathf.Clamp(Mathf.RoundToInt(distance * 2), 0, set.points.Length - 1);
-
-            return set.points[index];
         }
 
         #endregion

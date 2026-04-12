@@ -3,7 +3,7 @@ using Signals.Game.Controllers;
 
 namespace Signals.Game.Aspects
 {
-    internal class JunctionBranchAspect : AspectBase
+    public class JunctionBranchAspect : AspectBase
     {
         private JunctionBranchAspectDefinition _fullDef;
         private JunctionSignalController? _junctionController;

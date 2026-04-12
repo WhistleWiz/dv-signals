@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using Signals.Game.Util;
+using System.Collections.Generic;
 using System.Linq;
 
 using JData = Junction.JunctionData;
 
-namespace Signals.Game
+namespace Signals.Game.Railway
 {
     public static class TrackUtils
     {
@@ -16,7 +17,7 @@ namespace Signals.Game
         {
             var bi = r1.GetAllInBranches();
             var bo = r1.GetAllOutBranches();
-            return (bi != null && bi.Any(x => x.track == r2)) || (bo != null && bo.Any(x => x.track == r2));
+            return bi != null && bi.Any(x => x.track == r2) || bo != null && bo.Any(x => x.track == r2);
         }
 
         /// <summary>

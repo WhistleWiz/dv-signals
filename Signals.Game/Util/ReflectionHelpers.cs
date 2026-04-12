@@ -2,7 +2,7 @@
 using DV.Signs;
 using System.Reflection;
 
-namespace Signals.Game
+namespace Signals.Game.Util
 {
     internal static class ReflectionHelpers
     {

@@ -1,7 +1,7 @@
 ﻿using DV.PointSet;
 using UnityEngine;
 
-namespace Signals.Game
+namespace Signals.Game.Util
 {
     internal class GLHelper
     {

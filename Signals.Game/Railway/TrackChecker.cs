@@ -1,11 +1,12 @@
 ﻿using Signals.Common;
+using Signals.Game.Controllers;
 using Signals.Game.Curves;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Signals.Game
+namespace Signals.Game.Railway
 {
     /// <summary>
     /// Helper class with track utility functions.
@@ -66,6 +67,23 @@ namespace Signals.Game
             }
 
             /// <summary>
+            /// Checks if another signal has reserved any of the connected tracks.
+            /// </summary>
+            /// <param name="signal">The signal checking for reservations.</param>
+            public bool TestReservedByAnother(BasicSignalController signal)
+            {
+                foreach (var point in IntersectionPoints)
+                {
+                    if (TrackReserver.IsTrackReservedByAnother(point.Track, signal))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            /// <summary>
             /// Returns <see langword="true"/> if there are any intersection points with <paramref name="track"/>.
             /// </summary>
             /// <param name="track">The other track.</param>
@@ -88,8 +106,8 @@ namespace Signals.Game
         /// Checks if a track is occupied by a train.
         /// </summary>
         /// <param name="track">The track to check.</param>
-        /// <param name="check">The check behaviour if there are cached intersections for the track.</param>
-        public static bool IsOccupied(RailTrack track, CrossingCheckMode check)
+        /// <param name="crossingMode">The check behaviour if there are cached intersections for the track.</param>
+        public static bool IsOccupied(RailTrack track, CrossingCheckMode crossingMode)
         {
             if (track.HasBogies())
             {
@@ -101,10 +119,37 @@ namespace Signals.Game
                 return false;
             }
 
-            return check switch
+            return crossingMode switch
             {
                 CrossingCheckMode.WholeTrack => intersection.TestTracks(),
                 CrossingCheckMode.IntersectionOnly => intersection.TestIntersections(),
+                _ => false,
+            };
+        }
+
+        /// <summary>
+        /// Checks if a track is reserved by another signal.
+        /// </summary>
+        /// <param name="track">The track to check.</param>
+        /// <param name="signal">The signal checking for reservations.</param>
+        /// <param name="crossingMode">The check behaviour if there are cached intersections for the track.</param>
+        /// <returns></returns>
+        public static bool IsReservedByAnother(RailTrack track, BasicSignalController signal, CrossingCheckMode crossingMode)
+        {
+            if (TrackReserver.IsTrackReservedByAnother(track, signal))
+            {
+                return true;
+            }
+
+            if (!s_intersectionMap.TryGetValue(track, out var intersection))
+            {
+                return false;
+            }
+
+            return crossingMode switch
+            {
+                CrossingCheckMode.WholeTrack => intersection.TestReservedByAnother(signal),
+                CrossingCheckMode.IntersectionOnly => intersection.TestReservedByAnother(signal),
                 _ => false,
             };
         }

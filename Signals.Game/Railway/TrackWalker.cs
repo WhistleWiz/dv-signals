@@ -4,7 +4,7 @@ using System.Linq;
 
 using Branch = Junction.Branch;
 
-namespace Signals.Game
+namespace Signals.Game.Railway
 {
     /// <summary>
     /// Helper class to traverse tracks.

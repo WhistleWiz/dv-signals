@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Signals.Game
+namespace Signals.Game.Util
 {
     public static class OldAreaCalculator
     {

@@ -1,4 +1,5 @@
 ﻿using Signals.Common;
+using Signals.Game.Railway;
 
 namespace Signals.Game.Controllers
 {

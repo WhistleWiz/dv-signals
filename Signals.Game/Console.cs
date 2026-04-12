@@ -1,4 +1,6 @@
 ﻿using CommandTerminal;
+using Signals.Game.Railway;
+using System.Linq;
 using UnityEngine;
 
 namespace Signals.Game
@@ -40,6 +42,90 @@ namespace Signals.Game
             {
                 signal.ChangeToMostRestrictive(true);
                 signal.Operation = SignalOperationMode.SemiManual;
+            }
+        }
+
+        [RegisterCommand("Signals.Reserve",
+            Help = "Reserves a signal's tracks, with an optional duration",
+            Hint = "Signals.Reserve 123 30",
+            MinArgCount = 1, MaxArgCount = 2)]
+        public static void Reserve(CommandArg[] args)
+        {
+            if (!SignalManager.Running)
+            {
+                OutsideSessionError();
+                return;
+            }
+
+            var signal = SignalManager.Instance.AllSignals.First(x => x.Id == args[0].Int);
+
+            if (signal == null)
+            {
+                Debug.LogError($"Could not find signal with ID '{args[0]}'");
+                return;
+            }
+
+            float duration = 0;
+
+            if (args.Length == 2)
+            {
+                duration = args[1].Float;
+
+                if (duration <= 0)
+                {
+                    Debug.LogError($"Invalid reservation duration specified: {args[1]}");
+                    return;
+                }
+            }
+
+            TrackReserver.ReserveForSignal(signal);
+
+            if (duration > 0)
+            {
+                TrackReserver.ClearFromSignalDelayed(signal, duration);
+            }
+        }
+
+        [RegisterCommand("Signals.Unreserve",
+            Help = "Reserves a signal's tracks, with an optional delay",
+            Hint = "Signals.Unreserve 123 30",
+            MinArgCount = 1, MaxArgCount = 2)]
+        public static void Unreserve(CommandArg[] args)
+        {
+            if (!SignalManager.Running)
+            {
+                OutsideSessionError();
+                return;
+            }
+
+            var signal = SignalManager.Instance.AllSignals.First(x => x.Id == args[0].Int);
+
+            if (signal == null)
+            {
+                Debug.LogError($"Could not find signal with ID '{args[0]}'");
+                return;
+            }
+
+            float delay = 0;
+
+            if (args.Length == 2)
+            {
+                delay = args[1].Float;
+
+                if (delay <= 0)
+                {
+                    Debug.LogError($"Invalid delay specified: {args[1]}");
+                    return;
+                }
+            }
+
+            if (delay > 0)
+            {
+                TrackReserver.ClearFromSignalDelayed(signal, delay);
+            }
+            else
+            {
+                TrackReserver.ClearFromSignal(signal);
             }
         }
     }
