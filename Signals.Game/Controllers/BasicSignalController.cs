@@ -10,6 +10,9 @@ using UnityEngine;
 
 namespace Signals.Game.Controllers
 {
+    /// <summary>
+    /// Base class for a signal controller.
+    /// </summary>
     public class BasicSignalController
     {
         protected const float UpdateTime = 1.0f;
@@ -33,13 +36,11 @@ namespace Signals.Game.Controllers
             return value;
         }
 
-        private int? _baseAnimation;
         private SignalHover _hover;
         private SignalDefinitionToController? _comp;
 
         internal Renderer[] HighlightRenderers;
 
-        protected Coroutine? AnimatorDisabler;
         protected string InternalName = string.Empty;
         protected int UpdateRequested = 0;
 
@@ -129,13 +130,6 @@ namespace Signals.Game.Controllers
             // And finally the same for indicators.
             AllIndicators = def.Indicators.Select(x => AspectCreator.Create(this, x)).Where(x => x != null).ToArray()!;
 
-            // If there's an animator, set up the default state
-            if (def.Animator != null)
-            {
-                _baseAnimation = def.Animator.GetCurrentAnimatorStateInfo(0).shortNameHash;
-                def.Animator.enabled = false;
-            }
-
             _hover = def.GetComponent<SignalHover>();
             _hover.Initialise(def.OffStateHUDSprite);
 
@@ -155,11 +149,12 @@ namespace Signals.Game.Controllers
 
             foreach (var item in junctionMap)
             {
-                foreach (var (_, Position) in item.Value.IntersectionPoints)
+                foreach (var (Track, Position) in item.Value.IntersectionPoints)
                 {
                     if (Helpers.DistanceSqr(Definition.transform.position, Position.position) < CrossingMinDistanceSqr)
                     {
                         positions.Add(Position.position);
+                        shouldMoveForwards |= ShouldMoveForwards(Track);
                     }
                 }
             }
@@ -206,19 +201,6 @@ namespace Signals.Game.Controllers
             {
                 t.gameObject.SetActive(active);
             }
-        }
-
-        internal void DisableAnimator(float time)
-        {
-            if (Definition.Animator == null) return;
-
-            if (AnimatorDisabler != null)
-            {
-                Definition.StopCoroutine(AnimatorDisabler);
-            }
-
-            // Disable the animator after some time. Since the animations are instant
-            AnimatorDisabler = Definition.StartCoroutine(Helpers.DisableBehaviour(Definition.Animator, time));
         }
 
         /// <summary>
@@ -339,15 +321,6 @@ namespace Signals.Game.Controllers
             foreach (var item in AllLights)
             {
                 item.TurnOff();
-            }
-
-            // Try to reset the animator state if it exists.
-            if (Definition.Animator != null && _baseAnimation.HasValue)
-            {
-                var time = CurrentAspect != null ? CurrentAspect.Definition.AnimationTime : 1;
-                Definition.Animator.enabled = true;
-                Definition.Animator.CrossFadeInFixedTime(_baseAnimation.Value, time, 0);
-                DisableAnimator(time + 0.1f);
             }
 
             CurrentAspectIndex = OffValue;
@@ -505,6 +478,12 @@ namespace Signals.Game.Controllers
         {
             UpdateBlock();
 
+            // Update the reservation.
+            if (TrackReserver.HasReservation(this))
+            {
+                TrackReserver.ReserveForSignal(this);
+            }
+
             bool changed;
 
             for (int i = 0; i < AllAspects.Length; i++)
@@ -530,6 +509,7 @@ namespace Signals.Game.Controllers
             // Update displays and indicators.
             UpdateDisplays(changed);
             UpdateIndicators();
+            UpdateHoverDisplay();
 
             // Request the next signal to be updated to propagate out of range.
             UpdateRequested = Mathf.Max(UpdateRequested - 1, 0);

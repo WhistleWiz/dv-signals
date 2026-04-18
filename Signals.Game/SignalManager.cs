@@ -26,7 +26,6 @@ namespace Signals.Game
 
         private const string YardNameStart = "[Y]";
         private const string PaxNameEnd = "LP]";
-        private const string NoSign = "[#]";
         private const float JunctionPlacementDistance = 2.0f;
         private const float BranchPlacementDistance = 17.5f;
         private const float BranchDistanceThreshold = 4.5f * 4.5f;
@@ -91,65 +90,6 @@ namespace Signals.Game
             StopCoroutine(_updateCoro);
             Camera.onPostRender -= DebugRender;
             TrackReserver.ClearAll();
-        }
-
-        private void DebugRender(Camera cam)
-        {
-            var debugMode = SignalsMod.Settings.DebugBlocks;
-            if (debugMode == DebugMode.None || PlayerManager.ActiveCamera == null) return;
-
-            var debugHovered = debugMode == DebugMode.HoveredSignal;
-            var up2 = Vector3.up * 2;
-
-            foreach (var signal in AllSignals)
-            {
-                // Only draw the hovered sign if the debug mod is set to hovered.
-                if (debugHovered && !signal.Hovered) continue;
-                // Skip drawing signs that are too far away.
-                if (signal.GetCameraDistanceSqr() > 16000000) continue;
-
-                var block = signal.Block;
-                if (block == null) continue;
-
-                var offset = WorldMover.currentMove + Vector3.up;
-                var offset2 = signal.Definition.transform.right * -0.1f;
-                var hue = signal.Id * 0.31f;
-                var highlight = !debugHovered && signal.Hovered;
-
-                if (highlight)
-                {
-                    offset2 += new Vector3(0, 0.1f, 0);
-                }
-
-                if (block.NextSignal != null)
-                {
-                    GLHelper.DrawLozenge(block.NextSignal.Position + up2, block.NextSignal.Definition.transform.forward, GetColour(hue, highlight));
-                }
-
-                if ((debugHovered || highlight) && signal is DistantSignalController distant)
-                {
-                    GLHelper.DrawLine(signal.Position + offset2, distant.Home.Position + offset2, GetColour(hue, highlight));
-                }
-
-                foreach (var track in block.ExtraTracks)
-                {
-                    GLHelper.DrawPointSet(track.GetKinkedPointSet().points, offset + offset2, 20, GetColour(hue, highlight));
-                    hue += 0.03f;
-                }
-
-                hue += 0.1f;
-
-                foreach (var track in block.Tracks)
-                {
-                    GLHelper.DrawPointSet(track.GetKinkedPointSet().points, offset + offset2, 20, GetColour(hue, highlight));
-                    hue += 0.03f;
-                }
-            }
-
-            static Color GetColour(float hue, bool highlight)
-            {
-                return Color.HSVToRGB(hue % 1.00f, highlight ? 0.15f : 0.95f, 1.00f);
-            }
         }
 
         #region Mod Loading
@@ -339,7 +279,7 @@ namespace Signals.Game
 
                     // Don't place distant signals in tracks without signs (usually inside stations).
                     var placement = signal.PlacementInfo.Value;
-                    if (IsNonSign(placement.Track)) continue;
+                    if (placement.Track.IsNonSign()) continue;
 
                     // Check the minimum track length.
                     var kpSet = placement.Track.GetKinkedPointSet();
@@ -618,11 +558,6 @@ namespace Signals.Game
             return branch == null;
         }
 
-        private static bool IsPartOfYard(RailTrack track)
-        {
-            return track.name.StartsWith(YardNameStart);
-        }
-
         private static bool IsSmallTrack(RailTrack track)
         {
             return track.GetLength() < SmallTrackThreshold;
@@ -631,11 +566,6 @@ namespace Signals.Game
         private static bool IsPaxTrack(RailTrack track)
         {
             return track.name.EndsWith(PaxNameEnd);
-        }
-
-        private static bool IsNonSign(RailTrack track)
-        {
-            return track.name.StartsWith(NoSign);
         }
 
         private static bool IsLogicYardTrack(RailTrack track)
@@ -649,7 +579,7 @@ namespace Signals.Game
             {
                 var track = item.track.outBranch.track;
 
-                if (track == null || track.GetLength() > VerySmallTrackThreshold || !IsNonSign(track))
+                if (track == null || track.GetLength() > VerySmallTrackThreshold || !track.IsNonSign())
                 {
                     return false;
                 }
@@ -672,8 +602,9 @@ namespace Signals.Game
             SignalsMod.LogVerbose($"Making mainline signals for junction '{junction.junctionData.junctionIdLong}'");
 
             var old = IsOld(junction);
+            var left = junction.IsLeft();
             var group = new JunctionSignalGroup(junction,
-                CreateSignalAtJunction(junction, pack.GetJunctionSignal(old)),
+                CreateSignalAtJunction(junction, pack.GetJunctionSignal(old, left)),
                 CreateBranchSignals(junction, pack.GetMainlineSignal(old)));
 
             foreach (var signal in group.AllSignals)
@@ -685,7 +616,7 @@ namespace Signals.Game
 
             if (group.JunctionSignal != null)
             {
-                group.JunctionSignal.PrefabType = PrefabType.MainlineJunction;
+                group.JunctionSignal.PrefabType = left ? PrefabType.JunctionLeft : PrefabType.JunctionRight;
             }
 
             return group;
@@ -696,7 +627,7 @@ namespace Signals.Game
             var smallBranches = AreAllBranchesSmallNonSign(junction);
 
             // Create more regular signals rather than the full into yard group.
-            if (!smallBranches && junction.outBranches.Any(x => !IsPartOfYard(x.track.outBranch.track)))
+            if (!smallBranches && junction.outBranches.Any(x => !x.track.outBranch.track.IsPartOfYard()))
             {
                 return CreateIntoYardMainlineSignals(pack, junction);
             }
@@ -756,9 +687,10 @@ namespace Signals.Game
             SignalsMod.LogVerbose($"Making into yard reverse signals for junction '{junction.junctionData.junctionIdLong}'");
 
             var old = IsOld(junction);
+            var left = junction.IsLeft();
             var inPax = IsPaxTrack(junction.inBranch.track) && (old ? pack.OldPassengerSignal : pack.PassengerSignal) != null;
             var group = new JunctionSignalGroup(junction,
-                CreateSignalAtJunction(junction, inPax ? pack.GetPassengerSignal(old) : pack.GetJunctionSignal(old)),
+                CreateSignalAtJunction(junction, inPax ? pack.GetPassengerSignal(old) : pack.GetJunctionSignal(old, left)),
                 CreateBranchSignals(junction, pack.GetMainlineSignal(old)));
 
             foreach (var signal in group.AllSignals)
@@ -771,7 +703,7 @@ namespace Signals.Game
             if (group.JunctionSignal != null)
             {
                 group.JunctionSignal.Type = inPax ? SignalType.OutPax : SignalType.Mainline;
-                group.JunctionSignal.PrefabType = inPax ? PrefabType.OutPax : PrefabType.MainlineJunction;
+                group.JunctionSignal.PrefabType = inPax ? PrefabType.OutPax : (left ? PrefabType.JunctionLeft : PrefabType.JunctionRight);
             }
 
             return group;
@@ -884,7 +816,8 @@ namespace Signals.Game
 
         private static SignalControllerDefinition GetForType(SignalPack pack, PrefabType prefabType, bool old) => prefabType switch
         {
-            PrefabType.MainlineJunction => pack.GetJunctionSignal(old),
+            PrefabType.JunctionLeft => pack.GetLeftJunctionSignal(old),
+            PrefabType.JunctionRight => pack.GetRightJunctionSignal(old),
             PrefabType.IntoYard => pack.GetIntoYardSignal(old),
             PrefabType.OutPax => pack.GetPassengerSignal(old),
             _ => pack.GetMainlineSignal(old),
@@ -1095,7 +1028,8 @@ namespace Signals.Game
         {
             if (Check(PrefabType.IntoYard)) return PrefabType.IntoYard;
             if (Check(PrefabType.OutPax)) return PrefabType.OutPax;
-            if (Check(PrefabType.MainlineJunction)) return PrefabType.MainlineJunction;
+            if (Check(PrefabType.JunctionLeft)) return PrefabType.JunctionLeft;
+            if (Check(PrefabType.JunctionRight)) return PrefabType.JunctionRight;
             if (Check(PrefabType.Mainline)) return PrefabType.Mainline;
 
             return a;
@@ -1211,6 +1145,65 @@ namespace Signals.Game
 
         #region Utility
 
+        private void DebugRender(Camera cam)
+        {
+            var debugMode = SignalsMod.Settings.DebugBlocks;
+            if (debugMode == DebugMode.None || PlayerManager.ActiveCamera == null) return;
+
+            var debugHovered = debugMode == DebugMode.HoveredSignal;
+            var up2 = Vector3.up * 2;
+
+            foreach (var signal in AllSignals)
+            {
+                // Only draw the hovered sign if the debug mod is set to hovered.
+                if (debugHovered && !signal.Hovered) continue;
+                // Skip drawing signs that are too far away.
+                if (signal.GetCameraDistanceSqr() > 16000000) continue;
+
+                var block = signal.Block;
+                if (block == null) continue;
+
+                var offset = WorldMover.currentMove + Vector3.up;
+                var offset2 = signal.Definition.transform.right * -0.1f;
+                var hue = signal.Id * 0.31f;
+                var highlight = !debugHovered && signal.Hovered;
+
+                if (highlight)
+                {
+                    offset2 += new Vector3(0, 0.1f, 0);
+                }
+
+                if (block.NextSignal != null)
+                {
+                    GLHelper.DrawLozenge(block.NextSignal.Position + up2, block.NextSignal.Definition.transform.forward, GetColour(hue, highlight));
+                }
+
+                if ((debugHovered || highlight) && signal is DistantSignalController distant)
+                {
+                    GLHelper.DrawLine(signal.Position + offset2, distant.Home.Position + offset2, GetColour(hue, highlight));
+                }
+
+                foreach (var track in block.ExtraTracks)
+                {
+                    GLHelper.DrawPointSet(track.GetKinkedPointSet().points, offset + offset2, 20, GetColour(hue, highlight));
+                    hue += 0.03f;
+                }
+
+                hue += 0.1f;
+
+                foreach (var track in block.Tracks)
+                {
+                    GLHelper.DrawPointSet(track.GetKinkedPointSet().points, offset + offset2, 20, GetColour(hue, highlight));
+                    hue += 0.03f;
+                }
+            }
+
+            static Color GetColour(float hue, bool highlight)
+            {
+                return Color.HSVToRGB(hue % 1.00f, highlight ? 0.25f : 0.95f, 1.00f);
+            }
+        }
+
         /// <summary>
         /// Tries to find a pack from the mod ID.
         /// </summary>
@@ -1269,6 +1262,18 @@ namespace Signals.Game
 
             group = null!;
             return false;
+        }
+
+        /// <summary>
+        /// Tries to find a <see cref="BasicSignalController"/> with the specified ID.
+        /// </summary>
+        /// <param name="id">The id of the signal.</param>
+        /// <param name="signal">The signal, if found. Otherwise <see langword="null"/>.</param>
+        /// <returns><see langword="true"/> if a signal was found, otherwise <see langword="false"/>.</returns>
+        public bool TryGetSignal(int id, out BasicSignalController signal)
+        {
+            signal = AllSignals.First(x => x.Id == id);
+            return signal != null;
         }
 
         // For RUE debug.

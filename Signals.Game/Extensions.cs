@@ -51,6 +51,9 @@ namespace Signals.Game
 
         #region Track
 
+        private const string YardNameStart = "[Y]";
+        private const string NoSign = "[#]";
+
         public static bool IsOccupied(this RailTrack track, CrossingCheckMode crossingMode)
         {
             return TrackChecker.IsOccupied(track, crossingMode);
@@ -64,6 +67,16 @@ namespace Signals.Game
         public static bool IsReservedByAnother(this RailTrack track, BasicSignalController signal, CrossingCheckMode crossingMode)
         {
             return TrackChecker.IsReservedByAnother(track, signal, crossingMode);
+        }
+
+        public static bool IsPartOfYard(this RailTrack track)
+        {
+            return track.name.StartsWith(YardNameStart);
+        }
+
+        public static bool IsNonSign(this RailTrack track)
+        {
+            return track.name.StartsWith(NoSign);
         }
 
         public static double GetLength(this RailTrack track)
@@ -80,6 +93,8 @@ namespace Signals.Game
 
         #region Junctions
 
+        private const string JunctionLeft = "junc-l";
+
         public static Branch GetCurrentBranch(this Junction junction)
         {
             return junction.outBranches[junction.selectedBranch];
@@ -90,14 +105,24 @@ namespace Signals.Game
             return junction.outBranches[junction.defaultSelectedBranch];
         }
 
+        public static RailTrack[] GetAllTracks(this Junction junction)
+        {
+            return junction.outBranches.Select(x => x.track).ToArray();
+        }
+
         public static bool IsSetToThrough(this Junction junction)
         {
             return junction.GetCurrentBranch().track.name == "[track through]";
         }
 
-        public static RailTrack[] GetAllTracks(this Junction junction)
+        public static bool IsLeft(this Junction junction)
         {
-            return junction.outBranches.Select(x => x.track).ToArray();
+            return junction.transform.parent.name.StartsWith(JunctionLeft);
+        }
+
+        public static string GetStation(this Junction junction)
+        {
+            return TrackUtils.JunctionStation(junction);
         }
 
         #endregion

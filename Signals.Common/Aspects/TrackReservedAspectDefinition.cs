@@ -2,6 +2,7 @@
 
 namespace Signals.Common.Aspects
 {
+    [AddComponentMenu("DV Signals/Aspects/Track Reserved")]
     public class TrackReservedAspectDefinition : AspectBaseDefinition
     {
         [Space]

@@ -4,7 +4,7 @@ using System;
 
 namespace Signals.Game.Displays
 {
-    internal class DistanceToNextDisplay : InfoDisplay
+    public class DistanceToNextDisplay : InfoDisplay
     {
         private DistantSignalController? _distant;
 

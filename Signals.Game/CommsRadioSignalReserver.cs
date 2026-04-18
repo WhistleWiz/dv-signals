@@ -34,6 +34,7 @@ namespace Signals.Game
 
         private float Duration => s_durations[_durationIndex];
         private AudioClip? ConfirmSound => Controller.crewVehicleControl.confirmSound;
+        private AudioClip? SuccessSound => Controller.crewVehicleControl.spawnVehicleSound;
         private AudioClip? CancelSound => Controller.crewVehicleControl.cancelSound;
 
         public ButtonBehaviourType ButtonBehaviour { get; private set; }
@@ -95,13 +96,15 @@ namespace Signals.Game
             {
                 _active = true;
                 ButtonBehaviour = ButtonBehaviourType.Override;
+                PlayRadioSound(ConfirmSound);
                 SetDisplayToSignal();
                 return;
             }
 
             if (_displayOverriden)
             {
-                PlayRadioSound(ConfirmSound);
+                PlayRadioSound(CancelSound);
+                StopDisplayCoro();
                 SetDisplayToSignal();
                 return;
             }
@@ -117,7 +120,7 @@ namespace Signals.Game
 
             if (TrackReserver.ReserveForSignal(_controller, Duration))
             {
-                PlayRadioSound(ConfirmSound);
+                PlayRadioSound(SuccessSound);
                 SetSuccessDisplay();
             }
             else
@@ -163,7 +166,7 @@ namespace Signals.Game
         public void SetStartingDisplay()
         {
             StopDisplayCoro();
-            Display.SetDisplay("Signal Reserver", "Open");
+            Display.SetDisplay("Signal Reserver", "Click to begin");
         }
 
         private void SetFailedDisplay()

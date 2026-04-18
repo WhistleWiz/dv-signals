@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Signals.Common
 {
+    [AddComponentMenu("DV Signals/Signal Light Sequence")]
     public class SignalLightSequenceDefinition : MonoBehaviour
     {
         public SignalLightDefinition?[] Lights = new SignalLightDefinition?[0];

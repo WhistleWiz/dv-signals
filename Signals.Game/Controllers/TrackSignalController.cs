@@ -3,6 +3,9 @@ using Signals.Game.Railway;
 
 namespace Signals.Game.Controllers
 {
+    /// <summary>
+    /// A controller for a block starting on a fixed track.
+    /// </summary>
     public class TrackSignalController : BasicSignalController
     {
         // Signals too far from the camera aren't updated.
@@ -29,11 +32,12 @@ namespace Signals.Game.Controllers
                     if (item.track == starting) break;
                 }
 
-                InternalName = $"{junction.junctionData.junctionIdLong}:B{count}";
+                InternalName = $"{junction.junctionData.junctionIdLong}-B{count}";
             }
             else
             {
-                InternalName = $"{StartingTrack.name}:{PlacementLetter}";
+                var junction = startingDirection.IsOut() ? starting.inJunction : starting.outJunction;
+                InternalName = junction != null ? $"{junction.junctionData.junctionIdLong}-F" : $"{StartingTrack.name}:{PlacementLetter}";
             }
         }
 

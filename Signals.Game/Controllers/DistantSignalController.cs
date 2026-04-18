@@ -5,32 +5,21 @@ using Signals.Game.Railway;
 
 namespace Signals.Game.Controllers
 {
-    internal class DistantSignalController : BasicSignalController
+    /// <summary>
+    /// A controller for a distant signal.
+    /// </summary>
+    public class DistantSignalController : BasicSignalController
     {
-        private BasicSignalController _home;
-
-        public BasicSignalController Home
-        {
-            get => _home;
-            protected set
-            {
-                _home.AspectChanged -= UpdateFromHome;
-                _home.DisplaysUpdated -= UpdateDisplaysFromHome;
-                _home = value;
-                _home.AspectChanged += UpdateFromHome;
-                _home.DisplaysUpdated += UpdateDisplaysFromHome;
-            }
-        }
+        public BasicSignalController Home { get; private set; }
         public float Distance { get; private set; }
         public override string Name => string.IsNullOrEmpty(NameOverride) ? $"{Home.Name}-D" : NameOverride;
 
         public DistantSignalController(SignalControllerDefinition def, BasicSignalController home,
             SignalPlacementInfo info, float distance) : base(def, info)
         {
-            _home = home;
-
-            _home.AspectChanged += UpdateFromHome;
-            _home.DisplaysUpdated += UpdateDisplaysFromHome;
+            Home = home;
+            Home.AspectChanged += UpdateFromHome;
+            Home.DisplaysUpdated += UpdateDisplaysFromHome;
 
             Distance = distance;
             Type = SignalType.Distant;

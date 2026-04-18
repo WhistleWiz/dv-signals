@@ -2,6 +2,7 @@
 
 namespace Signals.Common.Aspects
 {
+    [AddComponentMenu("DV Signals/Aspects/Junction Branch")]
     public class JunctionBranchAspectDefinition : AspectBaseDefinition
     {
         public enum JunctionAspectMode

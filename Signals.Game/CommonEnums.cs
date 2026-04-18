@@ -6,6 +6,17 @@
         In
     }
 
+    public enum PrefabType
+    {
+        NotSet,
+        Mainline,
+        JunctionLeft,
+        JunctionRight,
+        IntoYard,
+        Shunting,
+        OutPax,
+    }
+
     public enum SignalType
     {
         NotSet,
@@ -35,15 +46,5 @@
         /// Fully manual.
         /// </summary>
         FullManual
-    }
-
-    public enum PrefabType
-    {
-        NotSet,
-        Mainline,
-        MainlineJunction,
-        IntoYard,
-        Shunting,
-        OutPax,
     }
 }

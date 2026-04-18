@@ -4,7 +4,7 @@ using Signals.Game.Railway;
 
 namespace Signals.Game.Displays
 {
-    internal class NextStationDisplay : InfoDisplay
+    public class NextStationDisplay : InfoDisplay
     {
         private NextStationDisplayDefinition _fullDef;
         private string? _startingStation;

@@ -3,7 +3,7 @@ using Signals.Game.Controllers;
 
 namespace Signals.Game.Displays
 {
-    internal class SignalNameDisplay : InfoDisplay
+    public class SignalNameDisplay : InfoDisplay
     {
         public SignalNameDisplay(InfoDisplayDefinition definition, BasicSignalController controller) : base(definition, controller) { }
 

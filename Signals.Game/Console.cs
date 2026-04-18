@@ -1,6 +1,5 @@
 ﻿using CommandTerminal;
 using Signals.Game.Railway;
-using System.Linq;
 using UnityEngine;
 
 namespace Signals.Game
@@ -57,9 +56,7 @@ namespace Signals.Game
                 return;
             }
 
-            var signal = SignalManager.Instance.AllSignals.First(x => x.Id == args[0].Int);
-
-            if (signal == null)
+            if (SignalManager.Instance.TryGetSignal(args[0].Int, out var signal))
             {
                 Debug.LogError($"Could not find signal with ID '{args[0]}'");
                 return;
@@ -98,9 +95,7 @@ namespace Signals.Game
                 return;
             }
 
-            var signal = SignalManager.Instance.AllSignals.First(x => x.Id == args[0].Int);
-
-            if (signal == null)
+            if (SignalManager.Instance.TryGetSignal(args[0].Int, out var signal))
             {
                 Debug.LogError($"Could not find signal with ID '{args[0]}'");
                 return;

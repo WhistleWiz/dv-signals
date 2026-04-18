@@ -4,7 +4,7 @@ using Signals.Game.Railway;
 
 namespace Signals.Game.Displays
 {
-    internal class TrackInfoDisplay : InfoDisplay
+    public class TrackInfoDisplay : InfoDisplay
     {
         private TrackInfoDisplayDefinition _fullDef;
 

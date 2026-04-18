@@ -75,7 +75,6 @@ namespace Signals.Game.Aspects
                 t.ToTransformed();
             }
 
-            PlayAnimation();
             PlaySound();
 
             Active = true;
@@ -112,22 +111,6 @@ namespace Signals.Game.Aspects
             }
 
             Active = false;
-        }
-
-        private void PlayAnimation()
-        {
-            if (Controller.Definition.Animator == null || !_animationId.HasValue)
-            {
-                return;
-            }
-
-            Controller.Definition.Animator.enabled = true;
-            Controller.Definition.Animator.CrossFadeInFixedTime(_animationId.Value, Definition.AnimationTime, 0);
-
-            if (Definition.DisableAnimatorAfterChanging)
-            {
-                Controller.DisableAnimator(Definition.AnimationTime + 0.1f);
-            }
         }
 
         /// <summary>

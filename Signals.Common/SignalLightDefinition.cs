@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Signals.Common
 {
+    [AddComponentMenu("DV Signals/Signal Light")]
     public class SignalLightDefinition : MonoBehaviour
     {
         public Renderer[] Renderers = new Renderer[0];

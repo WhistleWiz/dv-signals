@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Signals.Common
 {
-    [CreateAssetMenu(menuName = "DVSignals/Signal Pack")]
+    [CreateAssetMenu(menuName = "DV Signals/Signal Pack")]
     public class SignalPack : ScriptableObject
     {
         public string ModId = string.Empty;
@@ -15,10 +15,13 @@ namespace Signals.Common
         public string Repository = string.Empty;
 
         [Header("Main Signal")]
-        [Tooltip("Used on all junctions in mainlines, facing the joined track")]
+        [Tooltip("Used on all junctions in mainlines, facing the joined track\n" +
+            "It's also used as the fallback for all other signals if they're missing, except shunting ones")]
         public SignalControllerDefinition Signal = null!;
-        [Tooltip("Used on all junctions in mainlines, facing the junction branches")]
-        public SignalControllerDefinition? JunctionSignal;
+        [Tooltip("Used on all junctions with a track diverging to the left in mainlines, facing the junction branches")]
+        public SignalControllerDefinition? LeftJunctionSignal;
+        [Tooltip("Used on all junctions with a track diverging to the right in mainlines, facing the junction branches")]
+        public SignalControllerDefinition? RightJunctionSignal;
 
         [Header("Optional Signals")]
         [Tooltip("Used on junctions that enter/change yards")]
@@ -37,8 +40,10 @@ namespace Signals.Common
         [Header("Optional Alternate Versions")]
         [Tooltip("Used on all junctions in mainlines")]
         public SignalControllerDefinition? OldSignal;
-        [Tooltip("Used on all junctions in mainlines, facing the junction branches")]
-        public SignalControllerDefinition? OldJunctionSignal;
+        [Tooltip("Used on all junctions with a track diverging to the left in mainlines, facing the junction branches")]
+        public SignalControllerDefinition? OldLeftJunctionSignal;
+        [Tooltip("Used on all junctions with a track diverging to the right in mainlines, facing the junction branches")]
+        public SignalControllerDefinition? OldRightJunctionSignal;
         [Tooltip("Used on junctions that enter/change yards")]
         public SignalControllerDefinition? OldIntoYardSignal;
         [Tooltip("Used on junctions inside yards")]
@@ -69,21 +74,25 @@ namespace Signals.Common
             {
                 yield return Signal;
 
+                if (LeftJunctionSignal != null) yield return LeftJunctionSignal;
+                if (RightJunctionSignal != null) yield return RightJunctionSignal;
                 if (IntoYardSignal != null) yield return IntoYardSignal;
                 if (ShuntingSignal != null) yield return ShuntingSignal;
                 if (PassengerSignal != null) yield return PassengerSignal;
                 if (DistantSignal != null) yield return DistantSignal;
 
-                foreach (var item in OtherSignals)
-                {
-                    if (item != null) yield return item;
-                }
-
                 if (OldSignal != null) yield return OldSignal;
+                if (OldLeftJunctionSignal != null) yield return OldLeftJunctionSignal;
+                if (OldRightJunctionSignal != null) yield return OldRightJunctionSignal;
                 if (OldIntoYardSignal != null) yield return OldIntoYardSignal;
                 if (OldShuntingSignal != null) yield return OldShuntingSignal;
                 if (OldPassengerSignal != null) yield return OldPassengerSignal;
                 if (OldDistantSignal != null) yield return OldDistantSignal;
+
+                foreach (var item in OtherSignals)
+                {
+                    if (item != null) yield return item;
+                }
             }
         }
 
@@ -94,13 +103,27 @@ namespace Signals.Common
             return Signal;
         }
 
-        public SignalControllerDefinition GetJunctionSignal(bool old)
+        public SignalControllerDefinition GetLeftJunctionSignal(bool old)
         {
-            if (old && OldJunctionSignal != null) return OldJunctionSignal;
+            if (old && OldLeftJunctionSignal != null) return OldLeftJunctionSignal;
 
-            if (JunctionSignal != null) return JunctionSignal;
+            if (LeftJunctionSignal != null) return LeftJunctionSignal;
 
             return GetMainlineSignal(old);
+        }
+
+        public SignalControllerDefinition GetRightJunctionSignal(bool old)
+        {
+            if (old && OldRightJunctionSignal != null) return OldRightJunctionSignal;
+
+            if (RightJunctionSignal != null) return RightJunctionSignal;
+
+            return GetMainlineSignal(old);
+        }
+
+        public SignalControllerDefinition GetJunctionSignal(bool old, bool left)
+        {
+            return left ? GetLeftJunctionSignal(old) : GetRightJunctionSignal(old);
         }
 
         public SignalControllerDefinition GetIntoYardSignal(bool old)
@@ -109,7 +132,7 @@ namespace Signals.Common
 
             if (IntoYardSignal != null) return IntoYardSignal;
 
-            return GetJunctionSignal(old);
+            return GetMainlineSignal(old);
         }
 
         public SignalControllerDefinition GetPassengerSignal(bool old)

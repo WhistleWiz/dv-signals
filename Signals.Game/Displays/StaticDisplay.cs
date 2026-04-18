@@ -3,7 +3,7 @@ using Signals.Game.Controllers;
 
 namespace Signals.Game.Displays
 {
-    internal class StaticDisplay : InfoDisplay
+    public class StaticDisplay : InfoDisplay
     {
         private StaticDisplayDefinition _fullDef;
 

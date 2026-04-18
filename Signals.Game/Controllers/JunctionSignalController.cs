@@ -5,16 +5,19 @@ using System.Collections.Generic;
 namespace Signals.Game.Controllers
 {
     /// <summary>
-    /// Controls a signal with a junction.
+    /// A controller for a signal placed at a junction.
     /// </summary>
     /// <remarks>
-    /// Signal aspect is updated every second when a player is within 2km of the signal, and slows to
-    /// an update every 5 seconds when further away.
+    /// Switching the junction automatically updates the signal.
     /// </remarks>
     public class JunctionSignalController : TrackSignalController
     {
+        /// <summary>
+        /// If not <see langword="null"/>, the block will start at the specified track rather than the junction branches.
+        /// </summary>
         public RailTrack? OverrideStart;
 
+        public bool Left { get; protected set; }
         public Junction Junction { get; protected set; }
 
         public JunctionSignalController(SignalControllerDefinition def, Junction junction, RailTrack? starting, SignalPlacementInfo info) :
@@ -23,25 +26,12 @@ namespace Signals.Game.Controllers
             OverrideStart = starting;
 
             Junction = junction;
+            Left = junction.IsLeft();
 
             Junction.Switched += JunctionSwitched;
             Destroyed += (x) => Junction.Switched -= JunctionSwitched;
 
-            InternalName = $"{Junction.junctionData.junctionIdLong}-{(info.Direction.IsOut() ? 'T' : 'F')}";
-        }
-
-        public JunctionSignalController(SignalControllerDefinition def, Junction junction, RailTrack? starting, TrackDirection direction, SignalPlacementInfo info) :
-            base(def, starting ?? junction.GetCurrentBranch().track, TrackDirection.Out, info)
-        {
-            OverrideStart = starting;
-            Direction = direction;
-
-            Junction = junction;
-
-            Junction.Switched += JunctionSwitched;
-            Destroyed += (x) => Junction.Switched -= JunctionSwitched;
-
-            InternalName = $"{Junction.junctionData.junctionIdLong}-{(info.Direction.IsOut() ? 'T' : 'F')}";
+            InternalName = $"{Junction.junctionData.junctionIdLong}-T";
         }
 
         private void JunctionSwitched(Junction.SwitchMode mode, int branch)

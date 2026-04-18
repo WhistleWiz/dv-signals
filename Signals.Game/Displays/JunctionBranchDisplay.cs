@@ -3,7 +3,7 @@ using Signals.Game.Controllers;
 
 namespace Signals.Game.Displays
 {
-    internal class JunctionBranchDisplay : InfoDisplay
+    public class JunctionBranchDisplay : InfoDisplay
     {
         private JunctionBranchDisplayDefinition _fullDef;
         private JunctionSignalController? _junctionController;
@@ -18,26 +18,20 @@ namespace Signals.Game.Displays
         {
             if (_junctionController == null) return;
 
-            //if (_fullDef.TowardsOnly && !_junctionController.Direction.IsOut())
-            //{
-            //    DisplayText = string.Empty;
-            //    return;
-            //}
-
             DisplayText = GetBranchDisplay(_junctionController.Junction, _fullDef.BranchDisplay);
         }
 
-        private static string GetBranchDisplay(Junction junction, JunctionBranchDisplayDefinition.JunctionDisplayMode mode)
+        private static string GetBranchDisplay(Junction junction, JunctionBranchDisplayDefinition.BranchDisplayMode mode)
         {
             // Fallback to BranchNumber for certain modes.
             if (junction.outBranches.Count > 2)
             {
                 switch (mode)
                 {
-                    case JunctionBranchDisplayDefinition.JunctionDisplayMode.Symbols:
-                    case JunctionBranchDisplayDefinition.JunctionDisplayMode.Direction:
-                    case JunctionBranchDisplayDefinition.JunctionDisplayMode.DirectionLetter:
-                        mode = JunctionBranchDisplayDefinition.JunctionDisplayMode.BranchNumber;
+                    case JunctionBranchDisplayDefinition.BranchDisplayMode.Symbols:
+                    case JunctionBranchDisplayDefinition.BranchDisplayMode.Direction:
+                    case JunctionBranchDisplayDefinition.BranchDisplayMode.DirectionLetter:
+                        mode = JunctionBranchDisplayDefinition.BranchDisplayMode.BranchNumber;
                         break;
                     default:
                         break;
@@ -46,22 +40,22 @@ namespace Signals.Game.Displays
 
             switch (mode)
             {
-                case JunctionBranchDisplayDefinition.JunctionDisplayMode.BranchNumberRaw:
+                case JunctionBranchDisplayDefinition.BranchDisplayMode.BranchNumberRaw:
                     return junction.selectedBranch.ToString();
-                case JunctionBranchDisplayDefinition.JunctionDisplayMode.Symbols:
+                case JunctionBranchDisplayDefinition.BranchDisplayMode.Symbols:
                     if (junction.selectedBranch == 0) return "\\";
                     if (junction.selectedBranch == 1) return "/";
                     goto default;
-                case JunctionBranchDisplayDefinition.JunctionDisplayMode.Direction:
+                case JunctionBranchDisplayDefinition.BranchDisplayMode.Direction:
                     if (junction.selectedBranch == 0) return "LEFT";
                     if (junction.selectedBranch == 1) return "RIGHT";
                     goto default;
-                case JunctionBranchDisplayDefinition.JunctionDisplayMode.DirectionLetter:
+                case JunctionBranchDisplayDefinition.BranchDisplayMode.DirectionLetter:
                     if (junction.selectedBranch == 0) return "L";
                     if (junction.selectedBranch == 1) return "R";
                     goto default;
-                case JunctionBranchDisplayDefinition.JunctionDisplayMode.Letters:
-                    return IntToLetters(junction.selectedBranch);
+                case JunctionBranchDisplayDefinition.BranchDisplayMode.Letters:
+                    return IntToLetters(junction.selectedBranch + 1);
                 default:
                     return (junction.selectedBranch + 1).ToString();
             }

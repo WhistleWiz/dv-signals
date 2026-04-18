@@ -1,5 +1,8 @@
-﻿namespace Signals.Common.Aspects
+﻿using UnityEngine;
+
+namespace Signals.Common.Aspects
 {
+    [AddComponentMenu("DV Signals/Aspects/Is Next Aspect Any")]
     public class IsNextAspectAnyAspectDefinition : AspectBaseDefinition
     {
         public string[] NextIds = new string[0];

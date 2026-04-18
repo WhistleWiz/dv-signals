@@ -14,6 +14,7 @@ namespace Signals.Game.Patches
             // Create the object as inactive to prevent Awake() from running too early.
             var go = new GameObject(nameof(CommsRadioSignalReserver));
             go.transform.parent = __instance.transform;
+            go.transform.localPosition = Vector3.zero;
             go.SetActive(false);
             var mode = go.AddComponent<CommsRadioSignalReserver>();
             mode.Controller = __instance;

@@ -2,9 +2,10 @@
 
 namespace Signals.Common.Displays
 {
+    [AddComponentMenu("DV Signals/Displays/Junction Branch")]
     public class JunctionBranchDisplayDefinition : InfoDisplayDefinition
     {
-        public enum JunctionDisplayMode
+        public enum BranchDisplayMode
         {
             [Tooltip("0, 1, 2, 3, 4...")]
             BranchNumberRaw,
@@ -24,8 +25,6 @@ namespace Signals.Common.Displays
             "The display modes 'Symbols', 'Direction', and 'Direction Letter' only support " +
             "junctions with 2 branches, and will fall back to 'Branch Number' if the number " +
             "of branches is larger")]
-        public JunctionDisplayMode BranchDisplay = JunctionDisplayMode.Symbols;
-        [Tooltip("If true, only displays if the signal is facing the branches")]
-        public bool TowardsOnly = true;
+        public BranchDisplayMode BranchDisplay = BranchDisplayMode.Symbols;
     }
 }

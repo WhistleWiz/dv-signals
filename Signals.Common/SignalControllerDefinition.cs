@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace Signals.Common
 {
+    [AddComponentMenu("DV Signals/Signal Controller")]
     public class SignalControllerDefinition : MonoBehaviour
     {
         private const float HalfGauge = 1.435f / 2.0f;
@@ -17,18 +18,21 @@ namespace Signals.Common
         public Sprite? OffStateHUDSprite;
 
         [Header("Optional")]
-        [Tooltip("Extra signal displays")]
+        [Tooltip("Displays that aren't part of aspects")]
         public InfoDisplayDefinition[] Displays = new InfoDisplayDefinition[0];
         [Tooltip("Extra indicators")]
         public AspectBaseDefinition[] Indicators = new AspectBaseDefinition[0];
-        public Animator? Animator;
-
-        [SerializeField]
-        private bool _drawGuides = true;
+        //[Tooltip("How aspects in subsignals should be treated between main signals\n" +
+        //    " • Ignore: uses only this controller's aspects\n" +
+        //    " • Most Restrictive With Main: uses the most restrictive aspect from the subcontrollers, ignoring the main\n" +
+        //    " • Active: uses the aspect of the currently active subcontroller (ex.: subcontroller for the current junction branch)")]
+        //public SubsignalMode SubsignalMode = SubsignalMode.Ignore;
+        //[Tooltip("Additional signals within the same main signal")]
+        //public SubsignalControllerDefinition[] Subsignals = new SubsignalControllerDefinition[0];
 
         private void OnDrawGizmos()
         {
-            if (!_drawGuides) return;
+            if (transform.parent != null) return;
 
             Vector3 offset = Vector3.right * HalfGauge;
 

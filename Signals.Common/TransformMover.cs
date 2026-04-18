@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Signals.Common
 {
+    [AddComponentMenu("DV Signals/Transform Mover")]
     public class TransformMover : MonoBehaviour
     {
         [Header("Original")]
