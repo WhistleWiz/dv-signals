@@ -1,6 +1,5 @@
 ﻿using Signals.Common;
 using Signals.Game.Aspects;
-using Signals.Game.Displays;
 using Signals.Game.Railway;
 using Signals.Game.Util;
 using System;
@@ -15,12 +14,15 @@ namespace Signals.Game.Controllers
     /// </summary>
     public class BasicSignalController
     {
+        #region Static
+
+        // Signals too far from the camera aren't updated.
+        private const float SkipUpdateDistanceSqr = 1500 * 1500;
+
         protected const float UpdateTime = 1.0f;
-        protected const float OptimiseDistanceSqr = 2500 * 2500;
         protected const float CrossingMinDistanceSqr = 7.5f * 7.5f;
         protected const int OffValue = -1;
         protected const int UpdatePropagation = 3;
-
         private static int s_idGen = 0;
         private static object s_lock = new object();
 
@@ -36,10 +38,9 @@ namespace Signals.Game.Controllers
             return value;
         }
 
-        private SignalHover _hover;
-        private SignalDefinitionToController? _comp;
+        #endregion
 
-        internal Renderer[] HighlightRenderers;
+        #region Members
 
         protected string InternalName = string.Empty;
         protected int UpdateRequested = 0;
@@ -52,11 +53,10 @@ namespace Signals.Game.Controllers
         /// Override the name of this signal.
         /// </summary>
         public string NameOverride = string.Empty;
-        /// <summary>
-        /// How the signal should be updated. Optimisation routines still execute no matter this state.
-        /// </summary>
-        public SignalOperationMode Operation = SignalOperationMode.Automatic;
-        public int ManualOverrideAspect;
+
+        #endregion
+
+        #region Properties
 
         protected char PlacementLetter => PlacementInfo.HasValue ? PlacementInfo.Value.Direction.IsOut() ? 'O' : 'I' : '-';
 
@@ -65,77 +65,60 @@ namespace Signals.Game.Controllers
         /// </summary>
         public SignalControllerDefinition Definition { get; private set; }
         /// <summary>
-        /// The index of the current aspect. Use <see cref="ChangeAspect(int)"/> to change this value.
+        /// The junction group this signal belongs to.
         /// </summary>
-        public int CurrentAspectIndex { get; private set; }
-        public AspectBase[] AllAspects { get; private set; }
-        public SignalLight[] AllLights { get; private set; }
-        public InfoDisplay[] AllDisplays { get; private set; }
-        public AspectBase[] AllIndicators { get; private set; }
+        public JunctionSignalGroup? Group { get; internal set; }
+        /// <summary>
+        /// The signals belonging to this controller.
+        /// </summary>
+        public Signal[] Signals { get; private set; }
+        /// <summary>
+        /// The shunting signal belonging to this controller.
+        /// </summary>
+        public Signal? ShuntingSignal { get; private set; }
         /// <summary>
         /// Information about where this signal was placed.
         /// </summary>
         public SignalPlacementInfo? PlacementInfo { get; private set; }
-        /// <summary>
-        /// The group of tracks this signal works with.
-        /// </summary>
-        public TrackBlock? Block { get; set; }
-        /// <summary>
-        /// The junction group this signal belongs to.
-        /// </summary>
-        public JunctionSignalGroup? Group { get; internal set; }
+        public int? RequiredJunctionBranch { get; private set; } = null;
+        public Junction? GroupJunction => Group?.Junction;
 
         public virtual string Name => string.IsNullOrEmpty(NameOverride) ? InternalName : NameOverride;
         /// <summary>
         /// <see langword="true"/> if this signal exists in the world.
         /// </summary>
         public bool Exists => Definition != null;
-        public bool IsOn => CurrentAspectIndex >= 0;
         public bool HasUpdatesQueued => UpdateRequested > 0;
-        /// <summary>
-        /// <see langword="null"/> if the signal is off.
-        /// </summary>
-        public AspectBase? CurrentAspect => IsOn ? AllAspects[CurrentAspectIndex] : null;
         /// <summary>
         /// The position in the world of this signal.
         /// </summary>
         public Vector3 Position => Definition.transform.position;
-        public bool Hovered => ReflectionHelpers.IsHovered(_hover);
 
-        public Action<AspectBase?>? AspectChanged;
-        public Action<InfoDisplay[]>? DisplaysUpdated;
+        #endregion
+
+        #region Events
+
         public Action<BasicSignalController>? Destroyed;
+        public Action<Signal, AspectBase?>? AnyAspectChanged;
+        public Action<int?>? RequiredBranchChanged;
+
+        #endregion
 
         public BasicSignalController(SignalControllerDefinition def, SignalPlacementInfo? placementInfo)
         {
             Id = GetGenId();
             Definition = def;
-            CurrentAspectIndex = OffValue;
             PlacementInfo = placementInfo;
-            HighlightRenderers = def.GetComponentsInChildren<MeshRenderer>(true);
 
-            if (def.Aspects.Any(x => x == null)) SignalsMod.Error($"Null aspect in {def.name}");
-            if (def.Displays.Any(x => x == null)) SignalsMod.Error($"Null display in {def.name}");
-            if (def.Indicators.Any(x => x == null)) SignalsMod.Error($"Null indicator in {def.name}");
+            Signals = def.Signals.Select(x => new Signal(this, x)).ToArray();
 
-            // Instantiate all aspect implementations.
-            AllAspects = def.Aspects.Select(x => AspectCreator.Create(this, x)).Where(x => x != null).ToArray()!;
-
-            // Get an array of all lights.
-            AllLights = def.GetComponentsInChildren<SignalLight>(true);
-
-            // Same as aspects but for displays.
-            AllDisplays = def.Displays.Select(x => DisplayCreator.Create(this, x)).Where(x => x != null).ToArray()!;
-
-            // And finally the same for indicators.
-            AllIndicators = def.Indicators.Select(x => AspectCreator.Create(this, x)).Where(x => x != null).ToArray()!;
-
-            _hover = def.GetComponent<SignalHover>();
-            _hover.Initialise(def.OffStateHUDSprite);
+            if (def.ShuntingSignal != null)
+            {
+                ShuntingSignal = new Signal(this, def.ShuntingSignal);
+            }
 
             TrackChecker.OnMapBuilt += FixPositionDueToCrossing;
-            SignalManager.Instance.RegisterSignal(this);
-            _comp = SignalDefinitionToController.AddToDef(this);
+            SignalManager.Instance.RegisterController(this);
         }
 
         private void FixPositionDueToCrossing(Dictionary<RailTrack, TrackChecker.TrackIntersectionPoints> junctionMap)
@@ -188,47 +171,14 @@ namespace Signals.Game.Controllers
             return true;
         }
 
-        // Used to disable child objects of the signal to increase performance.
-        // The distance set is 2.5km, which is far enough that signals can realistically be seen,
-        // but still not too far that it is useless.
-        internal void Optimise()
-        {
-            if (PlayerManager.ActiveCamera == null) return;
-
-            bool active = GetCameraDistanceSqr() <= OptimiseDistanceSqr;
-
-            foreach (Transform t in Definition.transform)
-            {
-                t.gameObject.SetActive(active);
-            }
-        }
-
         /// <summary>
         /// Calculates the squared distance from the signal to the camera.
         /// </summary>
         public float GetCameraDistanceSqr()
         {
+            if (PlayerManager.ActiveCamera == null) return float.PositiveInfinity;
+
             return Helpers.DistanceSqr(Definition.transform.position, PlayerManager.ActiveCamera.transform.position);
-        }
-
-        protected bool IsAspectManuallyOverriden(int index)
-        {
-            if (Operation == SignalOperationMode.Automatic)
-            {
-                return false;
-            }
-
-            return index == ManualOverrideAspect;
-        }
-
-        protected bool IsTempOverrideMatched(int index)
-        {
-            if (Operation != SignalOperationMode.TempOverride)
-            {
-                return false;
-            }
-
-            return index <= ManualOverrideAspect;
         }
 
         public bool OffsetOnTrack(int pointIndexOffset)
@@ -244,8 +194,9 @@ namespace Signals.Game.Controllers
 
             placement.PointIndex = index;
             PlacementInfo = placement;
-            Definition.transform.position = (Vector3)point.position;
             Definition.transform.rotation = Quaternion.LookRotation(isOut ? point.forward : -point.forward);
+            Definition.transform.position = (Vector3)point.position + Vector3.right *
+                (placement.OppositeSide ? -Definition.Offset : Definition.Offset);
 
             return true;
         }
@@ -295,161 +246,14 @@ namespace Signals.Game.Controllers
                 Group.BranchSignals.RemoveAll(x => x == this);
             }
 
+            foreach (var signal in GetAllSignals())
+            {
+                signal.Destroy();
+            }
+
             TrackChecker.OnMapBuilt -= FixPositionDueToCrossing;
-            TrackReserver.ClearFromSignal(this);
-            SignalManager.Instance.UnregisterSignal(this);
+            SignalManager.Instance.UnregisterController(this);
             Destroyed?.Invoke(this);
-        }
-
-        /// <summary>
-        /// Turns off the signal until the next state update.
-        /// </summary>
-        /// <param name="keep">If true, keeps the signal off.</param>
-        /// <returns><see langword="true"/> if the signal was turned off successfuly, <see langword="false"/> otherwise.</returns>
-        /// <remarks>In case the aspect was turned off successfully, <see cref="AspectChanged"/> will be called.</remarks>
-        public bool TurnOff()
-        {
-            if (!IsOn) return false;
-
-            CurrentAspect?.Unapply();
-
-            foreach (var item in AllIndicators)
-            {
-                item.Unapply();
-            }
-
-            foreach (var item in AllLights)
-            {
-                item.TurnOff();
-            }
-
-            CurrentAspectIndex = OffValue;
-
-            AspectChanged?.Invoke(null);
-            return true;
-        }
-
-        /// <summary>
-        /// Changes the current aspect to a new one.
-        /// </summary>
-        /// <param name="newAspect">The index of the new aspect. Negative values turn off the signal.</param>
-        /// <returns><see langword="true"/> if the aspect changed, <see langword="false"/> otherwise.</returns>
-        /// <remarks>In case the aspect is successfully changed, <see cref="AspectChanged"/> will be called.</remarks>
-        public bool ChangeAspect(int newAspect)
-        {
-            // Check if the state changes. All negative numbers are treated as off.
-            if (newAspect == CurrentAspectIndex || !IsOn && newAspect < 0)
-            {
-                return false;
-            }
-
-            // Out of range, ignore request. Maybe make them open the signal (last state)?
-            if (newAspect >= AllAspects.Length)
-            {
-                SignalsMod.Error($"Failed to set state on signal '{Name}': {newAspect} >= {AllAspects.Length}");
-                return false;
-            }
-
-            // Turn off on negative numbers.
-            if (newAspect < 0)
-            {
-                SignalsMod.LogVerbose($"Turning off signal '{Name}'");
-                return TurnOff();
-            }
-
-            CurrentAspect?.Unapply();
-
-            SignalsMod.LogVerbose($"Setting signal '{Name}' to state '{AllAspects[newAspect].Definition.Id}'");
-            CurrentAspectIndex = newAspect;
-            AllAspects[newAspect].Apply();
-
-            AspectChanged?.Invoke(AllAspects[newAspect]);
-            return true;
-        }
-
-        /// <summary>
-        /// Change the current aspect to the most restrictive one.
-        /// </summary>
-        /// <param name="withOverride">If <see langword="true"/>, also sets the manual override.</param>
-        /// <returns><see langword="true"/> if the aspect changed, <see langword="false"/> otherwise.</returns>
-        public bool ChangeToMostRestrictive(bool withOverride)
-        {
-            if (withOverride)
-            {
-                ManualOverrideAspect = 0;
-            }
-
-            var changed = ChangeAspect(0);
-            UpdateDisplays(changed);
-            UpdateIndicators();
-
-            return changed;
-        }
-
-        /// <summary>
-        /// Change the current aspect to the least restrictive one.
-        /// </summary>
-        /// <param name="withOverride">If <see langword="true"/>, also sets the manual override.</param>
-        /// <returns><see langword="true"/> if the aspect changed, <see langword="false"/> otherwise.</returns>
-        public bool ChangeToLeastRestrictive(bool withOverride)
-        {
-            if (withOverride)
-            {
-                ManualOverrideAspect = AllAspects.Length - 1;
-            }
-
-            var changed = ChangeAspect(AllAspects.Length - 1);
-            UpdateDisplays(changed);
-            UpdateIndicators();
-
-            return changed;
-        }
-
-        public void UpdateHoverDisplay()
-        {
-            if (IsOn)
-            {
-                // Current aspect is not null when the signal is on.
-                _hover.UpdateStateDisplay(this, CurrentAspect!.Definition.HUDSprite);
-            }
-            else
-            {
-                _hover.UpdateStateDisplay(this, Definition.OffStateHUDSprite);
-            }
-        }
-
-        public void UpdateDisplays(bool aspectChanged)
-        {
-            foreach (var item in AllDisplays)
-            {
-                item.CheckAndUpdate(aspectChanged);
-            }
-
-            UpdateHoverDisplay();
-
-            DisplaysUpdated?.Invoke(AllDisplays);
-        }
-
-        public void UpdateIndicators()
-        {
-            if (!IsOn) return;
-
-            // Turn off all indicators first. This needs 2 loops to prevent
-            // conflicts where one indicator turns another that was already
-            // on, off.
-            foreach (var item in AllIndicators)
-            {
-                item.Unapply();
-            }
-
-            foreach (var item in AllIndicators)
-            {
-                // Turn on the ones that meet conditions.
-                if (item.MeetsConditions())
-                {
-                    item.Apply();
-                }
-            }
         }
 
         public void RequestUpdate(int level)
@@ -462,69 +266,104 @@ namespace Signals.Game.Controllers
         /// </summary>
         public virtual bool ShouldUpdate()
         {
-            return !Operation.IsFullyManual();
+            var dist = GetCameraDistanceSqr();
+
+            // If the camera is too far from the signal, skip updating.
+            return dist < SkipUpdateDistanceSqr;
         }
 
         /// <summary>
         /// Update the current <see cref="Block"/> before the signal is updated.
         /// </summary>
-        public virtual void UpdateBlock() { }
+        public virtual void UpdateBlocks() { }
 
         /// <summary>
         /// Updates the current aspect based on the conditions of <see cref="AllAspects"/>.
         /// </summary>
         /// <param name="startPropagate">Whether this signal should propagate its updates to the signals afterwards.</param>
-        public void UpdateAspect(bool startPropagate)
+        public void Update(bool forced, bool startPropagate)
         {
-            UpdateBlock();
+            UpdateBlocks();
 
-            // Update the reservation.
-            if (TrackReserver.HasReservation(this))
+            foreach (var signal in Signals)
             {
-                TrackReserver.ReserveForSignal(this);
-            }
-
-            bool changed;
-
-            for (int i = 0; i < AllAspects.Length; i++)
-            {
-                if (IsAspectManuallyOverriden(i) || AllAspects[i].MeetsConditions())
+                // Update the reservation.
+                if (TrackReserver.HasReservation(signal) && !TrackReserver.UpdateReservation(signal))
                 {
-                    changed = ChangeAspect(i);
-
-                    if (IsTempOverrideMatched(i))
-                    {
-                        Operation = SignalOperationMode.Automatic;
-                    }
-
-                    goto Finalise;
+                    SignalsMod.Warning($"Could not update reservation for signal {signal.Id}, old reservation is kept.");
                 }
+
+                signal.UpdateAspect(forced);
             }
 
-            // Turn off if no conditions are met.
-            changed = TurnOff();
-
-            Finalise:
-
-            // Update displays and indicators.
-            UpdateDisplays(changed);
-            UpdateIndicators();
-            UpdateHoverDisplay();
+            ShuntingSignal?.UpdateAspect(forced);
 
             // Request the next signal to be updated to propagate out of range.
             UpdateRequested = Mathf.Max(UpdateRequested - 1, 0);
-            GetNextSignal()?.RequestUpdate(startPropagate ? UpdatePropagation : UpdateRequested);
+            GetNextController()?.RequestUpdate(startPropagate ? UpdatePropagation : UpdateRequested);
         }
 
         /// <summary>
-        /// Gets the next signal within the <see cref="TrackBlock"/> this signal controls.
+        /// Set or clear a required branch for the junction of this controller's group.
+        /// </summary>
+        /// <param name="index">The branch index.</param>
+        /// <remarks>Use a negative number to clear the requirement.</remarks>
+        public void ChangeRequiredBranch(int index)
+        {
+            if (index < 0)
+            {
+                RequiredJunctionBranch = null;
+                RequiredBranchChanged?.Invoke(null);
+                return;
+            }
+
+            RequiredJunctionBranch = index;
+            RequiredBranchChanged?.Invoke(index);
+        }
+
+        public virtual Signal? GetActiveSignal()
+        {
+            return Signals.Length > 0 ? Signals[0] : null;
+        }
+
+        public Signal? GetMostRestrictiveSignal()
+        {
+            if (Signals.Length == 0) return null;
+
+            var signal = Signals[0];
+
+            for (int i = 1; i < Signals.Length; i++)
+            {
+                var test = Signals[i];
+
+                if (test.IsOff) continue;
+
+                if (test.CurrentAspectIndex < signal.CurrentAspectIndex)
+                {
+                    signal = test;
+                }
+            }
+
+            return signal;
+        }
+
+        public Signal? GetControllerSignal() => Definition.Mode switch
+        {
+            ControllerMode.MostRestrictive => GetMostRestrictiveSignal(),
+            _ => GetActiveSignal(),
+        };
+
+        /// <summary>
+        /// Gets the next controller from the active signal.
         /// </summary>
         /// <returns>The next</returns>
-        public BasicSignalController? GetNextSignal()
+        public virtual BasicSignalController? GetNextController()
         {
-            var block = Block;
+            var signal = GetControllerSignal();
 
-            return (block != null && block.NextSignal != null) ? block.NextSignal : null;
+            if (signal == null) return null;
+
+            return signal.GetNextController();
         }
 
         /// <summary>
@@ -532,44 +371,58 @@ namespace Signals.Game.Controllers
         /// </summary>
         /// <param name="condition">The condition a signal must meet.</param>
         /// <returns></returns>
-        public BasicSignalController? GetNextSignalCondition(Predicate<BasicSignalController> condition)
+        public virtual BasicSignalController? GetNextControllerCondition(Predicate<BasicSignalController> condition)
         {
-            var signal = this;
-            var visited = new HashSet<BasicSignalController>();
-            var safety = 0;
+            var signal = GetControllerSignal();
 
-            while (signal != null)
-            {
-                if (visited.Contains(signal)) return null;
+            if (signal == null) return null;
 
-                visited.Add(signal);
-
-                if (condition(signal)) return signal;
-
-                safety++;
-
-                if (safety > TrackWalker.MaxDepth)
-                {
-                    SignalsMod.Error($"Hit safety searching for next signal meeting condition of signal {Name}");
-                    return null;
-                }
-
-                signal = signal.GetNextSignal();
-            }
-
-            return null;
+            return signal.GetNextControllerCondition(condition);
         }
 
-        public virtual List<TrackBlock> GetPotentialBlocks()
+        public virtual IEnumerable<TrackBlock> GetPotentialBlocks()
         {
-            var blocks = new List<TrackBlock>();
-
-            if (Block != null)
+            foreach (var item in Signals)
             {
-                blocks.Add(Block);
+                if (item.Block != null)
+                {
+                    yield return item.Block;
+                }
+            }
+        }
+
+        public IEnumerable<Signal> GetAllSignals()
+        {
+            foreach(var signal in Signals)
+            {
+                yield return signal;
             }
 
-            return blocks;
+            if (ShuntingSignal != null)
+            {
+                yield return ShuntingSignal;
+            }
+        }
+
+        public TrackBlock? GetLongestBlock()
+        {
+            if (Signals.Length == 0) return null;
+
+            var block = Signals[0].Block;
+
+            for (int i = 1; i < Signals.Length; i++)
+            {
+                var signal = Signals[i];
+
+                if (signal.Block == null) continue;
+
+                if (block == null || block.Length < signal.Block.Length)
+                {
+                    block = signal.Block;
+                }
+            }
+
+            return block;
         }
     }
 }

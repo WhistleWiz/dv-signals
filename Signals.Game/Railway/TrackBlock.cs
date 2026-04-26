@@ -30,7 +30,7 @@ namespace Signals.Game.Railway
         public readonly int Id;
         public RailTrack[] Tracks { get; private set; }
         public RailTrack[] ExtraTracks { get; private set; }
-        public BasicSignalController? NextSignal { get; private set; }
+        public BasicSignalController? NextController { get; private set; }
         public float Length { get; private set; }
         /// <summary>
         /// Station covered by this block. Empty if not available.
@@ -98,7 +98,7 @@ namespace Signals.Game.Railway
         {
             Id = GetGenId();
             Tracks = tracks.ToArray();
-            NextSignal = nextSignal;
+            NextController = nextSignal;
 
             // Add all junction tracks to better handle diverging trains.
             ExtraTracks = tracks.Where(x => x.isJunctionTrack).SelectMany(x => x.inJunction.GetAllTracks()).ToArray();
@@ -110,7 +110,7 @@ namespace Signals.Game.Railway
             Id = GetGenId();
             Tracks = System.Array.Empty<RailTrack>();
             ExtraTracks = System.Array.Empty<RailTrack>();
-            NextSignal = nextSignal;
+            NextController = nextSignal;
             Length = distance;
         }
 
@@ -119,10 +119,10 @@ namespace Signals.Game.Railway
             return Tracks.Any(x => x.IsOccupied(crossingMode)) || ExtraTracks.Any(x => x.IsOccupied(crossingMode));
         }
 
-        public static TrackBlock CreateUntilSignal(RailTrack starting, TrackDirection direction, bool includeShunting, BasicSignalController? ignore = null)
+        public static TrackBlock CreateUntilMainSignal(RailTrack starting, TrackDirection direction, BasicSignalController? ignore = null)
         {
             var tracks = new List<RailTrack> { starting };
-            tracks.AddRange(TrackWalker.GetTracksUntilSignal(starting, direction, includeShunting, ignore, out var info));
+            tracks.AddRange(TrackWalker.GetTracksUntilMainSignal(starting, direction, ignore, out var info));
 
             return new TrackBlock(tracks, info.Signal);
         }

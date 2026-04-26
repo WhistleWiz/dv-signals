@@ -1,6 +1,5 @@
 ﻿using DV;
 using DV.Highlighting;
-using Signals.Game.Controllers;
 using Signals.Game.Railway;
 using UnityEngine;
 
@@ -25,7 +24,7 @@ namespace Signals.Game
         private bool _active = false;
         private bool _displayOverriden = false;
         private RaycastHit _hit;
-        private BasicSignalController? _controller;
+        private Signal? _signal;
         private Coroutine? _resetDisplayCoro;
 
         public CommsRadioController Controller = null!;
@@ -63,30 +62,30 @@ namespace Signals.Game
             if (!_active) return;
 
             if (Physics.Raycast(SignalOrigin.position, SignalOrigin.forward, out _hit, 1000f, Mask) &&
-                _hit.transform.TryGetComponent(out SignalDefinitionToController comp))
+                _hit.transform.TryGetComponent(out SignalDefinitionToInstance comp))
             {
-                var controller = comp.Controller;
+                var signal = comp.Signal;
 
-                if (controller != _controller)
+                if (signal != _signal)
                 {
-                    HighlightController(_controller, false);
-                    HighlightController(controller, true);
+                    HighlightSignal(_signal, false);
+                    HighlightSignal(signal, true);
 
-                    _controller = comp.Controller;
+                    _signal = comp.Signal;
 
                     SetDisplayToSignal();
                 }
             }
             else
             {
-                if (_controller != null)
+                if (_signal != null)
                 {
-                    HighlightController(_controller, false);
-                    _controller = null;
+                    HighlightSignal(_signal, false);
+                    _signal = null;
                     SetDisplayToSignal();
                 }
 
-                _controller = null;
+                _signal = null;
             }
         }
 
@@ -109,7 +108,7 @@ namespace Signals.Game
                 return;
             }
 
-            if (_controller == null)
+            if (_signal == null)
             {
                 _active = false;
                 ButtonBehaviour = ButtonBehaviourType.Regular;
@@ -118,7 +117,7 @@ namespace Signals.Game
                 return;
             }
 
-            if (TrackReserver.ReserveForSignal(_controller, Duration))
+            if (TrackReserver.ReserveForSignal(_signal, Duration))
             {
                 PlayRadioSound(SuccessSound);
                 SetSuccessDisplay();
@@ -185,13 +184,13 @@ namespace Signals.Game
         {
             if (_displayOverriden) return;
 
-            if (_controller == null)
+            if (_signal == null)
             {
                 Display.SetContentAndAction($"Signal: None\nDuration: {Duration} seconds", "");
             }
             else
             {
-                Display.SetContentAndAction($"Signal: {_controller.Id}\nDuration: {Duration} seconds", "Reserve");
+                Display.SetContentAndAction($"Signal: {_signal.Id}\nDuration: {Duration} seconds", "Reserve");
             }
         }
 
@@ -234,11 +233,11 @@ namespace Signals.Game
             }
         }
 
-        private static void HighlightController(BasicSignalController? controller, bool on)
+        private static void HighlightSignal(Signal? signal, bool on)
         {
-            if (controller == null) return;
+            if (signal == null) return;
 
-            foreach (var renderer in controller.HighlightRenderers)
+            foreach (var renderer in signal.HighlightRenderers)
             {
                 AGeneralHighlighter.Instance.ToggleHighlight(on, renderer, AGeneralHighlighter.HighlightType.Sign, false);
             }

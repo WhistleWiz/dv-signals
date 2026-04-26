@@ -1,5 +1,4 @@
 ﻿using Signals.Common.Aspects;
-using Signals.Game.Controllers;
 
 namespace Signals.Game.Aspects
 {
@@ -7,18 +6,22 @@ namespace Signals.Game.Aspects
     {
         private IsNextAspectAspectDefinition _fullDef;
 
-        public IsNextAspectAspect(AspectBaseDefinition definition, BasicSignalController controller) : base(definition, controller)
+        public IsNextAspectAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal)
         {
             _fullDef = (IsNextAspectAspectDefinition)definition;
         }
 
         public override bool MeetsConditions()
         {
-            var next = Controller.GetNextSignal();
+            var next = Signal.GetNextController();
 
             if (next == null) return false;
 
-            var state = next.CurrentAspect;
+            var signal = next.GetControllerSignal();
+
+            if (signal == null) return false;
+
+            var state = signal.CurrentAspect;
 
             // Turned off signal can never meet conditions.
             return state != null && state.Id == _fullDef.NextId;

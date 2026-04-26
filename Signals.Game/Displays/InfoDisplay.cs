@@ -1,24 +1,27 @@
-﻿using Signals.Common.Displays;
-using Signals.Game.Controllers;
+﻿using Signals.Common;
+using Signals.Common.Displays;
+using UnityEngine;
 
 namespace Signals.Game.Displays
 {
-    public abstract class InfoDisplay
+    public abstract class InfoDisplay : IHudDisplayable
     {
         private bool _hasUpdated = false;
         private bool _off = false;
 
         public InfoDisplayDefinition Definition;
-        public BasicSignalController Controller;
+        public Signal Signal;
 
         public string DisplayText { get => Definition.DisplayText; set => Definition.DisplayText = value; }
-        public bool ShouldDisplay => !_off && !string.IsNullOrEmpty(DisplayText);
-        public bool ShouldDisplayHUD => Definition.HUDBackground != null && ShouldDisplay;
+        public bool ShouldDisplay => !_off && !string.IsNullOrEmpty(DisplayText) && Definition.HUDSprite != null;
+        public int DisplayOrder => Definition.HUDDisplayOrder;
+        public Sprite? Sprite => Definition.HUDSprite;
+        public Color TextColour => Definition.HUDTextColour;
 
-        protected InfoDisplay(InfoDisplayDefinition definition, BasicSignalController controller)
+        protected InfoDisplay(InfoDisplayDefinition definition, Signal signal)
         {
             Definition = definition;
-            Controller = controller;
+            Signal = signal;
         }
 
         /// <summary>
@@ -28,7 +31,7 @@ namespace Signals.Game.Displays
         /// <returns></returns>
         public bool CheckAndUpdate(bool aspectChanged)
         {
-            if (Definition.DisableWhenSignalIsOff && !Controller.IsOn)
+            if (Definition.DisableWhenSignalIsOff && !Signal.IsOn)
             {
                 if (!_off)
                 {

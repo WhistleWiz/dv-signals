@@ -1,4 +1,5 @@
-﻿using Signals.Common.Aspects;
+﻿using Signals.Common;
+using Signals.Common.Aspects;
 using Signals.Game.Controllers;
 using Signals.Game.Railway;
 using System.Linq;
@@ -10,34 +11,32 @@ namespace Signals.Game.Aspects
     /// Base class for a signal aspect. It handles lights, animation and sound from a
     /// <see cref="AspectBaseDefinition"/> automatically.
     /// </summary>
-    public abstract class AspectBase
+    public abstract class AspectBase : IHudDisplayable
     {
         public AspectBaseDefinition Definition;
-        public BasicSignalController Controller;
+        public Signal Signal;
 
         private SignalLight[] _on = null!;
         private SignalLight[] _blink = null!;
         private SignalLightSequence[] _sequences = null!;
-        private int? _animationId;
 
         public string Id => Definition.Id;
-        public TrackBlock? ControllerTrackBlock => Controller.Block;
+        public TrackBlock? Block => Signal.Block;
         public bool Active { get; private set; }
-        public bool ShouldDisplayHUD => Active && Definition.HUDSprite != null;
+        public int DisplayOrder => Signal.DisplayOrder;
+        public string? DisplayText => Signal.DisplayText;
+        public Sprite? Sprite => Definition.HUDSprite;
+        public Color TextColour => Signal.TextColour;
+        public BasicSignalController Controller => Signal.Controller;
 
-        public AspectBase(AspectBaseDefinition definition, BasicSignalController controller)
+        public AspectBase(AspectBaseDefinition definition, Signal signal)
         {
             Definition = definition;
-            Controller = controller;
+            Signal = signal;
 
             _on = definition.OnLights.Select(x => x.GetController()).ToArray();
             _blink = definition.BlinkingLights.Select(x => x.GetController()).ToArray();
             _sequences = definition.LightSequences.Select(x => x.GetController()).ToArray();
-
-            if (!string.IsNullOrEmpty(definition.AnimationName))
-            {
-                _animationId = Animator.StringToHash(definition.AnimationName);
-            }
 
             Active = false;
         }

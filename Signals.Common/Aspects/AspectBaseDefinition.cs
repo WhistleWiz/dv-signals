@@ -23,14 +23,6 @@ namespace Signals.Common.Aspects
         public TransformMover[] Movers = new TransformMover[0];
 
         [Space]
-        public string? AnimationName;
-        public float AnimationTime = 1.0f;
-        [Tooltip("Disables the animator after changing the signal state to this\n" +
-            "Only disable this option if you want to keep playing an animation after changing the state " +
-            "(i.e. \"wigwag\" style signals)")]
-        public bool DisableAnimatorAfterChanging = true;
-
-        [Space]
         [Tooltip("A random entry is selected to play when this aspect is activated\n" +
             "Sound is played from this object's transform")]
         public AudioClip[] ActivationAudios = new AudioClip[0];

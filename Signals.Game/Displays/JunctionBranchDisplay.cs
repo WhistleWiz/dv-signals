@@ -6,19 +6,27 @@ namespace Signals.Game.Displays
     public class JunctionBranchDisplay : InfoDisplay
     {
         private JunctionBranchDisplayDefinition _fullDef;
-        private JunctionSignalController? _junctionController;
+        private Junction? _junction;
 
-        public JunctionBranchDisplay(InfoDisplayDefinition definition, BasicSignalController controller) : base(definition, controller)
+        public JunctionBranchDisplay(InfoDisplayDefinition definition, Signal signal) : base(definition, signal)
         {
             _fullDef = (JunctionBranchDisplayDefinition)definition;
-            _junctionController = (JunctionSignalController)controller;
+
+            if (signal.Controller is JunctionSignalController junctionController)
+            {
+                _junction = junctionController.GroupJunction;
+            }
+            else
+            {
+                _junction = signal.Controller.Group?.Junction;
+            }
         }
 
         public override void UpdateDisplay()
         {
-            if (_junctionController == null) return;
+            if (_junction == null) return;
 
-            DisplayText = GetBranchDisplay(_junctionController.Junction, _fullDef.BranchDisplay);
+            DisplayText = GetBranchDisplay(_junction, _fullDef.BranchDisplay);
         }
 
         private static string GetBranchDisplay(Junction junction, JunctionBranchDisplayDefinition.BranchDisplayMode mode)

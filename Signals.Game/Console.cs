@@ -19,10 +19,13 @@ namespace Signals.Game
                 return;
             }
 
-            foreach (var signal in SignalManager.Instance.AllSignals)
+            foreach (var controller in SignalManager.Instance.AllControllers)
             {
-                signal.ChangeToMostRestrictive(true);
-                signal.Operation = SignalOperationMode.TempOverride;
+                foreach (var signal in controller.GetAllSignals())
+                {
+                    signal.ChangeToMostRestrictive(true);
+                    signal.ChangeOperationMode(SignalOperationMode.TempOverride);
+                }
             }
         }
 
@@ -37,10 +40,13 @@ namespace Signals.Game
                 return;
             }
 
-            foreach (var signal in SignalManager.Instance.AllSignals)
+            foreach (var controller in SignalManager.Instance.AllControllers)
             {
-                signal.ChangeToMostRestrictive(true);
-                signal.Operation = SignalOperationMode.SemiManual;
+                foreach (var signal in controller.GetAllSignals())
+                {
+                    signal.ChangeToMostRestrictive(true);
+                    signal.ChangeOperationMode(SignalOperationMode.SemiManual);
+                }
             }
         }
 

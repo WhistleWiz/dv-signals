@@ -1,12 +1,13 @@
 ﻿using DV.Logic.Job;
 using DV.Signs;
 using System.Reflection;
+using UnityEngine;
 
 namespace Signals.Game.Util
 {
     internal static class ReflectionHelpers
     {
-        private static BindingFlags PrivateFlags = BindingFlags.Instance | BindingFlags.NonPublic;
+        private const BindingFlags PrivateFlags = BindingFlags.Instance | BindingFlags.NonPublic;
 
         // TrackID.
         private static PropertyInfo? s_trackIdTrimmedOrderNumber;
@@ -60,5 +61,21 @@ namespace Signals.Game.Util
         }
 
         public static bool IsHovered(SignHover sign) => (bool)SignHoveredIsHovered.GetValue(sign);
+
+        private static FieldInfo? s_signHoverRenderers;
+        private static FieldInfo SignHoveredRenderers
+        {
+            get
+            {
+                if (s_signHoverRenderers == null)
+                {
+                    s_signHoverRenderers = typeof(SignHover).GetField("renderers", PrivateFlags);
+                }
+
+                return s_signHoverRenderers;
+            }
+        }
+
+        public static MeshRenderer[] GetRenderers(SignHover sign) => (MeshRenderer[])SignHoveredRenderers.GetValue(sign);
     }
 }

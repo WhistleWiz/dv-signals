@@ -1,5 +1,4 @@
 ﻿using Signals.Common.Displays;
-using Signals.Game.Controllers;
 using Signals.Game.Railway;
 
 namespace Signals.Game.Displays
@@ -13,20 +12,20 @@ namespace Signals.Game.Displays
         {
             get
             {
-                _startingStation ??= Controller.Group != null ? TrackUtils.JunctionStation(Controller.Group.Junction) : string.Empty;
+                _startingStation ??= Signal.Controller.Group != null ? TrackUtils.JunctionStation(Signal.Controller.Group.Junction) : string.Empty;
 
                 return _startingStation;
             }
         }
 
-        public NextStationDisplay(InfoDisplayDefinition definition, BasicSignalController controller) : base(definition, controller)
+        public NextStationDisplay(InfoDisplayDefinition definition, Signal signal) : base(definition, signal)
         {
             _fullDef = (NextStationDisplayDefinition)definition;
         }
 
         public override void UpdateDisplay()
         {
-            var nextSignal = Controller.GetNextSignalCondition(x =>
+            var nextSignal = Signal.GetNextControllerCondition(x =>
             {
                 if (x.Group == null) return false;
 

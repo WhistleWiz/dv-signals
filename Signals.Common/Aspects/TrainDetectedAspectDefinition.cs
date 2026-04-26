@@ -2,7 +2,7 @@
 
 namespace Signals.Common.Aspects
 {
-    [AddComponentMenu("DV Signals/Aspects/Train Detected")]
+    [AddComponentMenu("DV Signals/Aspects/Train Detected (Aspect)")]
     public class TrainDetectedAspectDefinition : AspectBaseDefinition
     {
         [Space]

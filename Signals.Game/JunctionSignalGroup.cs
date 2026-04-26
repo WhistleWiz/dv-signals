@@ -71,12 +71,12 @@ namespace Signals.Game
         }
 
         /// <summary>
-        /// Checks if there is a signal at the specified junction branch track.
+        /// Checks if there is a controller at the specified junction branch track.
         /// </summary>
         /// <param name="track"></param>
         /// <param name="signal"></param>
         /// <returns></returns>
-        public bool TryGetSignalForTrack(RailTrack track, out TrackSignalController signal)
+        public bool TryGetControllerForTrack(RailTrack track, out TrackSignalController signal)
         {
             signal = BranchSignals.Find(x => x.StartingTrack == track);
             return signal != null;

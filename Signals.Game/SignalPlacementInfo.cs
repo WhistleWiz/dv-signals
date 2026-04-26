@@ -6,6 +6,7 @@
         public TrackDirection Direction;
         public int PointIndex;
         public double Span;
+        public bool OppositeSide;
 
         public SignalPlacementInfo(RailTrack track, TrackDirection direction, int pointIndex, double span)
         {
@@ -13,6 +14,7 @@
             Direction = direction;
             PointIndex = pointIndex;
             Span = span;
+            OppositeSide = false;
         }
     }
 }

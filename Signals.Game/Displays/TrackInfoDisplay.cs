@@ -1,5 +1,4 @@
 ﻿using Signals.Common.Displays;
-using Signals.Game.Controllers;
 using Signals.Game.Railway;
 
 namespace Signals.Game.Displays
@@ -8,7 +7,7 @@ namespace Signals.Game.Displays
     {
         private TrackInfoDisplayDefinition _fullDef;
 
-        public TrackInfoDisplay(InfoDisplayDefinition definition, BasicSignalController controller) : base(definition, controller)
+        public TrackInfoDisplay(InfoDisplayDefinition definition, Signal signal) : base(definition, signal)
         {
             _fullDef = (TrackInfoDisplayDefinition)definition;
         }
@@ -17,7 +16,7 @@ namespace Signals.Game.Displays
         {
             DisplayText = _fullDef.NoValidResultValue;
 
-            string text = GetText(Controller.Block, _fullDef.Format);
+            string text = GetText(Signal.Block, _fullDef.Format);
 
             DisplayText = string.IsNullOrEmpty(text) ? _fullDef.NoValidResultValue : text;
         }

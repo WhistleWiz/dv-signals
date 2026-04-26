@@ -7,10 +7,9 @@
         IntersectionOnly
     }
 
-    public enum SubsignalMode
+    public enum ControllerMode
     {
-        Ignore,
-        MostRestrictive,
-        Active
+        Active,
+        MostRestrictive
     }
 }

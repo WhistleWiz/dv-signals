@@ -1,6 +1,5 @@
 ﻿using Signals.Common;
 using Signals.Game.Aspects;
-using Signals.Game.Displays;
 using Signals.Game.Railway;
 
 namespace Signals.Game.Controllers
@@ -18,18 +17,24 @@ namespace Signals.Game.Controllers
             SignalPlacementInfo info, float distance) : base(def, info)
         {
             Home = home;
-            Home.AspectChanged += UpdateFromHome;
-            Home.DisplaysUpdated += UpdateDisplaysFromHome;
+            Home.AnyAspectChanged += UpdateFromHome;
 
             Distance = distance;
             Type = SignalType.Distant;
-            Block = TrackBlock.CreateForDistant(home, distance);
+
+            foreach (var signal in Signals)
+            {
+                signal.Block = TrackBlock.CreateForDistant(home, distance);
+            }
         }
 
         public override bool ShouldUpdate() => false;
 
-        private void UpdateFromHome(AspectBase? aspect) => UpdateAspect(false);
+        private void UpdateFromHome(Signal signal, AspectBase? aspect) => Update(true, false);
 
-        private void UpdateDisplaysFromHome(InfoDisplay[] obj) => UpdateDisplays(true);
+        public override BasicSignalController? GetNextController()
+        {
+            return Home;
+        }
     }
 }

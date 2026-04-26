@@ -2,7 +2,7 @@
 
 namespace Signals.Common.Aspects
 {
-    [AddComponentMenu("DV Signals/Aspects/Is Next Aspect")]
+    [AddComponentMenu("DV Signals/Aspects/Is Next Aspect (Aspect)")]
     public class IsNextAspectAspectDefinition : AspectBaseDefinition
     {
         public string NextId = string.Empty;

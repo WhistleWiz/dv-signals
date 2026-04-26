@@ -2,7 +2,7 @@
 
 namespace Signals.Common.Aspects
 {
-    [AddComponentMenu("DV Signals/Aspects/Open")]
+    [AddComponentMenu("DV Signals/Aspects/Open (Aspect)")]
     public class OpenAspectDefinition : AspectBaseDefinition
     {
         private void Reset()

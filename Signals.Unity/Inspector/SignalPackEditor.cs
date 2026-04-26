@@ -15,7 +15,7 @@ namespace Signals.Unity.Inspector
 
             if (GUILayout.Button("Validate and Export"))
             {
-                Validator.Open((SignalPack)target);
+                Exporter.Open((SignalPack)target);
             }
         }
     }

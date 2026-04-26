@@ -22,10 +22,13 @@ namespace Signals.Common.Displays
         public bool DisableWhenSignalIsOff = false;
         [Tooltip("How often this display is updated")]
         public UpdateMode Mode = UpdateMode.AspectChanged;
-        [Tooltip("The background of this display when hovered")]
-        public Sprite HUDBackground = null!;
+        [Tooltip("The sprite of this display when hovered\n" +
+            "The display is not shown in the HUD when this is null")]
+        public Sprite HUDSprite = null!;
         [Tooltip("The colour of the text when hovered")]
         public Color HUDTextColour = Color.black;
+        [Tooltip("Lower values are placed above higher values")]
+        public int HUDDisplayOrder = 1;
         [Tooltip("Optional world text object to assign the value of this display")]
         public TMP_Text? Text;
 
@@ -34,6 +37,8 @@ namespace Signals.Common.Displays
             get => _displayText;
             set
             {
+                if (_displayText == value) return;
+
                 _displayText = value;
 
                 if (Text != null)

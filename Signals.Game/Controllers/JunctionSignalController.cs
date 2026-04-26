@@ -28,45 +28,63 @@ namespace Signals.Game.Controllers
             Junction = junction;
             Left = junction.IsLeft();
 
+            if (ShuntingSignal != null)
+            {
+                ShuntingSignal.Block = TrackBlock.CreateForShunting(junction);
+            }
+
             Junction.Switched += JunctionSwitched;
             Destroyed += (x) => Junction.Switched -= JunctionSwitched;
 
-            InternalName = $"{Junction.junctionData.junctionIdLong}-T";
+            InternalName = $"{GroupJunction?.junctionData.junctionIdLong}-T";
         }
 
         private void JunctionSwitched(Junction.SwitchMode mode, int branch)
         {
             // Force update the display because of junction branch updates even if
             // the state didn't change.
-            UpdateAspect(true);
-            UpdateDisplays(true);
+            Update(true, true);
         }
 
-        public override void UpdateBlock()
+        public override void UpdateBlocks()
         {
             StartingTrack = OverrideStart ?? Junction.GetCurrentBranch().track;
 
-            base.UpdateBlock();
+            if (ShuntingSignal != null)
+            {
+                ShuntingSignal.Block = TrackBlock.CreateForShunting(Junction);
+            }
+
+            if (Signals.Length == 1)
+            {
+                base.UpdateBlocks();
+                return;
+            }
+
+            var selected = Junction.selectedBranch;
+
+            for (byte i = 0; i < Signals.Length; i++)
+            {
+                Junction.selectedBranch = (byte)(i % Junction.outBranches.Count);
+                var track = OverrideStart ?? Junction.GetCurrentBranch().track;
+                Signals[i].Block = TrackBlock.CreateUntilMainSignal(track, Direction, this);
+            }
+
+            Junction.selectedBranch = selected;
         }
 
-        public override List<TrackBlock> GetPotentialBlocks()
+        public override IEnumerable<TrackBlock> GetPotentialBlocks()
         {
-            var list = new List<TrackBlock>();
+            var selected = Junction.selectedBranch;
 
-            if (OverrideStart != null)
+            for (byte i = 0; i < Junction.outBranches.Count; i++)
             {
-                list.Add(TrackBlock.CreateUntilSignal(OverrideStart, Direction, Type == SignalType.Shunting, this));
-                return list;
+                Junction.selectedBranch = i;
+                var track = OverrideStart ?? Junction.GetCurrentBranch().track;
+                yield return TrackBlock.CreateUntilMainSignal(track, Direction, this);
             }
 
-            foreach (var branch in Junction.outBranches)
-            {
-                if (branch == null || branch.track == null) continue;
-
-                list.Add(TrackBlock.CreateUntilSignal(branch.track, Direction, Type == SignalType.Shunting, this));
-            }
-
-            return list;
+            Junction.selectedBranch = selected;
         }
     }
 }

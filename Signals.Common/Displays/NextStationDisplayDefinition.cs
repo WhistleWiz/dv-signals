@@ -2,7 +2,7 @@
 
 namespace Signals.Common.Displays
 {
-    [AddComponentMenu("DV Signals/Displays/Next Station")]
+    [AddComponentMenu("DV Signals/Displays/Next Station (Display)")]
     public class NextStationDisplayDefinition : InfoDisplayDefinition
     {
         public enum StationDisplayMode

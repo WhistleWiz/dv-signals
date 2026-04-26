@@ -1,4 +1,5 @@
 ﻿using Signals.Game.Controllers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -17,7 +18,7 @@ namespace Signals.Game.Railway
             public TrackDirection JunctionDirection;
         }
 
-        public class SignalInfo
+        public class ControllerInfo
         {
             public BasicSignalController? Signal;
             public TrackDirection SignalDirection;
@@ -25,9 +26,14 @@ namespace Signals.Game.Railway
 
         public const int MaxDepth = 64;
 
-        private static bool ShuntingCheck(bool include, BasicSignalController signal)
+        private static bool HasMainSignal(BasicSignalController controller)
         {
-            return include || signal.Type != SignalType.Shunting;
+            return controller.GetControllerSignal() != null;
+        }
+
+        private static bool HasShuntingSignal(BasicSignalController controller)
+        {
+            return controller.ShuntingSignal != null;
         }
 
         private static bool ContainsTrack(RailTrack from, Branch branch, TrackDirection direction)
@@ -108,19 +114,24 @@ namespace Signals.Game.Railway
             return tracks;
         }
 
-        public static List<RailTrack> GetTracksUntilSignal(RailTrack track, TrackDirection direction, bool includeShunting,
-            out SignalInfo info)
+        public static List<RailTrack> GetTracksUntilMainSignal(RailTrack track, TrackDirection direction, out ControllerInfo info)
         {
-            return GetTracksUntilSignal(track, direction, includeShunting, null, out info);
+            return GetTracksUntilMainSignal(track, direction, null, out info);
         }
 
-        public static List<RailTrack> GetTracksUntilSignal(RailTrack track, TrackDirection direction, bool includeShunting,
-            BasicSignalController? ignore, out SignalInfo info)
+        public static List<RailTrack> GetTracksUntilMainSignal(RailTrack track, TrackDirection direction,
+            BasicSignalController? ignore, out ControllerInfo info)
+        {
+            return GetTracksUntilSignal(track, direction, ignore, HasMainSignal, out info);
+        }
+
+        private static List<RailTrack> GetTracksUntilSignal(RailTrack track, TrackDirection direction,
+            BasicSignalController? ignore, Predicate<BasicSignalController> condition, out ControllerInfo info)
         {
             int depth = 0;
             HashSet<RailTrack> visited = new HashSet<RailTrack>();
             List<RailTrack> tracks = new List<RailTrack>();
-            info = new SignalInfo();
+            info = new ControllerInfo();
 
             // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
             while (depth++ < MaxDepth && track != null && !visited.Contains(track))
@@ -137,7 +148,7 @@ namespace Signals.Game.Railway
                     {
                         var found = group.ReverseJunctionSignal;
 
-                        if (found != null && found != ignore && ShuntingCheck(includeShunting, found))
+                        if (MeetsConditions(found))
                         {
                             info.Signal = found;
                             info.SignalDirection = TrackDirection.In;
@@ -148,7 +159,7 @@ namespace Signals.Game.Railway
                     {
                         var found = group.JunctionSignal;
 
-                        if (found != null && found != ignore && ShuntingCheck(includeShunting, found))
+                        if (MeetsConditions(found))
                         {
                             info.Signal = found;
                             info.SignalDirection = TrackDirection.Out;
@@ -173,7 +184,7 @@ namespace Signals.Game.Railway
 
                 // If the next track is a junction branch, check if there's a signal there before actually going into it.
                 if (track.isJunctionTrack && SignalManager.Instance.TryGetJunctionGroup(track.inJunction, out group) &&
-                    !direction.IsOut() && group.TryGetSignalForTrack(track, out var match) && match != ignore && ShuntingCheck(includeShunting, match))
+                    !direction.IsOut() && group.TryGetControllerForTrack(track, out var match) && MeetsConditions(match))
                 {
                     info.Signal = match;
                     info.SignalDirection = TrackDirection.In;
@@ -184,6 +195,11 @@ namespace Signals.Game.Railway
             }
 
             return tracks;
+
+            bool MeetsConditions(BasicSignalController? controller)
+            {
+                return controller != null && controller != ignore && condition(controller);
+            }
         }
     }
 }

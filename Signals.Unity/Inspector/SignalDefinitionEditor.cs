@@ -8,43 +8,33 @@ using UnityEngine;
 
 namespace Signals.Unity.Inspector
 {
-    [CustomEditor(typeof(SignalControllerDefinition))]
-    internal class SignalControllerDefinitionEditor : Editor
+    [CustomEditor(typeof(SignalDefinition))]
+    internal class SignalDefinitionEditor : Editor
     {
         private ReorderableList _aspectList = null!;
         private ReorderableList _displayList = null!;
 
         private void OnEnable()
         {
-            _aspectList = EditorHelper.CreateReorderableList(serializedObject, serializedObject.FindProperty(nameof(SignalControllerDefinition.Aspects)),
+            _aspectList = EditorHelper.CreateReorderableList(serializedObject, serializedObject.FindProperty(nameof(SignalDefinition.Aspects)),
                 true, true, true, "Aspects");
+            EditorHelper.AddBasicDrawerToList(_aspectList);
 
-            _aspectList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
-            {
-                var element = _aspectList.serializedProperty.GetArrayElementAtIndex(index);
-                EditorGUI.ObjectField(rect, element, GUIContent.none);
-            };
-
-            _displayList = EditorHelper.CreateReorderableList(serializedObject, serializedObject.FindProperty(nameof(SignalControllerDefinition.Displays)),
+            _displayList = EditorHelper.CreateReorderableList(serializedObject, serializedObject.FindProperty(nameof(SignalDefinition.Displays)),
                 true, true, true, "Displays");
-
-            _displayList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
-            {
-                var element = _displayList.serializedProperty.GetArrayElementAtIndex(index);
-                EditorGUI.ObjectField(rect, element, GUIContent.none);
-            };
+            EditorHelper.AddBasicDrawerToList(_displayList);
         }
 
         public override void OnInspectorGUI()
         {
-            var def = (SignalControllerDefinition)target;
-            var prop = serializedObject.FindProperty(nameof(SignalControllerDefinition.Aspects));
+            var def = (SignalDefinition)target;
+            var prop = serializedObject.FindProperty(nameof(SignalDefinition.Aspects));
 
             do
             {
                 switch (prop.name)
                 {
-                    case nameof(SignalControllerDefinition.Aspects):
+                    case nameof(SignalDefinition.Aspects):
                         EditorGUILayout.Space();
                         EditorGUILayout.HelpBox("Order is important, as conditions are checked from top to bottom", MessageType.Info);
 
@@ -56,7 +46,7 @@ namespace Signals.Unity.Inspector
                             AssetHelper.SaveAsset(target);
                         }
                         break;
-                    case nameof(SignalControllerDefinition.Displays):
+                    case nameof(SignalDefinition.Displays):
                         EditorHelper.DrawHeader("Optional");
                         _displayList.DoLayoutList();
 

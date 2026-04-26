@@ -1,26 +1,30 @@
-﻿using Signals.Common;
-using Signals.Game.Controllers;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 namespace Signals.Game.Railway
 {
+    /// <summary>
+    /// Class for making and checking track reservations.
+    /// </summary>
+    /// <remarks>
+    /// Tracks reserved by different signals in the same controller do not interfere with eachother.
+    /// </remarks>
     public static class TrackReserver
     {
-        private static readonly Dictionary<RailTrack, BasicSignalController> s_reservations = new Dictionary<RailTrack, BasicSignalController>();
-        private static readonly Dictionary<BasicSignalController, Coroutine> s_clearRoutines = new Dictionary<BasicSignalController, Coroutine>();
-        private static readonly HashSet<BasicSignalController> s_signals = new HashSet<BasicSignalController>();
+        private static readonly Dictionary<RailTrack, Signal> s_reservations = new Dictionary<RailTrack, Signal>();
+        private static readonly Dictionary<Signal, Coroutine> s_clearRoutines = new Dictionary<Signal, Coroutine>();
+        private static readonly HashSet<Signal> s_signals = new HashSet<Signal>();
 
         /// <summary>
         /// Called when a reservation is successfully made.
         /// </summary>
-        public static Action<BasicSignalController>? ReservationMade;
+        public static Action<Signal>? ReservationMade;
         /// <summary>
         /// Called when a reservation is successfully cleared.
         /// </summary>
-        public static Action<BasicSignalController>? ReservationCleared;
+        public static Action<Signal>? ReservationCleared;
 
         /// <summary>
         /// Clears all track reservations.
@@ -43,24 +47,24 @@ namespace Signals.Game.Railway
         /// <param name="signal">The signal to check.</param>
         /// <param name="crossingMode">How intersections with other tracks should be checked.</param>
         /// <returns><see langword="true"/> if another signal has reserved any of <paramref name="signal"/>'s tracks, <see langword="false"/> otherwise.</returns>
-        public static bool IsSignalReservedByAnother(BasicSignalController signal, CrossingCheckMode crossingMode)
+        public static bool IsSignalReservedByAnother(Signal signal)
         {
             var block = signal.Block;
 
             if (block == null) return false;
 
-            return block.AllTracks.Any(x => TrackChecker.IsReservedByAnother(x, signal, crossingMode));
+            return block.AllTracks.Any(x => TrackChecker.IsReservedByAnother(x, signal));
         }
 
         /// <summary>
-        /// Checks if a track is reserved by another signal.
+        /// Checks if a track is reserved by a signal from another controller.
         /// </summary>
         /// <param name="track">The track to check.</param>
         /// <param name="signal">The signal to check.</param>
-        /// <returns><see langword="true"/> if the track is reserved by another signal, <see langword="false"/> otherwise.</returns>
-        public static bool IsTrackReservedByAnother(RailTrack track, BasicSignalController signal)
+        /// <returns><see langword="true"/> if the track is reserved by a signal from another controller, <see langword="false"/> otherwise.</returns>
+        public static bool IsTrackReservedByAnother(RailTrack track, Signal signal)
         {
-            return s_reservations.TryGetValue(track, out var by) && by != signal;
+            return s_reservations.TryGetValue(track, out var by) && by.Controller != signal.Controller;
         }
 
         /// <summary>
@@ -69,7 +73,7 @@ namespace Signals.Game.Railway
         /// <param name="track">The track to check.</param>
         /// <param name="signal">The signal to check.</param>
         /// <returns><see langword="true"/> if <paramref name="track"/> is reserved by <paramref name="signal"/>, <see langword="false"/> otherwise.</returns>
-        public static bool IsTrackReservedBy(RailTrack track, BasicSignalController signal)
+        public static bool IsTrackReservedBy(RailTrack track, Signal signal)
         {
             return s_reservations.TryGetValue(track, out var by) && by == signal;
         }
@@ -80,7 +84,7 @@ namespace Signals.Game.Railway
         /// <param name="track">The track to check.</param>
         /// <param name="by">If reserved, which signal did it.</param>
         /// <returns><see langword="true"/> if <paramref name="track"/> is reserved, <see langword="false"/> otherwise.</returns>
-        public static bool IsTrackReserved(RailTrack track, out BasicSignalController by)
+        public static bool IsTrackReserved(RailTrack track, out Signal by)
         {
             return s_reservations.TryGetValue(track, out by);
         }
@@ -90,7 +94,7 @@ namespace Signals.Game.Railway
         /// </summary>
         /// <param name="signal">The signal to check.</param>
         /// <returns><see langword="true"/> if <paramref name="signal"/> has any track reservations, <see langword="false"/> otherwise.</returns>
-        public static bool HasReservation(BasicSignalController signal)
+        public static bool HasReservation(Signal signal)
         {
             return s_signals.Contains(signal);
         }
@@ -98,13 +102,13 @@ namespace Signals.Game.Railway
         /// <summary>
         /// Reserves a signal's tracks.
         /// </summary>
-        /// <param name="signal">The signal reserving the tracks.</param>
+        /// <param name="controller">The signal reserving the tracks.</param>
         /// <returns><see langword="true"/> if the tracks were successfully reserved, <see langword="false"/> otherwise.</returns>
         /// <remarks>Any track can only be reserved by a single signal at once, so this method will fail if 2 reservations overlap.
         /// <para>If the signal has already reserved tracks, they will be cleared before being reserved again.</para></remarks>
-        public static bool ReserveForSignal(BasicSignalController signal)
+        public static bool ReserveForSignal(Signal signal)
         {
-            if (signal.Block == null || IsSignalReservedByAnother(signal, CrossingCheckMode.WholeTrack))
+            if (signal.Block == null || IsSignalReservedByAnother(signal))
             {
                 return false;
             }
@@ -118,11 +122,10 @@ namespace Signals.Game.Railway
 
             foreach (var track in signal.Block.AllTracks)
             {
-                hasTracks = true;
-
                 if (!s_reservations.ContainsKey(track))
                 {
                     s_reservations.Add(track, signal);
+                    hasTracks = true;
                 }
             }
 
@@ -145,7 +148,7 @@ namespace Signals.Game.Railway
         /// <returns><see langword="true"/> if the tracks were successfully reserved, <see langword="false"/> otherwise.</returns>
         /// <remarks>Any track can only be reserved by a single signal at once, so this method will fail if 2 reservations overlap.
         /// <para>If <paramref name="signal"/> already reserved tracks for a duration, the new duration will overwrite it.</para></remarks>
-        public static bool ReserveForSignal(BasicSignalController signal, float duration)
+        public static bool ReserveForSignal(Signal signal, float duration)
         {
             if (duration <= 0)
             {
@@ -163,12 +166,15 @@ namespace Signals.Game.Railway
         }
 
         /// <summary>
-        /// Clear's all of a signal's reserved tracks.
+        /// Clears all of a signal's reserved tracks.
         /// </summary>
         /// <param name="signal">The signal reserving the tracks.</param>
-        public static void ClearFromSignal(BasicSignalController signal)
+        public static void ClearFromSignal(Signal signal)
         {
             var reservedBy = s_reservations.Where(x => x.Value == signal).ToList();
+
+            // If there's no reserved tracks, don't even invoke the event.
+            if (reservedBy.Any()) return;
 
             foreach (var item in reservedBy)
             {
@@ -185,7 +191,7 @@ namespace Signals.Game.Railway
         /// <param name="signal">The signal reserving the tracks.</param>
         /// <param name="delay">How long to wait until the tracks are cleared.</param>
         /// <remarks>If there is a delayed clearing for <paramref name="signal"/> already, it will be cancelled.</remarks>
-        public static void ClearFromSignalDelayed(BasicSignalController signal, float delay)
+        public static void ClearFromSignalDelayed(Signal signal, float delay)
         {
             if (s_clearRoutines.TryGetValue(signal, out var coroutine))
             {
@@ -195,7 +201,26 @@ namespace Signals.Game.Railway
             s_clearRoutines[signal] = CoroutineManager.Instance.StartCoroutine(ClearRoutine(signal, delay));
         }
 
-        private static System.Collections.IEnumerator ClearRoutine(BasicSignalController signal, float delay)
+        public static bool UpdateReservation(Signal signal)
+        {
+            if (!HasReservation(signal) || signal.Block == null) return false;
+
+            foreach (var track in signal.Block.AllTracks)
+            {
+                // This means the reservation update would overlap with another, so it is rejected.
+                if (TrackChecker.IsReservedByAnother(track, signal))
+                {
+                    return false;
+                }
+            }
+
+            ClearFromSignal(signal);
+            ReserveForSignal(signal);
+
+            return true;
+        }
+
+        private static System.Collections.IEnumerator ClearRoutine(Signal signal, float delay)
         {
             yield return WaitFor.Seconds(delay);
 

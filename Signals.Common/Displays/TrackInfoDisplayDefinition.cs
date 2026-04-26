@@ -2,7 +2,7 @@
 
 namespace Signals.Common.Displays
 {
-    [AddComponentMenu("DV Signals/Displays/Track Info")]
+    [AddComponentMenu("DV Signals/Displays/Track Info (Display)")]
     public class TrackInfoDisplayDefinition : InfoDisplayDefinition
     {
         [Tooltip("How to format the display\n" +

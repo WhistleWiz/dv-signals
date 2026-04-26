@@ -35,8 +35,8 @@ namespace Signals.Game
         private const float SmallTrackThreshold = 50.0f;
         private const float VerySmallTrackThreshold = 15.0f;
         private const float UpdateTime = 1.0f;
-        private const int LaserPointerTargetLayer = 15;
         private const int MergeLoops = 3;
+        private const int LaserPointerTargetLayer = 15;
 
         private static Transform? s_holder;
         private static bool s_loaded = false;
@@ -64,16 +64,16 @@ namespace Signals.Game
 
         private Dictionary<Junction, JunctionSignalGroup> _junctionSignals =
             new Dictionary<Junction, JunctionSignalGroup>();
-        private List<ShuntingSignalController> _shuntingSignals =
-            new List<ShuntingSignalController>();
         private List<DistantSignalController> _distantSignals =
             new List<DistantSignalController>();
-        private List<BasicSignalController> _signalRegister =
+        private List<BasicSignalController> _controllerRegister =
             new List<BasicSignalController>();
+        private Dictionary<int, Signal> _signalRegister =
+            new Dictionary<int, Signal>();
 
         private Coroutine? _updateCoro;
 
-        public List<BasicSignalController> AllSignals => _signalRegister;
+        public List<BasicSignalController> AllControllers => _controllerRegister;
 
         public new static string AllowAutoCreate()
         {
@@ -129,8 +129,6 @@ namespace Signals.Game
 
                 if (pack != null)
                 {
-                    ProcessSignals(pack);
-
                     if (DefaultPack == null)
                     {
                         DefaultPack = pack;
@@ -141,6 +139,7 @@ namespace Signals.Game
                         InstalledPacks.Add(mod.Info.Id, pack);
                     }
 
+                    ProcessControllers(pack);
                     bundle.Unload(false);
                     break;
                 }
@@ -157,12 +156,28 @@ namespace Signals.Game
             }
         }
 
-        private static void ProcessSignals(SignalPack pack)
+        private static void ProcessControllers(SignalPack pack)
         {
-            foreach (var item in pack.AllSignals)
+            foreach (var controller in pack.AllControllers)
             {
-                item.gameObject.layer = LaserPointerTargetLayer;
-                item.gameObject.AddComponent<SignalHover>();
+                foreach (var signal in controller.Signals)
+                {
+                    ProcessSignal(signal);
+                }
+
+                if (controller.ShuntingSignal != null)
+                {
+                    ProcessSignal(controller.ShuntingSignal);
+                }
+            }
+
+            static bool ProcessSignal(SignalDefinition signal)
+            {
+                if (signal.TryGetComponent<SignalHover>(out var hover)) return false;
+
+                hover = signal.gameObject.AddComponent<SignalHover>();
+                hover.gameObject.layer = LaserPointerTargetLayer;
+                return true;
             }
         }
 
@@ -226,7 +241,7 @@ namespace Signals.Game
                         _junctionSignals.Add(junction, CreateIntoPaxSignals(pack, junction));
                         break;
                     case SignalCreationMode.Shunting:
-                        _shuntingSignals.AddRange(CreateShuntingSignals(pack, junction));
+                        _junctionSignals.Add(junction, CreateShuntingSignals(pack, junction));
                         break;
                     default:
                         continue;
@@ -235,8 +250,7 @@ namespace Signals.Game
 
             sw.Stop();
             SignalsMod.Log($"Finished creating signals for {_junctionSignals.Count} junction(s), " +
-                $"current total is {_signalRegister.Count} ({sw.Elapsed.TotalSeconds:F4}s)");
-            SignalsMod.Log($"{_shuntingSignals.Count} shunting signal(s) were also created");
+                $"current total is {_controllerRegister.Count} ({sw.Elapsed.TotalSeconds:F4}s)");
 
             for (int i = 0; i < MergeLoops; i++)
             {
@@ -244,14 +258,14 @@ namespace Signals.Game
                 count = MergeSignals(pack);
                 sw.Stop();
                 SignalsMod.Log($"Merged {count} signal(s) (loop {i + 1}/{MergeLoops}), " +
-                    $"current total is {_signalRegister.Count} ({sw.Elapsed.TotalSeconds:F4}s)");
+                    $"current total is {_controllerRegister.Count} ({sw.Elapsed.TotalSeconds:F4}s)");
             }
 
             sw.Restart();
             CreateDistantSignals(pack);
             sw.Stop();
             SignalsMod.Log($"Finished creating {_distantSignals.Count} distant signal(s), " +
-                $"current total is {_signalRegister.Count} ({sw.Elapsed.TotalSeconds:F4}s)");
+                $"current total is {_controllerRegister.Count} ({sw.Elapsed.TotalSeconds:F4}s)");
 
             TrackChecker.StartBuildingMap();
 
@@ -305,11 +319,11 @@ namespace Signals.Game
             {
                 foreach (var signal in group.Value.AllSignals)
                 {
-                    signal.UpdateBlock();
+                    signal.UpdateBlocks();
 
                     foreach (var block in signal.GetPotentialBlocks())
                     {
-                        var next = block.NextSignal;
+                        var next = block.NextController;
 
                         if (next is TrackSignalController track)
                         {
@@ -323,8 +337,8 @@ namespace Signals.Game
                             {
                                 if (!reverse)
                                 {
-                                    next.UpdateBlock();
-                                    var nextBlock = next.Block;
+                                    next.UpdateBlocks();
+                                    var nextBlock = next.GetLongestBlock();
 
                                     if (nextBlock != null && nextBlock.Length < LongTrackThreshold)
                                     {
@@ -350,7 +364,7 @@ namespace Signals.Game
 
                     foreach (var block in signal.GetPotentialBlocks())
                     {
-                        var next = block.NextSignal;
+                        var next = block.NextController;
                         atLeastOneNext |= next != null;
 
                         if (next is TrackSignalController track)
@@ -363,9 +377,19 @@ namespace Signals.Game
                             if (!CanBeMerged(source, target) || toMerge.ContainsKey(target))
                             {
                                 // If reverse, don't check for the length, else fail for long tracks too.
-                                if (reverse || (next.Block != null && next.Block.Length > LongTrackThreshold))
+                                if (reverse)
                                 {
                                     RemoveFromMap(target);
+                                }
+                                else
+                                {
+                                    var longBlock = next.GetLongestBlock();
+
+                                    // If reverse, don't check for the length, else fail for long tracks too.
+                                    if (longBlock != null && longBlock.Length > LongTrackThreshold)
+                                    {
+                                        RemoveFromMap(target);
+                                    }
                                 }
                             }
                         }
@@ -732,38 +756,26 @@ namespace Signals.Game
             return group;
         }
 
-        private static List<ShuntingSignalController> CreateShuntingSignals(SignalPack pack, Junction junction)
+        private static JunctionSignalGroup CreateShuntingSignals(SignalPack pack, Junction junction)
         {
+            SignalsMod.LogVerbose($"Making shunting signals for junction '{junction.junctionData.junctionIdLong}'");
+
             var old = IsOld(junction);
             var def = pack.GetShuntingSignal(old);
-            var list = new List<ShuntingSignalController>();
 
-            if (def == null) return list;
+            if (def == null) return new JunctionSignalGroup(junction);
 
-            //CreateJunctionSignal();
-            CreateBranchSignals();
+            var group = new JunctionSignalGroup(junction, null,
+                //CreateSignalAtJunction(junction, def),
+                CreateShuntingBranchSignals());
 
-            return list;
+            return group;
 
-            void CreateJunctionSignal()
-            {
-                var track = junction.inBranch.track;
-                var kpSet = track.GetKinkedPointSet();
-                var tDirJ = TrackUtils.TrackDirectionFromJunction(track, junction);
-                var tSpan = kpSet.GetSpan(JunctionPlacementDistance / 4.0f, tDirJ);
-                var index = kpSet.GetPointIndexForSpan(tSpan);
-                var point = kpSet.points[index];
-
-                var placement = new SignalPlacementInfo(track, tDirJ, index, tSpan);
-                var signal = InstantiateFromDef(def, point.position, tDirJ.IsOut() ? point.forward : -point.forward, track);
-
-                list.Add(new ShuntingSignalController(signal, junction.inBranch.track, tDirJ, placement));
-            }
-
-            void CreateBranchSignals()
+            List<TrackSignalController> CreateShuntingBranchSignals()
             {
                 EquiPointSet.Point? prev = null;
                 float baseSpan = BranchPlacementDistance;
+                var list = new List<TrackSignalController>();
 
                 // Check potential placements to see if they're too close to eachother.
                 foreach (var branch in junction.outBranches)
@@ -805,8 +817,10 @@ namespace Signals.Game
                     var placement = new SignalPlacementInfo(track, tDirT, index, tSpan);
                     var signal = InstantiateFromDef(def, point.position, tDirT.IsOut() ? point.forward : -point.forward, track);
 
-                    list.Add(new ShuntingSignalController(signal, track, tDirT, placement));
+                    list.Add(new TrackSignalController(signal, branch.track, tDirT, placement));
                 }
+
+                return list;
             }
         }
 
@@ -824,8 +838,12 @@ namespace Signals.Game
         };
 
         private static SignalControllerDefinition InstantiateFromDef(SignalControllerDefinition definition,
-            Vector3d position, Vector3 direction, RailTrack track) =>
-                Instantiate(definition, (Vector3)position, Helpers.FlattenLook(direction), track.transform);
+            Vector3d position, Vector3 direction, RailTrack track)
+        {
+            var go = Instantiate(definition, (Vector3)position, Helpers.FlattenLook(direction), track.transform);
+            go.transform.position += go.transform.right * definition.Offset;
+            return go;
+        }
 
         private static JunctionSignalController? CreateSignalAtJunction(Junction junction, SignalControllerDefinition definition)
         {
@@ -1062,7 +1080,7 @@ namespace Signals.Game
 
             if (remain is JunctionSignalController junctionRemain)
             {
-                controller = new JunctionSignalController(signal, junctionRemain.Junction, null, info);
+                controller = new JunctionSignalController(signal, junctionRemain.GroupJunction, null, info);
             }
             else
             {
@@ -1089,36 +1107,33 @@ namespace Signals.Game
             while (true)
             {
                 // Check how many signals to update per frame so they all update roughly once a second.
-                int count = Mathf.CeilToInt(_signalRegister.Count * Time.fixedDeltaTime);
+                int count = Mathf.CeilToInt(_controllerRegister.Count * Time.fixedDeltaTime);
 
                 // Loop through all registered signals.
-                for (int start = 0; start < _signalRegister.Count; start += count)
+                for (int start = 0; start < _controllerRegister.Count; start += count)
                 {
                     // Loop through a batch of signals. Updates are distributed so they don't all update
                     // at once, but batched so timing is consistent.
-                    for (int current = start; current < start + count && current < _signalRegister.Count; current++)
+                    for (int current = start; current < start + count && current < _controllerRegister.Count; current++)
                     {
                         // Stop updating if camera is gone.
                         while (PlayerManager.ActiveCamera == null) yield return WaitFor.Seconds(UpdateTime);
 
-                        var signal = _signalRegister[current];
+                        var controller = _controllerRegister[current];
 
                         // Check if it can be updated.
-                        if (!signal.SafetyCheck())
+                        if (!controller.SafetyCheck())
                         {
                             current--;
                             continue;
                         }
 
-                        // Distance optimisation.
-                        signal.Optimise();
-
                         // Skip updating if not needed.
-                        var update = signal.ShouldUpdate();
-                        if (!update && !signal.HasUpdatesQueued) continue;
+                        var update = controller.ShouldUpdate();
+                        if (!update && !controller.HasUpdatesQueued) continue;
 
                         // Actually update.
-                        signal.UpdateAspect(update);
+                        controller.Update(false, update);
                     }
 
                     yield return WaitFor.FixedUpdate;
@@ -1129,18 +1144,35 @@ namespace Signals.Game
         /// <summary>
         /// Register a <see cref="BasicSignalController"/> to be automatically updated.
         /// </summary>
-        public void RegisterSignal(BasicSignalController signal)
+        public void RegisterController(BasicSignalController controller)
         {
-            _signalRegister.Add(signal);
+            _controllerRegister.Add(controller);
         }
 
         /// <summary>
         /// Unregister a <see cref="BasicSignalController"/> from being automatically updated.
         /// </summary>
         /// <returns><see langword="true"/> if the signal was successfully removed, and <see langword="false"/> otherwise.</returns>
-        public bool UnregisterSignal(BasicSignalController signal)
+        public bool UnregisterController(BasicSignalController controller)
         {
-            return _signalRegister.Remove(signal);
+
+            return _controllerRegister.Remove(controller);
+        }
+
+        /// <summary>
+        /// Register a <see cref="Signal"/> to be accessible by various methods.
+        /// </summary>
+        public void RegisterSignal(Signal signal)
+        {
+            _signalRegister.Add(signal.Id, signal);
+        }
+
+        /// <summary>
+        /// Unregister a <see cref="Signal"/> from being accessible by various methods.
+        /// </summary>
+        public void UnregisterSignal(Signal signal)
+        {
+            _signalRegister.Remove(signal.Id);
         }
 
         #region Utility
@@ -1153,48 +1185,52 @@ namespace Signals.Game
             var debugHovered = debugMode == DebugMode.HoveredSignal;
             var up2 = Vector3.up * 2;
 
-            foreach (var signal in AllSignals)
+            foreach (var controller in AllControllers)
             {
-                // Only draw the hovered sign if the debug mod is set to hovered.
-                if (debugHovered && !signal.Hovered) continue;
-                // Skip drawing signs that are too far away.
-                if (signal.GetCameraDistanceSqr() > 16000000) continue;
+                // Skip drawing signals that are too far away.
+                if (controller.GetCameraDistanceSqr() > 16000000) continue;
 
-                var block = signal.Block;
-                if (block == null) continue;
-
-                var offset = WorldMover.currentMove + Vector3.up;
-                var offset2 = signal.Definition.transform.right * -0.1f;
-                var hue = signal.Id * 0.31f;
-                var highlight = !debugHovered && signal.Hovered;
-
-                if (highlight)
+                foreach (var signal in controller.GetAllSignals())
                 {
-                    offset2 += new Vector3(0, 0.1f, 0);
-                }
+                    // Only draw the hovered sign if the debug mod is set to hovered.
+                    if (debugHovered && !signal.Hovered) continue;
 
-                if (block.NextSignal != null)
-                {
-                    GLHelper.DrawLozenge(block.NextSignal.Position + up2, block.NextSignal.Definition.transform.forward, GetColour(hue, highlight));
-                }
+                    var block = signal.Block;
+                    if (block == null) continue;
 
-                if ((debugHovered || highlight) && signal is DistantSignalController distant)
-                {
-                    GLHelper.DrawLine(signal.Position + offset2, distant.Home.Position + offset2, GetColour(hue, highlight));
-                }
+                    var offset = WorldMover.currentMove + Vector3.up;
+                    var offset2 = signal.Definition.transform.right * -0.1f;
+                    var hue = signal.Id * 0.31f;
+                    var highlight = !debugHovered && signal.Hovered;
 
-                foreach (var track in block.ExtraTracks)
-                {
-                    GLHelper.DrawPointSet(track.GetKinkedPointSet().points, offset + offset2, 20, GetColour(hue, highlight));
-                    hue += 0.03f;
-                }
+                    if (highlight)
+                    {
+                        offset2 += new Vector3(0, 0.1f, 0);
+                    }
 
-                hue += 0.1f;
+                    if (block.NextController != null)
+                    {
+                        GLHelper.DrawLozenge(block.NextController.Position + up2, block.NextController.Definition.transform.forward, GetColour(hue, highlight));
+                    }
 
-                foreach (var track in block.Tracks)
-                {
-                    GLHelper.DrawPointSet(track.GetKinkedPointSet().points, offset + offset2, 20, GetColour(hue, highlight));
-                    hue += 0.03f;
+                    if ((debugHovered || highlight) && controller is DistantSignalController distant)
+                    {
+                        GLHelper.DrawLine(controller.Position + offset2, distant.Home.Position + offset2, GetColour(hue, highlight));
+                    }
+
+                    foreach (var track in block.ExtraTracks)
+                    {
+                        GLHelper.DrawPointSet(track.GetKinkedPointSet().points, offset + offset2, 20, GetColour(hue, highlight));
+                        hue += 0.03f;
+                    }
+
+                    hue += 0.1f;
+
+                    foreach (var track in block.Tracks)
+                    {
+                        GLHelper.DrawPointSet(track.GetKinkedPointSet().points, offset + offset2, 20, GetColour(hue, highlight));
+                        hue += 0.03f;
+                    }
                 }
             }
 
@@ -1267,13 +1303,24 @@ namespace Signals.Game
         /// <summary>
         /// Tries to find a <see cref="BasicSignalController"/> with the specified ID.
         /// </summary>
-        /// <param name="id">The id of the signal.</param>
+        /// <param name="id">The ID of the controller.</param>
+        /// <param name="signal">The signal, if found. Otherwise <see langword="null"/>.</param>
+        /// <returns><see langword="true"/> if a controller was found, otherwise <see langword="false"/>.</returns>
+        public bool TryGetController(int id, out BasicSignalController signal)
+        {
+            signal = AllControllers.First(x => x.Id == id);
+            return signal != null;
+        }
+
+        /// <summary>
+        /// Tries to find a <see cref="Signal"/> with the specified ID.
+        /// </summary>
+        /// <param name="id">The ID of the signal.</param>
         /// <param name="signal">The signal, if found. Otherwise <see langword="null"/>.</param>
         /// <returns><see langword="true"/> if a signal was found, otherwise <see langword="false"/>.</returns>
-        public bool TryGetSignal(int id, out BasicSignalController signal)
+        public bool TryGetSignal(int id, out Signal signal)
         {
-            signal = AllSignals.First(x => x.Id == id);
-            return signal != null;
+            return _signalRegister.TryGetValue(id, out signal);
         }
 
         // For RUE debug.

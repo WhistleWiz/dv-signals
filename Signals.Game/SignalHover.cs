@@ -2,8 +2,8 @@
 using DV.Hovering;
 using DV.Signs;
 using DV.UI.LocoHUD;
-using Signals.Game.Controllers;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,8 +12,6 @@ namespace Signals.Game
 {
     internal class SignalHover : SignHover
     {
-        private const string BlankSpace = " ";
-
         private static Vector2 s_size = new Vector2(120, 120);
         private static Dictionary<Sprite, GameObject> s_sprites = new Dictionary<Sprite, GameObject>();
         private static ContentSizeFitter? s_sizeFitter;
@@ -53,48 +51,28 @@ namespace Signals.Game
             });
         }
 
-        public void UpdateStateDisplay(BasicSignalController controller, Sprite? sprite)
+        public void UpdateStateDisplay(Signal signal)
         {
             signTypes.Clear();
 
-            if (sprite != null)
-            {
-                signTypes.Add(new SignDisplayInstance()
-                {
-                    prefab = GetPrefabFromSprite(sprite),
-                    text = BlankSpace
-                });
-            }
+            var hudElements = signal.GetAllHudElements().OrderBy(x => x.DisplayOrder);
 
-            foreach (var item in controller.AllDisplays)
+            foreach (var element in hudElements)
             {
-                if (item == null || !item.ShouldDisplayHUD) continue;
+                if (element.Sprite == null || string.IsNullOrEmpty(element.DisplayText)) continue;
 
-                var go = GetPrefabFromSprite(item.Definition.HUDBackground);
+                var go = GetPrefabFromSprite(element.Sprite);
                 var text = go.GetComponentInChildren<TMP_Text>();
 
                 if (text != null)
                 {
-                    text.color = item.Definition.HUDTextColour;
+                    text.color = element.TextColour;
                 }
 
                 signTypes.Add(new SignDisplayInstance()
                 {
                     prefab = go,
-                    text = item.DisplayText
-                });
-            }
-
-            foreach (var item in controller.AllIndicators)
-            {
-                if (item == null || !item.ShouldDisplayHUD) continue;
-
-                var go = GetPrefabFromSprite(item.Definition.HUDSprite);
-
-                signTypes.Add(new SignDisplayInstance()
-                {
-                    prefab = go,
-                    text = BlankSpace
+                    text = element.DisplayText
                 });
             }
 

@@ -1,6 +1,5 @@
 ﻿using Signals.Common.Aspects;
 using Signals.Game.Aspects;
-using Signals.Game.Controllers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,31 +7,34 @@ using System.Linq;
 namespace Signals.Game
 {
     /// <summary>
-    /// Class to instantiate the implementations of signal aspect definitions.
+    /// Class to instantiate the implementation of a signal <see cref="AspectBaseDefinition"/>.
     /// </summary>
     public static class AspectCreator
     {
         private static Type[] s_defaultTypes;
         private static HashSet<Type> s_failedAspects = new HashSet<Type>();
 
-        internal static Dictionary<Type, Func<AspectBaseDefinition, BasicSignalController, AspectBase>> CreatorFunctions;
+        internal static Dictionary<Type, Func<AspectBaseDefinition, Signal, AspectBase>> CreatorFunctions;
 
         static AspectCreator()
         {
-            CreatorFunctions = new Dictionary<Type, Func<AspectBaseDefinition, BasicSignalController, AspectBase>>
+            CreatorFunctions = new Dictionary<Type, Func<AspectBaseDefinition, Signal, AspectBase>>
             {
                 { typeof(OpenAspectDefinition), (x, y) => new OpenAspect(x, y) },
                 { typeof(TrainDetectedAspectDefinition), (x, y) => new TrainDetectedAspect(x, y) },
                 { typeof(TrackReservedAspectDefinition), (x, y) => new TrackReservedAspect(x, y) },
                 { typeof(IsNextAspectAspectDefinition), (x, y) => new IsNextAspectAspect(x, y) },
                 { typeof(IsNextAspectAnyAspectDefinition), (x, y) => new IsNextAspectAnyAspect(x, y) },
-                { typeof(JunctionBranchAspectDefinition), (x, y) => new JunctionBranchAspect(x, y) }
+                { typeof(IsParentAspectAspectDefinition), (x, y) => new IsParentAspectAspect(x, y) },
+                { typeof(JunctionBranchAspectDefinition), (x, y) => new JunctionBranchAspect(x, y) },
+                { typeof(MatchingBranchAspectDefinition), (x, y) => new MatchingBranchAspect(x, y) },
+                { typeof(RequiredBranchAspectDefinition), (x, y) => new RequiredBranchAspect(x, y) }
             };
 
             s_defaultTypes = CreatorFunctions.Keys.ToArray();
         }
 
-        internal static AspectBase? Create(BasicSignalController controller, AspectBaseDefinition? def)
+        internal static AspectBase? Create(Signal signal, AspectBaseDefinition? def)
         {
             if (def == null) return null;
 
@@ -40,7 +42,7 @@ namespace Signals.Game
 
             if (CreatorFunctions.TryGetValue(t, out var creator))
             {
-                var result = creator(def, controller);
+                var result = creator(def, signal);
                 return result;
             }
 
@@ -62,7 +64,7 @@ namespace Signals.Game
         /// <para>Inputs are the definition and the controller.</para>
         /// </param>
         /// <returns><see langword="true"/> if the type was sucessfully added, otherwise <see langword="false"/>.</returns>
-        public static bool AddCreatorFunction<T>(Func<AspectBaseDefinition, BasicSignalController, AspectBase> func)
+        public static bool AddCreatorFunction<T>(Func<AspectBaseDefinition, Signal, AspectBase> func)
             where T : AspectBaseDefinition
         {
             var t = typeof(T);

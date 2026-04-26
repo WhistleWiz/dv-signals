@@ -8,14 +8,14 @@ namespace Signals.Game.Displays
     {
         private DistantSignalController? _distant;
 
-        public DistanceToNextDisplay(InfoDisplayDefinition definition, BasicSignalController controller) : base(definition, controller)
+        public DistanceToNextDisplay(InfoDisplayDefinition definition, Signal signal) : base(definition, signal)
         {
-            _distant = (DistantSignalController)controller;
+            _distant = (DistantSignalController)signal.Controller;
         }
 
         public override void UpdateDisplay()
         {
-            var distance = _distant != null ? _distant.Distance : (Controller.Block != null ? Controller.Block.Length : 0);
+            var distance = _distant != null ? _distant.Distance : (Signal.Block != null ? Signal.Block.Length : 0);
             var rounded = Math.Round(distance * 0.001, 1);
             var text = rounded > 0 ? $"{rounded}" : string.Empty;
 

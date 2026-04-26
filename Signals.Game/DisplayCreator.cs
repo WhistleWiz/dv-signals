@@ -1,5 +1,4 @@
 ﻿using Signals.Common.Displays;
-using Signals.Game.Controllers;
 using Signals.Game.Displays;
 using System;
 using System.Collections.Generic;
@@ -7,16 +6,19 @@ using System.Linq;
 
 namespace Signals.Game
 {
+    /// <summary>
+    /// Class to instantiate the implementation of an <see cref="InfoDisplayDefinition"/>.
+    /// </summary>
     public static class DisplayCreator
     {
         private static Type[] s_defaultTypes;
         private static HashSet<Type> s_failedDisplays = new HashSet<Type>();
 
-        internal static Dictionary<Type, Func<InfoDisplayDefinition, BasicSignalController, InfoDisplay>> CreatorFunctions;
+        internal static Dictionary<Type, Func<InfoDisplayDefinition, Signal, InfoDisplay>> CreatorFunctions;
 
         static DisplayCreator()
         {
-            CreatorFunctions = new Dictionary<Type, Func<InfoDisplayDefinition, BasicSignalController, InfoDisplay>>
+            CreatorFunctions = new Dictionary<Type, Func<InfoDisplayDefinition, Signal, InfoDisplay>>
             {
                 { typeof(SignalNameDisplayDefinition), (x, y) => new SignalNameDisplay(x, y) },
                 { typeof(SignalIdDisplayDefinition), (x, y) => new SignalIdDisplay(x, y) },
@@ -31,7 +33,7 @@ namespace Signals.Game
             s_defaultTypes = CreatorFunctions.Keys.ToArray();
         }
 
-        internal static InfoDisplay? Create(BasicSignalController controller, InfoDisplayDefinition? def)
+        internal static InfoDisplay? Create(Signal signal, InfoDisplayDefinition? def)
         {
             if (def == null) return null;
 
@@ -39,7 +41,7 @@ namespace Signals.Game
 
             if (CreatorFunctions.TryGetValue(t, out var creator))
             {
-                var result = creator(def, controller);
+                var result = creator(def, signal);
                 return result;
             }
 
@@ -61,7 +63,7 @@ namespace Signals.Game
         /// <para>Inputs are the definition and the controller.</para>
         /// </param>
         /// <returns><see langword="true"/> if the type was sucessfully added, otherwise <see langword="false"/>.</returns>
-        public static bool AddCreatorFunction<T>(Func<InfoDisplayDefinition, BasicSignalController, InfoDisplay> func)
+        public static bool AddCreatorFunction<T>(Func<InfoDisplayDefinition, Signal, InfoDisplay> func)
             where T : InfoDisplayDefinition
         {
             var t = typeof(T);

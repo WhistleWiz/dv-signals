@@ -1,20 +1,19 @@
 ﻿using Signals.Common.Aspects;
-using Signals.Game.Controllers;
 
 namespace Signals.Game.Aspects
 {
-    internal class TrainDetectedAspect : AspectBase
+    public class TrainDetectedAspect : AspectBase
     {
         private TrainDetectedAspectDefinition _fullDef;
 
-        public TrainDetectedAspect(AspectBaseDefinition definition, BasicSignalController controller) : base(definition, controller)
+        public TrainDetectedAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal)
         {
             _fullDef = (TrainDetectedAspectDefinition)definition;
         }
 
         public override bool MeetsConditions()
         {
-            var block = ControllerTrackBlock;
+            var block = Block;
 
             return block != null && block.IsOccupied(_fullDef.CrossingCheckMode);
         }

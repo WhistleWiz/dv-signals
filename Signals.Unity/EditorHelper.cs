@@ -11,16 +11,31 @@ namespace Signals.Unity
         {
             return new ReorderableList(obj, elements, draggable, displayHeader, displayButtons, displayButtons)
             {
-                drawHeaderCallback = (Rect rect) =>
+                drawHeaderCallback = rect =>
                 {
                     EditorGUI.LabelField(rect, header);
                 }
             };
         }
+
+        public static void AddBasicDrawerToList(ReorderableList list)
+        {
+            list.drawElementCallback = (rect, index, isActive, isFocused) =>
+            {
+                var element = list.serializedProperty.GetArrayElementAtIndex(index);
+                EditorGUI.ObjectField(rect, element, GUIContent.none);
+            };
+        }
+
         public static void DrawHeader(string title)
         {
             EditorGUILayout.Space();
             EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+        }
+
+        public static GUIStyle StyleWithTextColour(Color c, GUIStyle original)
+        {
+            return new GUIStyle(original) { normal = new GUIStyleState() { textColor = c } };
         }
     }
 }

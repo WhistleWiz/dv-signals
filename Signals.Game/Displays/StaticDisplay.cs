@@ -7,7 +7,7 @@ namespace Signals.Game.Displays
     {
         private StaticDisplayDefinition _fullDef;
 
-        public StaticDisplay(InfoDisplayDefinition definition, BasicSignalController controller) : base(definition, controller)
+        public StaticDisplay(InfoDisplayDefinition definition, Signal signal) : base(definition, signal)
         {
             _fullDef = (StaticDisplayDefinition)definition;
             DisplayText = _fullDef.DisplayedText;

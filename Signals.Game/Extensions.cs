@@ -1,7 +1,6 @@
 ﻿using DV.Logic.Job;
 using DV.PointSet;
 using Signals.Common;
-using Signals.Game.Controllers;
 using Signals.Game.Railway;
 using Signals.Game.Util;
 using System.Linq;
@@ -64,9 +63,9 @@ namespace Signals.Game
             return track.BogiesOnTrack().Count() > 0;
         }
 
-        public static bool IsReservedByAnother(this RailTrack track, BasicSignalController signal, CrossingCheckMode crossingMode)
+        public static bool IsReservedByAnother(this RailTrack track, Signal signal)
         {
-            return TrackChecker.IsReservedByAnother(track, signal, crossingMode);
+            return TrackChecker.IsReservedByAnother(track, signal);
         }
 
         public static bool IsPartOfYard(this RailTrack track)

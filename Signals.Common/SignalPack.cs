@@ -68,7 +68,7 @@ namespace Signals.Common
             return true;
         }
 
-        public IEnumerable<SignalControllerDefinition> AllSignals
+        public IEnumerable<SignalControllerDefinition> AllControllers
         {
             get
             {

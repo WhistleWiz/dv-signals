@@ -1,5 +1,4 @@
 ﻿using Signals.Common;
-using Signals.Game.Controllers;
 using Signals.Game.Curves;
 using System;
 using System.Collections.Generic;
@@ -9,7 +8,7 @@ using UnityEngine;
 namespace Signals.Game.Railway
 {
     /// <summary>
-    /// Helper class with track utility functions.
+    /// Helper class with track utility functions taht include track intersections.
     /// </summary>
     public static class TrackChecker
     {
@@ -19,7 +18,7 @@ namespace Signals.Game.Railway
         public class TrackIntersectionPoints
         {
             private const float CheckHeight = 4.0f;
-            private const float CheckRadius = 2.5f;
+            private const float CheckRadius = 3.5f;
             private const int TrainLayerMask = 1 << 10;
 
             private static Collider[] s_testCache = new Collider[1];
@@ -70,7 +69,7 @@ namespace Signals.Game.Railway
             /// Checks if another signal has reserved any of the connected tracks.
             /// </summary>
             /// <param name="signal">The signal checking for reservations.</param>
-            public bool TestReservedByAnother(BasicSignalController signal)
+            public bool TestReservedByAnother(Signal signal)
             {
                 foreach (var point in IntersectionPoints)
                 {
@@ -133,8 +132,8 @@ namespace Signals.Game.Railway
         /// <param name="track">The track to check.</param>
         /// <param name="signal">The signal checking for reservations.</param>
         /// <param name="crossingMode">The check behaviour if there are cached intersections for the track.</param>
-        /// <returns></returns>
-        public static bool IsReservedByAnother(RailTrack track, BasicSignalController signal, CrossingCheckMode crossingMode)
+        /// <remarks>Tracks reserved by another signal in the same controller do not interfere with the reservation.</remarks>
+        public static bool IsReservedByAnother(RailTrack track, Signal signal)
         {
             if (TrackReserver.IsTrackReservedByAnother(track, signal))
             {
@@ -146,12 +145,7 @@ namespace Signals.Game.Railway
                 return false;
             }
 
-            return crossingMode switch
-            {
-                CrossingCheckMode.WholeTrack => intersection.TestReservedByAnother(signal),
-                CrossingCheckMode.IntersectionOnly => intersection.TestReservedByAnother(signal),
-                _ => false,
-            };
+            return intersection.TestReservedByAnother(signal);
         }
 
         internal static void StartBuildingMap()

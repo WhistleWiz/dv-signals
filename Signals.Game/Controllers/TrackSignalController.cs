@@ -8,9 +8,6 @@ namespace Signals.Game.Controllers
     /// </summary>
     public class TrackSignalController : BasicSignalController
     {
-        // Signals too far from the camera aren't updated.
-        private const float SkipUpdateDistanceSqr = 1500 * 1500;
-
         public RailTrack StartingTrack { get; protected set; }
         public TrackDirection Direction { get; protected set; }
 
@@ -19,6 +16,18 @@ namespace Signals.Game.Controllers
         {
             StartingTrack = starting;
             Direction = startingDirection;
+
+            if (ShuntingSignal != null)
+            {
+                if (starting.isJunctionTrack)
+                {
+                    ShuntingSignal.Block = TrackBlock.CreateForShunting(starting.outBranch.track);
+                }
+                else
+                {
+                    ShuntingSignal.Block = TrackBlock.CreateForShunting(starting);
+                }
+            }
 
             if (starting.isJunctionTrack)
             {
@@ -46,19 +55,12 @@ namespace Signals.Game.Controllers
             return StartingTrack != track;
         }
 
-        public override bool ShouldUpdate()
+        public override void UpdateBlocks()
         {
-            if (Operation.IsFullyManual()) return false;
-
-            var dist = GetCameraDistanceSqr();
-
-            // If the camera is too far from the signal, skip updating.
-            return dist < SkipUpdateDistanceSqr;
-        }
-
-        public override void UpdateBlock()
-        {
-            Block = TrackBlock.CreateUntilSignal(StartingTrack, Direction, Type == SignalType.Shunting, this);
+            foreach (var signal in Signals)
+            {
+                signal.Block = TrackBlock.CreateUntilMainSignal(StartingTrack, Direction, this);
+            }
         }
     }
 }
