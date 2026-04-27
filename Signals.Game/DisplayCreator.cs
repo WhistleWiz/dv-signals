@@ -20,7 +20,6 @@ namespace Signals.Game
         {
             CreatorFunctions = new Dictionary<Type, Func<InfoDisplayDefinition, Signal, InfoDisplay>>
             {
-                { typeof(SignalNameDisplayDefinition), (x, y) => new SignalNameDisplay(x, y) },
                 { typeof(SignalIdDisplayDefinition), (x, y) => new SignalIdDisplay(x, y) },
                 { typeof(JunctionBranchDisplayDefinition), (x, y) => new JunctionBranchDisplay(x, y) },
                 { typeof(JunctionIdDisplayDefinition), (x, y) => new JunctionIdDisplay(x, y) },

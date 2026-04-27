@@ -20,7 +20,7 @@ namespace Signals.Game
         {
             CreatorFunctions = new Dictionary<Type, Func<AspectBaseDefinition, Signal, AspectBase>>
             {
-                { typeof(OpenAspectDefinition), (x, y) => new OpenAspect(x, y) },
+                { typeof(AlwaysActiveAspectDefinition), (x, y) => new AlwaysActiveAspect(x, y) },
                 { typeof(TrainDetectedAspectDefinition), (x, y) => new TrainDetectedAspect(x, y) },
                 { typeof(TrackReservedAspectDefinition), (x, y) => new TrackReservedAspect(x, y) },
                 { typeof(IsNextAspectAspectDefinition), (x, y) => new IsNextAspectAspect(x, y) },

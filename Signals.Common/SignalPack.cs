@@ -30,12 +30,14 @@ namespace Signals.Common
         public SignalControllerDefinition? ShuntingSignal;
         [Tooltip("Used on passenger track")]
         public SignalControllerDefinition? PassengerSignal;
-        [Tooltip("Used before mainline signals warn about their state")]
+        [Tooltip("Used on mainline tracks that meet certain conditions")]
         public SignalControllerDefinition? DistantSignal;
         [Tooltip("The distance a Distant Signal must be from its corresponding signal"), Min(100.0f)]
-        public float DistantSignalDistance = 200.0f;
-        [Tooltip("The minimum length of a track to be eligible for a distant signal\nShould be at least double the signal distance"), Min(200.0f)]
+        public float DistantSignalDistance = 300.0f;
+        [Tooltip("The minimum length of a track to be eligible for a distant signal"), Min(200.0f)]
         public float DistantSignalMinimumTrackLength = 600.0f;
+        [Tooltip("The minimum length of a track to be eligible for a distant signal"), Min(50.0f)]
+        public float DistantTolerance = 100.0f;
 
         [Header("Optional Alternate Versions")]
         [Tooltip("Used on all junctions in mainlines")]

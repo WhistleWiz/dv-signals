@@ -312,10 +312,14 @@ namespace Signals.Game.Controllers
         {
             if (index < 0)
             {
+                if (!RequiredJunctionBranch.HasValue) return;
+
                 RequiredJunctionBranch = null;
                 RequiredBranchChanged?.Invoke(null);
                 return;
             }
+
+            if (RequiredJunctionBranch.HasValue && RequiredJunctionBranch.Value == index) return;
 
             RequiredJunctionBranch = index;
             RequiredBranchChanged?.Invoke(index);

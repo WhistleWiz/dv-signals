@@ -4,16 +4,29 @@ namespace Signals.Game.Displays
 {
     public class SignalIdDisplay : InfoDisplay
     {
-        public SignalIdDisplay(InfoDisplayDefinition definition, Signal signal) : base(definition, signal) { }
+        private SignalIdDisplayDefinition _fullDef;
+
+        public SignalIdDisplay(InfoDisplayDefinition def, Signal signal) : base(def, signal)
+        {
+            _fullDef = (SignalIdDisplayDefinition)def;
+        }
 
         public override void UpdateDisplay()
         {
-            var id = Signal.Id.ToString();
+            string text;
+            var junction = Controller.GroupJunction;
 
-            if (id != DisplayText)
+            if (_fullDef.WithJunction && junction != null)
             {
-                DisplayText = id;
+                var station = junction.GetStation();
+                text = $"{(string.IsNullOrEmpty(station) ? "W" : station)}-{Signal.Id}";
             }
+            else
+            {
+                text = Signal.Id.ToString();
+            }
+
+            DisplayText = text;
         }
     }
 }

@@ -7,6 +7,8 @@ using UnityEngine;
 
 namespace Signals.Game.Aspects
 {
+
+
     /// <summary>
     /// Base class for a signal aspect. It handles lights, animation and sound from a
     /// <see cref="AspectBaseDefinition"/> automatically.

@@ -5,11 +5,18 @@ namespace Signals.Game.Aspects
 {
     public class TrackReservedAspect : AspectBase
     {
-        public TrackReservedAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal) { }
+        private TrackReservedAspectDefinition _fullDef;
+
+        public TrackReservedAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal)
+        {
+            _fullDef = (TrackReservedAspectDefinition)definition;
+        }
 
         public override bool MeetsConditions()
         {
-            return TrackReserver.IsSignalReservedByAnother(Signal);
+            var another = TrackReserver.IsSignalReservedByAnother(Signal);
+
+            return _fullDef.Invert ? !another && TrackReserver.HasReservation(Signal) : another;
         }
     }
 }

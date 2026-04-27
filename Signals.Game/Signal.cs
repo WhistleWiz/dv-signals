@@ -250,6 +250,8 @@ namespace Signals.Game
 
         Finalise:
 
+            DistantSignal?.UpdateAspect(forced);
+
             // Update displays and indicators.
             UpdateDisplays(changed || forced);
             UpdateIndicators();

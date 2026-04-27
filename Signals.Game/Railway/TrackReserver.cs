@@ -110,6 +110,7 @@ namespace Signals.Game.Railway
         {
             if (signal.Block == null || IsSignalReservedByAnother(signal))
             {
+                SignalsMod.Warning("Reservation failed: block was null or overlapped reservation");
                 return false;
             }
 
@@ -132,6 +133,7 @@ namespace Signals.Game.Railway
             // Check if any track was actually reserved.
             if (hasTracks == false)
             {
+                SignalsMod.Warning("Reservation failed: no tracks could be reserved");
                 return false;
             }
 
@@ -174,7 +176,7 @@ namespace Signals.Game.Railway
             var reservedBy = s_reservations.Where(x => x.Value == signal).ToList();
 
             // If there's no reserved tracks, don't even invoke the event.
-            if (reservedBy.Any()) return;
+            if (!reservedBy.Any()) return;
 
             foreach (var item in reservedBy)
             {

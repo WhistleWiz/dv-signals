@@ -2,9 +2,9 @@
 
 namespace Signals.Game.Aspects
 {
-    public class OpenAspect : AspectBase
+    public class AlwaysActiveAspect : AspectBase
     {
-        public OpenAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal) { }
+        public AlwaysActiveAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal) { }
 
         public override bool MeetsConditions()
         {

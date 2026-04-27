@@ -7,5 +7,10 @@ namespace Signals.Common.Aspects
     {
         [Tooltip("If true, activates when the junction's branch isn't the one for the controller")]
         public bool Invert = true;
+
+        private void Reset()
+        {
+            Id = "MATCHING_BRANCH";
+        }
     }
 }

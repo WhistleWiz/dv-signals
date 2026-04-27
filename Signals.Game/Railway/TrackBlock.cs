@@ -139,7 +139,7 @@ namespace Signals.Game.Railway
 
         public static TrackBlock CreateForShunting(Junction junction)
         {
-            return new TrackBlock(new[] { junction.GetCurrentBranch().track.outBranch.track }, null);
+            return CreateForShunting(junction.GetCurrentBranch().track.outBranch.track);
         }
     }
 }

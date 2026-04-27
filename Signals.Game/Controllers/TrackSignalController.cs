@@ -19,14 +19,7 @@ namespace Signals.Game.Controllers
 
             if (ShuntingSignal != null)
             {
-                if (starting.isJunctionTrack)
-                {
-                    ShuntingSignal.Block = TrackBlock.CreateForShunting(starting.outBranch.track);
-                }
-                else
-                {
-                    ShuntingSignal.Block = TrackBlock.CreateForShunting(starting);
-                }
+                ShuntingSignal.Block = TrackBlock.CreateForShunting(starting);
             }
 
             if (starting.isJunctionTrack)

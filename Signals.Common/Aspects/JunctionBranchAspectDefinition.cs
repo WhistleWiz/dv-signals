@@ -18,5 +18,10 @@ namespace Signals.Common.Aspects
         [Tooltip("Aspect is active when the junction's selected branch index matches this value\n" +
             "0 is the leftmost branch")]
         public int ActiveOnBranch = 0;
+
+        private void Reset()
+        {
+            Id = "JUNCTION_BRANCH";
+        }
     }
 }
