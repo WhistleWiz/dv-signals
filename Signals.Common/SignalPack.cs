@@ -14,49 +14,54 @@ namespace Signals.Common
         public string HomePage = string.Empty;
         public string Repository = string.Empty;
 
-        [Header("Main Signal")]
+        [Header("Required Signals")]
         [Tooltip("Used on all junctions in mainlines, facing the joined track\n" +
             "It's also used as the fallback for all other signals if they're missing, except shunting ones")]
         public SignalControllerDefinition Signal = null!;
+        [Tooltip("Used on junctions inside yards")]
+        public SignalControllerDefinition ShuntingSignal = null!;
+
+        [Header("Optional Signals")]
         [Tooltip("Used on all junctions with a track diverging to the left in mainlines, facing the junction branches")]
         public SignalControllerDefinition? LeftJunctionSignal;
         [Tooltip("Used on all junctions with a track diverging to the right in mainlines, facing the junction branches")]
         public SignalControllerDefinition? RightJunctionSignal;
-
-        [Header("Optional Signals")]
-        [Tooltip("Used on junctions that enter/change yards")]
-        public SignalControllerDefinition? IntoYardSignal;
-        [Tooltip("Used on junctions inside yards")]
-        public SignalControllerDefinition? ShuntingSignal;
-        [Tooltip("Used on passenger track")]
+        [Tooltip("Used when entering yards")]
+        public SignalControllerDefinition? EntrySignal;
+        [Tooltip("Used when leaving yards")]
+        public SignalControllerDefinition? ExitSignal;
+        [Tooltip("Used when leaving passenger tracks")]
         public SignalControllerDefinition? PassengerSignal;
-        [Tooltip("Used on mainline tracks that meet certain conditions")]
+        [Tooltip("Used to warn about the state of mainline signals")]
         public SignalControllerDefinition? DistantSignal;
-        [Tooltip("The distance a Distant Signal must be from its corresponding signal"), Min(100.0f)]
+        [Tooltip("The distance a Distant Signal must be from its corresponding signal"), Min(300.0f)]
         public float DistantSignalDistance = 300.0f;
-        [Tooltip("The minimum length of a track to be eligible for a distant signal"), Min(200.0f)]
-        public float DistantSignalMinimumTrackLength = 600.0f;
-        [Tooltip("The minimum length of a track to be eligible for a distant signal"), Min(50.0f)]
+        [Tooltip("The minimum length of a track to be eligible for a distant signal"), Min(100.0f)]
+        public float DistantSignalMinimumDistance = 100.0f;
+        [Tooltip("The tolerance in case another signal is placed before"), Min(10.0f)]
         public float DistantTolerance = 100.0f;
 
         [Header("Optional Alternate Versions")]
         [Tooltip("Used on all junctions in mainlines")]
         public SignalControllerDefinition? OldSignal;
+        [Tooltip("Used on junctions inside yards")]
+        public SignalControllerDefinition? OldShuntingSignal;
         [Tooltip("Used on all junctions with a track diverging to the left in mainlines, facing the junction branches")]
         public SignalControllerDefinition? OldLeftJunctionSignal;
         [Tooltip("Used on all junctions with a track diverging to the right in mainlines, facing the junction branches")]
         public SignalControllerDefinition? OldRightJunctionSignal;
-        [Tooltip("Used on junctions that enter/change yards")]
-        public SignalControllerDefinition? OldIntoYardSignal;
-        [Tooltip("Used on junctions inside yards")]
-        public SignalControllerDefinition? OldShuntingSignal;
-        [Tooltip("Used on passenger track")]
+        [Tooltip("Used when entering yards")]
+        public SignalControllerDefinition? OldEntrySignal;
+        [Tooltip("Used when leaving yards")]
+        public SignalControllerDefinition? OldExitSignal;
+        [Tooltip("Used when leaving passenger tracks")]
         public SignalControllerDefinition? OldPassengerSignal;
-        [Tooltip("Used on mainline tracks that meet certain conditions")]
+        [Tooltip("Used to warn about the state of mainline signals")]
         public SignalControllerDefinition? OldDistantSignal;
 
         [Header("Extras")]
-        [Tooltip("Any additional signals included in this pack")]
+        [Tooltip("Any additional signals included in this pack\n" +
+            "These must use custom placement code")]
         public SignalControllerDefinition[] OtherSignals = Array.Empty<SignalControllerDefinition>();
 
         public bool Validate()
@@ -78,7 +83,7 @@ namespace Signals.Common
 
                 if (LeftJunctionSignal != null) yield return LeftJunctionSignal;
                 if (RightJunctionSignal != null) yield return RightJunctionSignal;
-                if (IntoYardSignal != null) yield return IntoYardSignal;
+                if (EntrySignal != null) yield return EntrySignal;
                 if (ShuntingSignal != null) yield return ShuntingSignal;
                 if (PassengerSignal != null) yield return PassengerSignal;
                 if (DistantSignal != null) yield return DistantSignal;
@@ -86,7 +91,7 @@ namespace Signals.Common
                 if (OldSignal != null) yield return OldSignal;
                 if (OldLeftJunctionSignal != null) yield return OldLeftJunctionSignal;
                 if (OldRightJunctionSignal != null) yield return OldRightJunctionSignal;
-                if (OldIntoYardSignal != null) yield return OldIntoYardSignal;
+                if (OldEntrySignal != null) yield return OldEntrySignal;
                 if (OldShuntingSignal != null) yield return OldShuntingSignal;
                 if (OldPassengerSignal != null) yield return OldPassengerSignal;
                 if (OldDistantSignal != null) yield return OldDistantSignal;
@@ -128,11 +133,11 @@ namespace Signals.Common
             return left ? GetLeftJunctionSignal(old) : GetRightJunctionSignal(old);
         }
 
-        public SignalControllerDefinition GetIntoYardSignal(bool old)
+        public SignalControllerDefinition GetEntrySignal(bool old)
         {
-            if (old && OldIntoYardSignal != null) return OldIntoYardSignal;
+            if (old && OldEntrySignal != null) return OldEntrySignal;
 
-            if (IntoYardSignal != null) return IntoYardSignal;
+            if (EntrySignal != null) return EntrySignal;
 
             return GetMainlineSignal(old);
         }
@@ -143,12 +148,23 @@ namespace Signals.Common
 
             if (PassengerSignal != null) return PassengerSignal;
 
+            return GetExitSignal(old);
+        }
+
+        public SignalControllerDefinition GetExitSignal(bool old)
+        {
+            if (old && OldExitSignal != null) return OldExitSignal;
+
+            if (ExitSignal != null) return ExitSignal;
+
             return GetMainlineSignal(old);
         }
 
-        public SignalControllerDefinition? GetShuntingSignal(bool old)
+        public SignalControllerDefinition GetShuntingSignal(bool old)
         {
-            return old ? OldShuntingSignal : ShuntingSignal;
+            if (old && OldShuntingSignal != null) return OldShuntingSignal;
+
+            return ShuntingSignal;
         }
     }
 }

@@ -24,7 +24,7 @@ namespace Signals.Game.Controllers
 
             foreach (var signal in Signals)
             {
-                signal.Block = TrackBlock.CreateForDistant(home, distance);
+                signal.SetBlock(TrackBlock.CreateForDistant(home, distance));
             }
         }
 

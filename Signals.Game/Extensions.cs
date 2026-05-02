@@ -80,12 +80,12 @@ namespace Signals.Game
 
         public static double GetLength(this RailTrack track)
         {
-            return RailTrackRegistry.RailTrackToLogicTrack[track].length;
+            return track.LogicTrack().length;
         }
 
         public static TrackID GetID(this RailTrack track)
         {
-            return RailTrackRegistry.RailTrackToLogicTrack[track].ID;
+            return track.LogicTrack().ID;
         }
 
         #endregion

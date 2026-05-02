@@ -62,11 +62,83 @@ namespace Signals.Game.Railway
             return false;
         }
 
+        public static bool GoesToDeadEnd(RailTrack track, TrackDirection direction)
+        {
+            int depth = 0;
+            var visited = new HashSet<RailTrack>();
+            var tracks = new List<RailTrack>();
+
+            // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
+            while (depth++ < MaxDepth && track != null && !visited.Contains(track))
+            {
+                visited.Add(track);
+
+                Junction? junction = direction.IsOut() ? track.outJunction : track.inJunction;
+                Branch? branch;
+
+                // Found junction, check if we're going into. If we are, it's not a dead end.
+                if (junction != null && !track.isJunctionTrack)
+                {
+                    return false;
+                }
+
+                branch = direction.IsOut() ? track.GetOutBranch() : track.GetInBranch();
+
+                // No branch means we reach a dead end.
+                if (branch == null || branch.track == null)
+                {
+                    return true;
+                }
+
+                // Check if the current track is the next track of the next branch.
+                if (ContainsTrack(track, branch, direction))
+                {
+                    // Direction must be flipped.
+                    direction = direction.Flipped();
+                }
+
+                track = branch.track;
+                tracks.Add(track);
+            }
+
+            return false;
+        }
+
+        public static List<RailTrack> WalkTracks(RailTrack track, TrackDirection direction, int count)
+        {
+            int depth = 0;
+            var visited = new HashSet<RailTrack>();
+            var tracks = new List<RailTrack>();
+
+            // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
+            while (depth++ < count && track != null && !visited.Contains(track))
+            {
+                visited.Add(track);
+
+                var branch = direction.IsOut() ? track.GetOutBranch() : track.GetInBranch();
+
+                // No branch means we have no track to go, stop looping.
+                if (branch == null || branch.track == null) break;
+
+                // Check if the current track is the next track of the next branch.
+                if (ContainsTrack(track, branch, direction))
+                {
+                    // Direction must be flipped.
+                    direction = direction.Flipped();
+                }
+
+                track = branch.track;
+                tracks.Add(track);
+            }
+
+            return tracks;
+        }
+
         public static List<RailTrack> GetTracksUntilJunction(RailTrack track, TrackDirection direction, bool includeFinalBranchTracks, out JunctionInfo info)
         {
             int depth = 0;
-            HashSet<RailTrack> visited = new HashSet<RailTrack>();
-            List<RailTrack> tracks = new List<RailTrack>();
+            var visited = new HashSet<RailTrack>();
+            var tracks = new List<RailTrack>();
             info = new JunctionInfo();
 
             // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
@@ -129,8 +201,8 @@ namespace Signals.Game.Railway
             BasicSignalController? ignore, Predicate<BasicSignalController> condition, out ControllerInfo info)
         {
             int depth = 0;
-            HashSet<RailTrack> visited = new HashSet<RailTrack>();
-            List<RailTrack> tracks = new List<RailTrack>();
+            var visited = new HashSet<RailTrack>();
+            var tracks = new List<RailTrack>();
             info = new ControllerInfo();
 
             // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
@@ -195,6 +267,100 @@ namespace Signals.Game.Railway
             }
 
             return tracks;
+
+            bool MeetsConditions(BasicSignalController? controller)
+            {
+                return controller != null && controller != ignore && condition(controller);
+            }
+        }
+
+        public static HashSet<BasicSignalController> GetAllPossibleMainControllers(RailTrack track, TrackDirection direction,
+            BasicSignalController? ignore)
+        {
+            return GetAllPossibleControllers(track, direction, ignore, HasMainSignal);
+        }
+
+        private static HashSet<BasicSignalController> GetAllPossibleControllers(RailTrack track, TrackDirection direction,
+            BasicSignalController? ignore, Predicate<BasicSignalController> condition)
+        {
+            int depth = 0;
+            var visited = new HashSet<RailTrack>();
+            var tracks = new Queue<RailTrack>();
+            var controllers = new HashSet<BasicSignalController>();
+
+            tracks.Enqueue(track);
+
+            while (tracks.Count > 0)
+            {
+                track = tracks.Dequeue();
+
+                // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
+                while (depth++ < MaxDepth && track != null && !visited.Contains(track))
+                {
+                    visited.Add(track);
+
+                    Junction? junction = direction.IsOut() ? track.outJunction : track.inJunction;
+                    Branch? branch = direction.IsOut() ? track.GetOutBranch() : track.GetInBranch();
+
+                    // Found junction, check signal.
+                    if (junction != null && SignalManager.Instance.TryGetJunctionGroup(junction, out var group))
+                    {
+                        if (track.isJunctionTrack)
+                        {
+                            var found = group.ReverseJunctionSignal;
+
+                            if (MeetsConditions(found))
+                            {
+                                controllers.Add(found!);
+                                direction = TrackDirection.Out;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            var found = group.JunctionSignal;
+
+                            if (MeetsConditions(found))
+                            {
+                                controllers.Add(found!);
+                                direction = TrackDirection.Out;
+                                break;
+                            }
+
+                            foreach (var outBranch in junction.outBranches)
+                            {
+                                if (outBranch.track == branch.track) continue;
+
+                                tracks.Enqueue(outBranch.track);
+                            }
+                        }
+                    }
+
+
+                    // No branch means we have no track to go, stop looping.
+                    if (branch == null || branch.track == null) break;
+
+                    // Check if the current track is the next track of the next branch.
+                    if (ContainsTrack(track, branch, direction))
+                    {
+                        // Direction must be flipped.
+                        direction = direction.Flipped();
+                    }
+
+                    track = branch.track;
+
+                    // If the next track is a junction branch, check if there's a signal there before actually going into it.
+                    if (track.isJunctionTrack && SignalManager.Instance.TryGetJunctionGroup(track.inJunction, out group) &&
+                        !direction.IsOut() && group.TryGetControllerForTrack(track, out var match) && MeetsConditions(match))
+                    {
+                        controllers.Add(match!);
+                        direction = TrackDirection.Out;
+                        break;
+                    }
+                }
+            }
+
+            return controllers;
 
             bool MeetsConditions(BasicSignalController? controller)
             {

@@ -25,5 +25,7 @@ namespace Signals.Common
         [Tooltip("An optional distant signal\n" +
             "This is automatically enabled or disabled based on the signal distance")]
         public SignalDefinition? DistantSignal;
+        [Tooltip("In case this signal displays distant state by itself")]
+        public bool SelfActsAsDistant = false;
     }
 }

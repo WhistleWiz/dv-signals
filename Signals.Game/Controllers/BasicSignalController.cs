@@ -38,6 +38,14 @@ namespace Signals.Game.Controllers
             return value;
         }
 
+        internal static void ResetIdGeneration()
+        {
+            lock (s_lock)
+            {
+                s_idGen = 0;
+            }
+        }
+
         #endregion
 
         #region Members
@@ -195,7 +203,7 @@ namespace Signals.Game.Controllers
             placement.PointIndex = index;
             PlacementInfo = placement;
             Definition.transform.rotation = Quaternion.LookRotation(isOut ? point.forward : -point.forward);
-            Definition.transform.position = (Vector3)point.position + Vector3.right *
+            Definition.transform.position = (Vector3)point.position + Definition.transform.right *
                 (placement.OppositeSide ? -Definition.Offset : Definition.Offset);
 
             return true;
@@ -391,6 +399,17 @@ namespace Signals.Game.Controllers
                 if (item.Block != null)
                 {
                     yield return item.Block;
+                }
+            }
+        }
+
+        public virtual IEnumerable<(Signal Signal, IEnumerable<BasicSignalController> Controllers)> GetPotentialNextControllers()
+        {
+            foreach (var item in Signals)
+            {
+                if (item.Block != null && item.Block.NextController != null)
+                {
+                    yield return (item, new[] { item.Block.NextController });
                 }
             }
         }

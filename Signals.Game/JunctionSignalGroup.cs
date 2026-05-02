@@ -23,7 +23,7 @@ namespace Signals.Game
             }
         }
 
-        public IEnumerable<TrackSignalController> AllSignals
+        public IEnumerable<TrackSignalController> AllControllers
         {
             get
             {
@@ -43,13 +43,23 @@ namespace Signals.Game
             BranchSignals = new List<TrackSignalController>();
         }
 
+        public JunctionSignalGroup(Junction junction, JunctionSignalController? junctionSignal)
+        {
+            Junction = junction;
+            JunctionSignal = junctionSignal;
+            ReverseJunctionSignal = null;
+            BranchSignals = new List<TrackSignalController>();
+
+            AssignSelfToControllers();
+        }
+
         public JunctionSignalGroup(Junction junction, JunctionSignalController? junctionSignal, List<TrackSignalController> branchSignals)
         {
             Junction = junction;
             JunctionSignal = junctionSignal;
             BranchSignals = branchSignals;
 
-            AssignSelfToSignals();
+            AssignSelfToControllers();
         }
 
         public JunctionSignalGroup(Junction junction, JunctionSignalController? junctionSignal, TrackSignalController? reverseJunctionSignal)
@@ -59,10 +69,10 @@ namespace Signals.Game
             ReverseJunctionSignal = reverseJunctionSignal;
             BranchSignals = new List<TrackSignalController>();
 
-            AssignSelfToSignals();
+            AssignSelfToControllers();
         }
 
-        private void AssignSelfToSignals()
+        private void AssignSelfToControllers()
         {
             if (JunctionSignal != null) JunctionSignal.Group = this;
             if (ReverseJunctionSignal != null) ReverseJunctionSignal.Group = this;

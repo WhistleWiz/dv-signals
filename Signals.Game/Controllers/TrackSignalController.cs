@@ -1,5 +1,6 @@
 ﻿using Signals.Common;
 using Signals.Game.Railway;
+using System.Collections.Generic;
 
 namespace Signals.Game.Controllers
 {
@@ -17,10 +18,7 @@ namespace Signals.Game.Controllers
             StartingTrack = starting;
             Direction = startingDirection;
 
-            if (ShuntingSignal != null)
-            {
-                ShuntingSignal.Block = TrackBlock.CreateForShunting(starting);
-            }
+            ShuntingSignal?.SetBlock(TrackBlock.CreateForShunting(starting));
 
             if (starting.isJunctionTrack)
             {
@@ -52,7 +50,15 @@ namespace Signals.Game.Controllers
         {
             foreach (var signal in Signals)
             {
-                signal.Block = TrackBlock.CreateUntilMainSignal(StartingTrack, Direction, this);
+                signal.SetBlock(TrackBlock.CreateUntilMainSignal(StartingTrack, Direction, this));
+            }
+        }
+
+        public override IEnumerable<(Signal Signal, IEnumerable<BasicSignalController> Controllers)> GetPotentialNextControllers()
+        {
+            foreach(var signal in Signals)
+            {
+                yield return (signal, TrackWalker.GetAllPossibleMainControllers(StartingTrack, Direction, this));
             }
         }
     }

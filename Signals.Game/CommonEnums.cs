@@ -12,19 +12,21 @@
         Mainline,
         JunctionLeft,
         JunctionRight,
-        IntoYard,
+        Entry,
+        Exit,
+        ExitPax,
         Shunting,
-        OutPax,
     }
 
     public enum SignalType
     {
         NotSet,
         Mainline,
-        IntoYard,
+        Entry,
+        Exit,
+        ExitPax,
         Shunting,
         Distant,
-        OutPax,
         Other
     }
 

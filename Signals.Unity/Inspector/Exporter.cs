@@ -183,7 +183,7 @@ namespace Signals.Unity.Inspector
 
             ValidateController(_pack.LeftJunctionSignal, "Left Junction Signal");
             ValidateController(_pack.RightJunctionSignal, "Right Junction Signal");
-            ValidateController(_pack.IntoYardSignal, "Into Yard Signal");
+            ValidateController(_pack.EntrySignal, "Into Yard Signal");
             ValidateController(_pack.ShuntingSignal, "Shunting Signal");
             ValidateController(_pack.PassengerSignal, "Passenger Signal");
             ValidateController(_pack.DistantSignal, "Distant Signal");
@@ -191,7 +191,7 @@ namespace Signals.Unity.Inspector
             ValidateController(_pack.OldSignal, "Old Main Signal");
             ValidateController(_pack.OldLeftJunctionSignal, "Old Left Junction Signal");
             ValidateController(_pack.OldRightJunctionSignal, "Old Right Junction Signal");
-            ValidateController(_pack.OldIntoYardSignal, "Old Into Yard Signal");
+            ValidateController(_pack.OldEntrySignal, "Old Into Yard Signal");
             ValidateController(_pack.OldShuntingSignal, "Old Shunting Signal");
             ValidateController(_pack.OldPassengerSignal, "Old Passenger Signal");
             ValidateController(_pack.OldDistantSignal, "Old Distant Signal");

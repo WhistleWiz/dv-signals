@@ -1,6 +1,8 @@
-﻿using Signals.Common;
+﻿using DV.UI;
+using Signals.Common;
 using Signals.Game.Railway;
 using System.Collections.Generic;
+using static Junction;
 
 namespace Signals.Game.Controllers
 {
@@ -28,10 +30,7 @@ namespace Signals.Game.Controllers
             Junction = junction;
             Left = junction.IsLeft();
 
-            if (ShuntingSignal != null)
-            {
-                ShuntingSignal.Block = TrackBlock.CreateForShunting(junction);
-            }
+            ShuntingSignal?.SetBlock(TrackBlock.CreateForShunting(junction));
 
             Junction.Switched += JunctionSwitched;
             Destroyed += (x) => Junction.Switched -= JunctionSwitched;
@@ -50,10 +49,7 @@ namespace Signals.Game.Controllers
         {
             StartingTrack = OverrideStart ?? Junction.GetCurrentBranch().track;
 
-            if (ShuntingSignal != null)
-            {
-                ShuntingSignal.Block = TrackBlock.CreateForShunting(Junction);
-            }
+            ShuntingSignal?.SetBlock(TrackBlock.CreateForShunting(Junction));
 
             if (Signals.Length == 1)
             {
@@ -67,7 +63,7 @@ namespace Signals.Game.Controllers
             {
                 Junction.selectedBranch = (byte)(i % Junction.outBranches.Count);
                 var track = OverrideStart ?? Junction.GetCurrentBranch().track;
-                Signals[i].Block = TrackBlock.CreateUntilMainSignal(track, Direction, this);
+                Signals[i].SetBlock(TrackBlock.CreateUntilMainSignal(track, Direction, this));
             }
 
             Junction.selectedBranch = selected;
@@ -85,6 +81,34 @@ namespace Signals.Game.Controllers
             }
 
             Junction.selectedBranch = selected;
+        }
+
+        public override IEnumerable<(Signal Signal, IEnumerable<BasicSignalController> Controllers)> GetPotentialNextControllers()
+        {
+            if (Signals.Length == 1)
+            {
+                var controllers = new HashSet<BasicSignalController>();
+
+                foreach (var branch in Junction.outBranches)
+                {
+                    controllers.UnionWith(TrackWalker.GetAllPossibleMainControllers(branch.track, Direction, this));
+                }
+
+                yield return (Signals[0], controllers);
+            }
+            else
+            {
+                var selected = Junction.selectedBranch;
+
+                for (byte i = 0; i < Signals.Length; i++)
+                {
+                    Junction.selectedBranch = (byte)(i % Junction.outBranches.Count);
+                    var track = OverrideStart ?? Junction.GetCurrentBranch().track;
+                    yield return (Signals[i], TrackWalker.GetAllPossibleMainControllers(track, Direction, this));
+                }
+
+                Junction.selectedBranch = selected;
+            }
         }
     }
 }

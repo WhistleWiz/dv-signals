@@ -31,6 +31,14 @@ namespace Signals.Game
             return value;
         }
 
+        internal static void ResetIdGeneration()
+        {
+            lock (s_lock)
+            {
+                s_idGen = 0;
+            }
+        }
+
         protected const int OffValue = -1;
 
         #endregion
@@ -66,7 +74,7 @@ namespace Signals.Game
         /// <summary>
         /// The block of tracks this signal works with.
         /// </summary>
-        public TrackBlock? Block { get; set; }
+        public TrackBlock? Block { get; private set; }
         public Signal? Parent { get; set; }
         public Signal? DistantSignal { get; private set; }
         public int CurrentAspectIndex { get; private set; }
@@ -152,6 +160,13 @@ namespace Signals.Game
         {
             DistantSignal?.Destroy();
             SignalManager.Instance.UnregisterSignal(this);
+            GameObject.Destroy(Definition.gameObject);
+        }
+
+        public void DestroyDistant()
+        {
+            DistantSignal?.Destroy();
+            DistantSignal = null;
         }
 
         /// <summary>
@@ -180,6 +195,12 @@ namespace Signals.Game
 
             AspectChanged?.Invoke(null);
             return true;
+        }
+
+        public void SetBlock(TrackBlock block)
+        {
+            Block = block;
+            DistantSignal?.SetBlock(block);
         }
 
         /// <summary>
