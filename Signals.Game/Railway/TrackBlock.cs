@@ -28,7 +28,7 @@ namespace Signals.Game.Railway
         private string? _station;
 
         public readonly int Id;
-        public RailTrack[] Tracks { get; private set; }
+        public TrackInfo[] Tracks { get; private set; }
         public RailTrack[] ExtraTracks { get; private set; }
         public BasicSignalController? NextController { get; private set; }
         public float Length { get; private set; }
@@ -88,27 +88,27 @@ namespace Signals.Game.Railway
         {
             get
             {
-                var tracks = Tracks.ToHashSet();
+                var tracks = Tracks.Select(x => x.Track).ToHashSet();
                 tracks.UnionWith(ExtraTracks);
                 return tracks;
             }
         }
 
-        private TrackBlock(IEnumerable<RailTrack> tracks, BasicSignalController? nextSignal)
+        private TrackBlock(IEnumerable<TrackInfo> tracks, BasicSignalController? nextSignal)
         {
             Id = GetGenId();
             Tracks = tracks.ToArray();
             NextController = nextSignal;
 
             // Add all junction tracks to better handle diverging trains.
-            ExtraTracks = tracks.Where(x => x.isJunctionTrack).SelectMany(x => x.inJunction.GetAllTracks()).ToArray();
+            ExtraTracks = tracks.Where(x => x.IsJunctionTrack).SelectMany(x => x.Track.inJunction.GetAllTracks()).ToArray();
             Length = (float)TrackUtils.GetTotalLength(Tracks);
         }
 
         private TrackBlock(BasicSignalController? nextSignal, float distance)
         {
             Id = GetGenId();
-            Tracks = System.Array.Empty<RailTrack>();
+            Tracks = System.Array.Empty<TrackInfo>();
             ExtraTracks = System.Array.Empty<RailTrack>();
             NextController = nextSignal;
             Length = distance;
@@ -116,12 +116,12 @@ namespace Signals.Game.Railway
 
         public bool IsOccupied(CrossingCheckMode crossingMode)
         {
-            return Tracks.Any(x => x.IsOccupied(crossingMode)) || ExtraTracks.Any(x => x.IsOccupied(crossingMode));
+            return Tracks.Any(x => x.Track.IsOccupied(crossingMode)) || ExtraTracks.Any(x => x.IsOccupied(crossingMode));
         }
 
         public static TrackBlock CreateUntilMainSignal(RailTrack starting, TrackDirection direction, BasicSignalController? ignore = null)
         {
-            var tracks = new List<RailTrack> { starting };
+            var tracks = new List<TrackInfo> { new TrackInfo(starting, direction) };
             tracks.AddRange(TrackWalker.GetTracksUntilMainSignal(starting, direction, ignore, out var info));
 
             return new TrackBlock(tracks, info.Signal);
@@ -134,7 +134,7 @@ namespace Signals.Game.Railway
 
         public static TrackBlock CreateForShunting(RailTrack track)
         {
-            return new TrackBlock(new[] { track }, null);
+            return new TrackBlock(new[] { new TrackInfo(track, TrackDirection.Out) }, null);
         }
 
         public static TrackBlock CreateForShunting(Junction junction)

@@ -52,7 +52,7 @@ namespace Signals.Unity.Inspector
 
                         if (GUILayout.Button("Get Displays From Children"))
                         {
-                            def.Displays = def.GetComponentsInChildren<InfoDisplayDefinition>().ToArray();
+                            def.Displays = def.GetComponentsInChildren<DisplayBaseDefinition>().ToArray();
                             AssetHelper.SaveAsset(target);
                         }
                         break;

@@ -19,7 +19,7 @@ namespace Signals.Common
 
         [Header("Optional")]
         [Tooltip("Displays that aren't part of aspects")]
-        public InfoDisplayDefinition[] Displays = new InfoDisplayDefinition[0];
+        public DisplayBaseDefinition[] Displays = new DisplayBaseDefinition[0];
         [Tooltip("Extra aspects that do not interfere with the main ones")]
         public AspectBaseDefinition[] Indicators = new AspectBaseDefinition[0];
         [Tooltip("An optional distant signal\n" +

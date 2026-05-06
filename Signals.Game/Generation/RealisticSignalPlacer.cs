@@ -11,24 +11,14 @@ namespace Signals.Game.Generation
         {
             public SignalControllerDefinition Definition;
             public PrefabType PrefabType;
+            public SignalType SignalType;
             public bool Old;
-
-            public readonly SignalType SignalType => PrefabType switch
-            {
-                PrefabType.Mainline => SignalType.Mainline,
-                PrefabType.JunctionLeft => SignalType.Mainline,
-                PrefabType.JunctionRight => SignalType.Mainline,
-                PrefabType.Entry => SignalType.Entry,
-                PrefabType.Exit => SignalType.Exit,
-                PrefabType.ExitPax => SignalType.ExitPax,
-                PrefabType.Shunting => SignalType.Shunting,
-                _ => SignalType.NotSet,
-            };
 
             public PlacementHelper(SignalControllerDefinition definition, PrefabType prefabType, bool old)
             {
                 Definition = definition;
                 PrefabType = prefabType;
+                SignalType = GetSignalType(prefabType);
                 Old = old;
             }
 
@@ -89,7 +79,7 @@ namespace Signals.Game.Generation
                     anyYard = true;
                 }
                 // If it's not part of a station, then it requires a normal signal.
-                else if (!IsPartOfStation(track))
+                else if (!track.IsPartOfStation())
                 {
                     if (IsShortDeadEnd(track) || ComesFromStationAndIsShort(track))
                     {
@@ -118,7 +108,10 @@ namespace Signals.Game.Generation
                         // If this track can be considered a mainline through the yard, then give it proper signals.
                         if (IsYardTrackMainline(branch))
                         {
-                            branchTrackKey.Add(track, GetPlacement(PrefabType.Exit, old));
+                            // Manually change the type.
+                            var placement = GetPlacement(PrefabType.Exit, old);
+                            placement.SignalType = SignalType.Mainline;
+                            branchTrackKey.Add(track, placement);
                         }
                         else
                         {
@@ -192,6 +185,18 @@ namespace Signals.Game.Generation
             }
         }
 
+        private static SignalType GetSignalType(PrefabType prefab) => prefab switch
+        {
+            PrefabType.Mainline => SignalType.Mainline,
+            PrefabType.JunctionLeft => SignalType.Mainline,
+            PrefabType.JunctionRight => SignalType.Mainline,
+            PrefabType.Entry => SignalType.Entry,
+            PrefabType.Exit => SignalType.Exit,
+            PrefabType.ExitPax => SignalType.ExitPax,
+            PrefabType.Shunting => SignalType.Shunting,
+            _ => SignalType.NotSet,
+        };
+
         private static bool IsBetweenMains(RailTrack track)
         {
             //var inBranch = track.GetInBranch();
@@ -219,7 +224,7 @@ namespace Signals.Game.Generation
             var outSide = TrackWalker.WalkTracks(track, TrackDirection.Out, 2);
             if (outSide.Count < 2) return false;
 
-            return !IsPartOfStation(inSide[1]) && !IsPartOfStation(outSide[1]);
+            return !inSide[1].Track.IsPartOfStation() && !outSide[1].Track.IsPartOfStation();
         }
 
         private static bool ComesFromStationAndIsShort(RailTrack track)
@@ -232,7 +237,7 @@ namespace Signals.Game.Generation
 
             branch = branch.track.GetInBranch();
 
-            return branch != null && IsPartOfStation(branch.track);
+            return branch != null && branch.track.IsPartOfStation();
         }
 
         private static bool IsYardTrackMainline(Junction.Branch branch)
@@ -243,9 +248,9 @@ namespace Signals.Game.Generation
 
             var tracks = TrackWalker.WalkTracks(branch.track, TrackDirection.In, 3);
 
-            if (tracks.Count < 3 || !IsPartOfStation(tracks[0])) return false;
+            if (tracks.Count < 3 || !tracks[0].Track.IsPartOfStation()) return false;
 
-            return !tracks[2].IsPartOfYard();
+            return !tracks[2].Track.IsPartOfYard();
         }
 
         private static List<TrackSignalController> CreateBranchSignals(Junction junction,
@@ -363,21 +368,6 @@ namespace Signals.Game.Generation
                 }
 
                 set.Add(delete);
-            }
-
-            void RemoveFromMap(TrackSignalController signal)
-            {
-                if (!toDelete.TryGetValue(signal, out var set)) return;
-
-                foreach (var item in set)
-                {
-                    if (toMerge.TryGetValue(item, out var set2))
-                    {
-                        set2.Remove(signal);
-                    }
-                }
-
-                toDelete.Remove(signal);
             }
         }
     }

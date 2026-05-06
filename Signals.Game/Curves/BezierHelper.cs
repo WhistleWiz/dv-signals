@@ -177,5 +177,20 @@ namespace Signals.Game.Curves
 
             return (curve.GetPointAt(0), curve.GetTangentAt(0), total);
         }
+
+        public static float GetCurvature(CubicBezier bezier, float t)
+        {
+            var d1 = bezier.Derivative(t);
+            var d2 = bezier.SecondDerivative(t);
+
+            var lengthSqr = d1.sqrMagnitude;
+
+            // Close to divide by 0.
+            if (lengthSqr < 0.00001f) return 0;
+
+            var length = Mathf.Sqrt(lengthSqr);
+
+            return Vector3.Cross(d1, d2).magnitude / (length * length * length);
+        }
     }
 }

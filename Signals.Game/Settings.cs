@@ -13,6 +13,8 @@ namespace Signals.Game
     {
         [Draw("Custom Pack", Tooltip = "The mod ID of a custom signals pack")]
         public string CustomPack = string.Empty;
+        //[Draw("Flip Speed Sign Side", Tooltip = "Speed signs are placed on the left side of the track rather than the right")]
+        //public bool FlipSpeedSigns = false;
         [Draw("Use Verbose Logging", Tooltip = "Logs a lot more information\n" +
             "Useful if you are experiencing bugs")]
         public bool UseVerboseLogging = false;

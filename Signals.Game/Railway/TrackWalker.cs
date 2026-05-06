@@ -104,11 +104,11 @@ namespace Signals.Game.Railway
             return false;
         }
 
-        public static List<RailTrack> WalkTracks(RailTrack track, TrackDirection direction, int count)
+        public static List<TrackInfo> WalkTracks(RailTrack track, TrackDirection direction, int count)
         {
             int depth = 0;
             var visited = new HashSet<RailTrack>();
-            var tracks = new List<RailTrack>();
+            var tracks = new List<TrackInfo>();
 
             // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
             while (depth++ < count && track != null && !visited.Contains(track))
@@ -128,17 +128,17 @@ namespace Signals.Game.Railway
                 }
 
                 track = branch.track;
-                tracks.Add(track);
+                tracks.Add(new TrackInfo(track, direction));
             }
 
             return tracks;
         }
 
-        public static List<RailTrack> GetTracksUntilJunction(RailTrack track, TrackDirection direction, bool includeFinalBranchTracks, out JunctionInfo info)
+        public static List<TrackInfo> GetTracksUntilJunction(RailTrack track, TrackDirection direction, bool includeFinalBranchTracks, out JunctionInfo info)
         {
             int depth = 0;
             var visited = new HashSet<RailTrack>();
-            var tracks = new List<RailTrack>();
+            var tracks = new List<TrackInfo>();
             info = new JunctionInfo();
 
             // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
@@ -180,29 +180,29 @@ namespace Signals.Game.Railway
                     break;
                 }
 
-                tracks.Add(track);
+                tracks.Add(new TrackInfo(track, direction));
             }
 
             return tracks;
         }
 
-        public static List<RailTrack> GetTracksUntilMainSignal(RailTrack track, TrackDirection direction, out ControllerInfo info)
+        public static List<TrackInfo> GetTracksUntilMainSignal(RailTrack track, TrackDirection direction, out ControllerInfo info)
         {
             return GetTracksUntilMainSignal(track, direction, null, out info);
         }
 
-        public static List<RailTrack> GetTracksUntilMainSignal(RailTrack track, TrackDirection direction,
+        public static List<TrackInfo> GetTracksUntilMainSignal(RailTrack track, TrackDirection direction,
             BasicSignalController? ignore, out ControllerInfo info)
         {
             return GetTracksUntilSignal(track, direction, ignore, HasMainSignal, out info);
         }
 
-        private static List<RailTrack> GetTracksUntilSignal(RailTrack track, TrackDirection direction,
+        private static List<TrackInfo> GetTracksUntilSignal(RailTrack track, TrackDirection direction,
             BasicSignalController? ignore, Predicate<BasicSignalController> condition, out ControllerInfo info)
         {
             int depth = 0;
             var visited = new HashSet<RailTrack>();
-            var tracks = new List<RailTrack>();
+            var tracks = new List<TrackInfo>();
             info = new ControllerInfo();
 
             // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
@@ -263,7 +263,7 @@ namespace Signals.Game.Railway
                     break;
                 }
 
-                tracks.Add(track);
+                tracks.Add(new TrackInfo(track, direction));
             }
 
             return tracks;

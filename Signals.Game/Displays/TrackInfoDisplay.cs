@@ -3,11 +3,11 @@ using Signals.Game.Railway;
 
 namespace Signals.Game.Displays
 {
-    public class TrackInfoDisplay : InfoDisplay
+    public class TrackInfoDisplay : DisplayBase
     {
         private TrackInfoDisplayDefinition _fullDef;
 
-        public TrackInfoDisplay(InfoDisplayDefinition definition, Signal signal) : base(definition, signal)
+        public TrackInfoDisplay(DisplayBaseDefinition definition, Signal signal) : base(definition, signal)
         {
             _fullDef = (TrackInfoDisplayDefinition)definition;
         }

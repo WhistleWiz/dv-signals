@@ -3,7 +3,7 @@ using Signals.Game.Railway;
 
 namespace Signals.Game.Displays
 {
-    public class NextStationDisplay : InfoDisplay
+    public class NextStationDisplay : DisplayBase
     {
         private NextStationDisplayDefinition _fullDef;
         private string? _startingStation;
@@ -18,7 +18,7 @@ namespace Signals.Game.Displays
             }
         }
 
-        public NextStationDisplay(InfoDisplayDefinition definition, Signal signal) : base(definition, signal)
+        public NextStationDisplay(DisplayBaseDefinition definition, Signal signal) : base(definition, signal)
         {
             _fullDef = (NextStationDisplayDefinition)definition;
         }

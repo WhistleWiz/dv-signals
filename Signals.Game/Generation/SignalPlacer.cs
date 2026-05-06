@@ -69,17 +69,12 @@ namespace Signals.Game.Generation
 
         public static bool IsLogicYardTrack(RailTrack track)
         {
-            return !track.GetID().IsGeneric();
+            return !track.GetId().IsGeneric();
         }
 
         public static bool IsShortDeadEnd(RailTrack track)
         {
             return !(track.inIsConnected && track.outIsConnected) && track.GetLength() < DeadEndThreshold;
-        }
-
-        public static bool IsPartOfStation(RailTrack track)
-        {
-            return track.IsPartOfYard() || track.IsNonSign();
         }
 
         public static bool AreAllBranchesSmallNonSign(Junction junction)
@@ -343,6 +338,7 @@ namespace Signals.Game.Generation
         {
             if (Check(SignalType.Entry)) return SignalType.Entry;
             if (Check(SignalType.ExitPax)) return SignalType.ExitPax;
+            if (Check(SignalType.Exit)) return SignalType.Exit;
             if (Check(SignalType.Mainline)) return SignalType.Mainline;
 
             return a;
@@ -357,6 +353,7 @@ namespace Signals.Game.Generation
         {
             if (Check(PrefabType.Entry)) return PrefabType.Entry;
             if (Check(PrefabType.ExitPax)) return PrefabType.ExitPax;
+            if (Check(PrefabType.Exit)) return PrefabType.Exit;
             if (Check(PrefabType.JunctionLeft)) return PrefabType.JunctionLeft;
             if (Check(PrefabType.JunctionRight)) return PrefabType.JunctionRight;
             if (Check(PrefabType.Mainline)) return PrefabType.Mainline;
@@ -417,6 +414,17 @@ namespace Signals.Game.Generation
             {
                 foreach (var controller in junction.Value.AllControllers)
                 {
+                    // Exit signals should not have the distant signal included.
+                    if (controller.Type == SignalType.ExitPax || controller.Type == SignalType.Exit)
+                    {
+                        foreach (var signal in controller.Signals)
+                        {
+                            signal.DestroyDistant();
+                        }
+
+                        continue;
+                    }
+
                     foreach (var (signal, controllers) in controller.GetPotentialNextControllers())
                     {
                         // Signal doesn't have a distant part, skip.
@@ -467,7 +475,7 @@ namespace Signals.Game.Generation
 
                     // Don't place distant signals in tracks inside stations.
                     var placement = controller.PlacementInfo.Value;
-                    if (IsPartOfStation(placement.Track)) continue;
+                    if (placement.Track.IsPartOfStation()) continue;
 
                     // Check the minimum track length.
                     var kpSet = placement.Track.GetKinkedPointSet();

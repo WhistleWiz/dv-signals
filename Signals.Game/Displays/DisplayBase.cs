@@ -5,13 +5,13 @@ using UnityEngine;
 
 namespace Signals.Game.Displays
 {
-    public abstract class InfoDisplay : IHudDisplayable
+    public abstract class DisplayBase : IHudDisplayable
     {
         private bool _hasUpdated = false;
         private bool _off = false;
 
         public Signal Signal;
-        public InfoDisplayDefinition Definition;
+        public DisplayBaseDefinition Definition;
 
         public string DisplayText { get => Definition.DisplayText; set => Definition.DisplayText = value; }
         public bool ShouldDisplay => !_off && !string.IsNullOrEmpty(DisplayText) && Definition.HUDSprite != null;
@@ -20,7 +20,7 @@ namespace Signals.Game.Displays
         public Color TextColour => Definition.HUDTextColour;
         public BasicSignalController Controller => Signal.Controller;
 
-        protected InfoDisplay(InfoDisplayDefinition definition, Signal signal)
+        protected DisplayBase(DisplayBaseDefinition definition, Signal signal)
         {
             Signal = signal;
             Definition = definition;
@@ -51,12 +51,12 @@ namespace Signals.Game.Displays
                 _off = false;
             }
 
-            if (Definition.Mode == InfoDisplayDefinition.UpdateMode.AtStart && _hasUpdated)
+            if (Definition.Mode == DisplayBaseDefinition.UpdateMode.AtStart && _hasUpdated)
             {
                 return false;
             }
 
-            if (Definition.Mode == InfoDisplayDefinition.UpdateMode.AspectChanged && !aspectChanged)
+            if (Definition.Mode == DisplayBaseDefinition.UpdateMode.AspectChanged && !aspectChanged)
             {
                 return false;
             }

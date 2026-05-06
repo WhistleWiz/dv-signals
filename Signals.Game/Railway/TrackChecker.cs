@@ -179,7 +179,7 @@ namespace Signals.Game.Railway
                     // Skip if no intersection was detected.
                     if (!BezierHelper.Intersects(track.curve, other.curve, DefaultPrecision, out var intersection)) continue;
 
-                    SignalsMod.LogVerbose($"Found intersection between track '{track.GetID()}' and '{other.GetID()}'");
+                    SignalsMod.LogVerbose($"Found intersection between track '{track.GetId()}' and '{other.GetId()}'");
 
                     if (point == null)
                     {
@@ -240,7 +240,7 @@ namespace Signals.Game.Railway
                 // Skip if no intersection was detected.
                 if (!BezierHelper.Intersects(track.curve, other.curve, precision, out var intersection)) continue;
 
-                SignalsMod.LogVerbose($"Found intersection between track '{track.GetID()}' and '{other.GetID()}'");
+                SignalsMod.LogVerbose($"Found intersection between track '{track.GetId()}' and '{other.GetId()}'");
 
                 result ??= new TrackIntersectionPoints(track);
 

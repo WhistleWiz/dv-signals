@@ -28,7 +28,8 @@ namespace Signals.Game
                 { typeof(IsParentAspectAspectDefinition), (x, y) => new IsParentAspectAspect(x, y) },
                 { typeof(JunctionBranchAspectDefinition), (x, y) => new JunctionBranchAspect(x, y) },
                 { typeof(MatchingBranchAspectDefinition), (x, y) => new MatchingBranchAspect(x, y) },
-                { typeof(RequiredBranchAspectDefinition), (x, y) => new RequiredBranchAspect(x, y) }
+                { typeof(RequiredBranchAspectDefinition), (x, y) => new RequiredBranchAspect(x, y) },
+                { typeof(MaxSpeedAspectDefinition), (x, y) => new MaxSpeedAspect(x, y) }
             };
 
             s_defaultTypes = CreatorFunctions.Keys.ToArray();

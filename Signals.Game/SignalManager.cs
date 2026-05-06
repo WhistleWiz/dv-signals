@@ -202,6 +202,7 @@ namespace Signals.Game
             SignalsMod.Log("Started creating signals...");
             //OldAreaCalculator.DebugCreateDummies();
 
+            SpeedCalculator.ClearCache();
             BasicSignalController.ResetIdGeneration();
             Signal.ResetIdGeneration();
 
@@ -385,7 +386,7 @@ namespace Signals.Game
 
                     foreach (var track in block.Tracks)
                     {
-                        GLHelper.DrawPointSet(track.GetKinkedPointSet().points, offset + offset2, 20, GetColour(hue, highlight));
+                        GLHelper.DrawPointSet(track.Track.GetKinkedPointSet().points, offset + offset2, 20, GetColour(hue, highlight));
                         hue += 0.03f;
                     }
                 }

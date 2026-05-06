@@ -7,18 +7,18 @@ using System.Linq;
 namespace Signals.Game
 {
     /// <summary>
-    /// Class to instantiate the implementation of an <see cref="InfoDisplayDefinition"/>.
+    /// Class to instantiate the implementation of an <see cref="DisplayBaseDefinition"/>.
     /// </summary>
     public static class DisplayCreator
     {
         private static Type[] s_defaultTypes;
         private static HashSet<Type> s_failedDisplays = new HashSet<Type>();
 
-        internal static Dictionary<Type, Func<InfoDisplayDefinition, Signal, InfoDisplay>> CreatorFunctions;
+        internal static Dictionary<Type, Func<DisplayBaseDefinition, Signal, DisplayBase>> CreatorFunctions;
 
         static DisplayCreator()
         {
-            CreatorFunctions = new Dictionary<Type, Func<InfoDisplayDefinition, Signal, InfoDisplay>>
+            CreatorFunctions = new Dictionary<Type, Func<DisplayBaseDefinition, Signal, DisplayBase>>
             {
                 { typeof(SignalIdDisplayDefinition), (x, y) => new SignalIdDisplay(x, y) },
                 { typeof(JunctionBranchDisplayDefinition), (x, y) => new JunctionBranchDisplay(x, y) },
@@ -26,13 +26,14 @@ namespace Signals.Game
                 { typeof(TrackInfoDisplayDefinition), (x, y) => new TrackInfoDisplay(x, y) },
                 { typeof(DistanceToNextDisplayDefinition), (x, y) => new DistanceToNextDisplay(x, y) },
                 { typeof(StaticDisplayDefinition), (x, y) => new StaticDisplay(x, y) },
-                { typeof(NextStationDisplayDefinition), (x, y) => new NextStationDisplay(x, y) }
+                { typeof(NextStationDisplayDefinition), (x, y) => new NextStationDisplay(x, y) },
+                { typeof(SpeedLimitDisplayDefinition), (x, y) => new SpeedLimitDisplay(x, y) }
             };
 
             s_defaultTypes = CreatorFunctions.Keys.ToArray();
         }
 
-        internal static InfoDisplay? Create(Signal signal, InfoDisplayDefinition? def)
+        internal static DisplayBase? Create(Signal signal, DisplayBaseDefinition? def)
         {
             if (def == null) return null;
 
@@ -62,8 +63,8 @@ namespace Signals.Game
         /// <para>Inputs are the definition and the controller.</para>
         /// </param>
         /// <returns><see langword="true"/> if the type was sucessfully added, otherwise <see langword="false"/>.</returns>
-        public static bool AddCreatorFunction<T>(Func<InfoDisplayDefinition, Signal, InfoDisplay> func)
-            where T : InfoDisplayDefinition
+        public static bool AddCreatorFunction<T>(Func<DisplayBaseDefinition, Signal, DisplayBase> func)
+            where T : DisplayBaseDefinition
         {
             var t = typeof(T);
 
@@ -84,7 +85,7 @@ namespace Signals.Game
         /// <returns><see langword="true"/> if the tpe was sucessfully removed, otherwise <see langword="false"/>.</returns>
         /// <remarks>This method will not remove the default types.</remarks>
         public static bool RemoveCreatorFunction<T>()
-            where T : InfoDisplayDefinition
+            where T : DisplayBaseDefinition
         {
             var t = typeof(T);
 

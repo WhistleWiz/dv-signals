@@ -3,7 +3,7 @@
 namespace Signals.Common.Displays
 {
     [AddComponentMenu("DV Signals/Displays/Junction Id (Display)")]
-    public class JunctionIdDisplayDefinition : InfoDisplayDefinition
+    public class JunctionIdDisplayDefinition : DisplayBaseDefinition
     {
         public enum IdDisplayMode
         {

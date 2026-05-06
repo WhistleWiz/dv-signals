@@ -78,12 +78,17 @@ namespace Signals.Game
             return track.name.StartsWith(NoSign);
         }
 
+        public static bool IsPartOfStation(this RailTrack track)
+        {
+            return track.IsPartOfYard() || track.IsNonSign();
+        }
+
         public static double GetLength(this RailTrack track)
         {
             return track.LogicTrack().length;
         }
 
-        public static TrackID GetID(this RailTrack track)
+        public static TrackID GetId(this RailTrack track)
         {
             return track.LogicTrack().ID;
         }

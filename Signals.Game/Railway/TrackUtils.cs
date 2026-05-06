@@ -51,9 +51,31 @@ namespace Signals.Game.Railway
         {
             foreach (var track in tracks)
             {
-                if (track.GetID().IsGeneric()) continue;
+                if (track.GetId().IsGeneric()) continue;
 
-                var text = track.GetID().yardId;
+                var text = track.GetId().yardId;
+
+                if (!string.IsNullOrEmpty(text))
+                {
+                    return text;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Finds the first station ID in a <see cref="TrackInfo"/> collection.
+        /// </summary>
+        /// <param name="tracks">The tracks to check.</param>
+        /// <returns>The first track valid result found, or <see cref="string.Empty"/> if no result is found.</returns>
+        public static string NextStation(IEnumerable<TrackInfo> tracks)
+        {
+            foreach (var track in tracks)
+            {
+                if (track.GetId().IsGeneric()) continue;
+
+                var text = track.GetId().yardId;
 
                 if (!string.IsNullOrEmpty(text))
                 {
@@ -73,9 +95,31 @@ namespace Signals.Game.Railway
         {
             foreach (var track in tracks)
             {
-                if (track.GetID().IsGeneric()) continue;
+                if (track.GetId().IsGeneric()) continue;
 
-                var text = track.GetID().SignIDSubYardPart;
+                var text = track.GetId().SignIDSubYardPart;
+
+                if (!string.IsNullOrEmpty(text))
+                {
+                    return text;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Finds the first track yard in a <see cref="TrackInfo"/> collection.
+        /// </summary>
+        /// <param name="tracks">The tracks to check.</param>
+        /// <returns>The first track valid result found, or <see cref="string.Empty"/> if no result is found.</returns>
+        public static string NextTrackYard(IEnumerable<TrackInfo> tracks)
+        {
+            foreach (var track in tracks)
+            {
+                if (track.GetId().IsGeneric()) continue;
+
+                var text = track.GetId().SignIDSubYardPart;
 
                 if (!string.IsNullOrEmpty(text))
                 {
@@ -95,7 +139,31 @@ namespace Signals.Game.Railway
         {
             foreach (var track in tracks)
             {
-                var id = track.GetID();
+                var id = track.GetId();
+
+                if (id.IsGeneric()) continue;
+
+                var text = ReflectionHelpers.GetTrimmedOrderNumber(id);
+
+                if (!string.IsNullOrEmpty(text))
+                {
+                    return text;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Finds the first track number in a <see cref="TrackInfo"/> collection.
+        /// </summary>
+        /// <param name="tracks">The tracks to check.</param>
+        /// <returns>The first track valid result found, or <see cref="string.Empty"/> if no result is found.</returns>
+        public static string NextTrackNumber(IEnumerable<TrackInfo> tracks)
+        {
+            foreach (var track in tracks)
+            {
+                var id = track.GetId();
 
                 if (id.IsGeneric()) continue;
 
@@ -119,7 +187,31 @@ namespace Signals.Game.Railway
         {
             foreach (var track in tracks)
             {
-                var id = track.GetID();
+                var id = track.GetId();
+
+                if (id.IsGeneric()) continue;
+
+                var text = ReflectionHelpers.GetTrackType(id);
+
+                if (!string.IsNullOrEmpty(text))
+                {
+                    return text;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Finds the first track number and type in a <see cref="TrackInfo"/> collection.
+        /// </summary>
+        /// <param name="tracks">The tracks to check.</param>
+        /// <returns>The first valid result found, or <see cref="string.Empty"/> if no result is found.</returns>
+        public static string NextTrackType(IEnumerable<TrackInfo> tracks)
+        {
+            foreach (var track in tracks)
+            {
+                var id = track.GetId();
 
                 if (id.IsGeneric()) continue;
 
@@ -183,6 +275,33 @@ namespace Signals.Game.Railway
             }
 
             return length;
+        }
+
+        public static double GetTotalLength(IEnumerable<TrackInfo> tracks)
+        {
+            double length = 0.0;
+
+            foreach (var track in tracks)
+            {
+                length += track.Length;
+            }
+
+            return length;
+        }
+
+        public static float GetSpeedLimit(float radius)
+        {
+            if (radius < 50f) return 10f;
+            if (radius < 70f) return 20f;
+            if (radius < 95f) return 30f;
+            if (radius < 130f) return 40f;
+            if (radius < 170f) return 50f;
+            if (radius < 230f) return 60f;
+            if (radius < 360f) return 70f;
+            if (radius < 700f) return 80f;
+            if (radius < 900f) return 90f;
+            if (radius < 1200f) return 100f;
+            return 120f;
         }
     }
 }

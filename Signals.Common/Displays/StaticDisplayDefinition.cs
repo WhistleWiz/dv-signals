@@ -3,7 +3,7 @@
 namespace Signals.Common.Displays
 {
     [AddComponentMenu("DV Signals/Displays/Static (Display)")]
-    public class StaticDisplayDefinition : InfoDisplayDefinition
+    public class StaticDisplayDefinition : DisplayBaseDefinition
     {
         public string DisplayedText = string.Empty;
 

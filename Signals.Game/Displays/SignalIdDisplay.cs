@@ -2,11 +2,11 @@
 
 namespace Signals.Game.Displays
 {
-    public class SignalIdDisplay : InfoDisplay
+    public class SignalIdDisplay : DisplayBase
     {
         private SignalIdDisplayDefinition _fullDef;
 
-        public SignalIdDisplay(InfoDisplayDefinition def, Signal signal) : base(def, signal)
+        public SignalIdDisplay(DisplayBaseDefinition def, Signal signal) : base(def, signal)
         {
             _fullDef = (SignalIdDisplayDefinition)def;
         }

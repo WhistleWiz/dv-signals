@@ -3,7 +3,7 @@
 namespace Signals.Common.Displays
 {
     [AddComponentMenu("DV Signals/Displays/Track Info (Display)")]
-    public class TrackInfoDisplayDefinition : InfoDisplayDefinition
+    public class TrackInfoDisplayDefinition : DisplayBaseDefinition
     {
         [Tooltip("How to format the display\n" +
             "Use {0} for station ID, {1} for yard ID, {2} for track number, and {3} for track type")]

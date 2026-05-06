@@ -43,6 +43,30 @@ namespace Signals.Game.Curves
             yield return P3;
         }
 
+        public Vector3 Derivative(float t)
+        {
+            float tInv = 1.0f - t;
+            float tInvSqr = tInv * tInv;
+            float tSqr = t * t;
+
+            return 3.0f * tInvSqr * (P1 - P0) + 6.0f * tInv * t * (P2 - P1) + 3.0f * tSqr * (P3 - P2);
+        }
+
+        public Vector3 SecondDerivative(float t)
+        {
+            return 6.0f * (1.0f - t) * (P2 - 2.0f * P1 + P0) + 6.0f * t * (P3 - 2.0f * P2 + P1);
+        }
+
+        public float EndsDistanceSqr()
+        {
+            return (P3 - P0).sqrMagnitude;
+        }
+
+        public float EndsDistance()
+        {
+            return (P3 - P0).magnitude;
+        }
+
         public static CubicBezier FromBezierCurve(BezierCurve curve, int index)
         {
             return new CubicBezier(curve[index].position, curve[index].globalHandle2, curve[index + 1].globalHandle1, curve[index + 1].position);

@@ -4,11 +4,11 @@ using System;
 
 namespace Signals.Game.Displays
 {
-    public class DistanceToNextDisplay : InfoDisplay
+    public class DistanceToNextDisplay : DisplayBase
     {
         private DistantSignalController? _distant;
 
-        public DistanceToNextDisplay(InfoDisplayDefinition definition, Signal signal) : base(definition, signal)
+        public DistanceToNextDisplay(DisplayBaseDefinition definition, Signal signal) : base(definition, signal)
         {
             _distant = (DistantSignalController)signal.Controller;
         }

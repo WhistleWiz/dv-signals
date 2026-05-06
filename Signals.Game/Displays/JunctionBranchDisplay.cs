@@ -3,12 +3,12 @@ using Signals.Game.Controllers;
 
 namespace Signals.Game.Displays
 {
-    public class JunctionBranchDisplay : InfoDisplay
+    public class JunctionBranchDisplay : DisplayBase
     {
         private JunctionBranchDisplayDefinition _fullDef;
         private Junction? _junction;
 
-        public JunctionBranchDisplay(InfoDisplayDefinition definition, Signal signal) : base(definition, signal)
+        public JunctionBranchDisplay(DisplayBaseDefinition definition, Signal signal) : base(definition, signal)
         {
             _fullDef = (JunctionBranchDisplayDefinition)definition;
 

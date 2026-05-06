@@ -69,7 +69,7 @@ namespace Signals.Game
         public SignalDefinition Definition { get; private set; }
         public SignalLight[] AllLights { get; private set; }
         public AspectBase[] AllAspects { get; private set; }
-        public InfoDisplay[] AllDisplays { get; private set; }
+        public DisplayBase[] AllDisplays { get; private set; }
         public AspectBase[] AllIndicators { get; private set; }
         /// <summary>
         /// The block of tracks this signal works with.
@@ -99,7 +99,7 @@ namespace Signals.Game
         #region Events
 
         public Action<AspectBase?>? AspectChanged;
-        public Action<InfoDisplay[]>? DisplaysUpdated;
+        public Action<DisplayBase[]>? DisplaysUpdated;
         public Action<SignalOperationMode>? OperationModeChanged;
         public Action<int>? OverrideChanged;
 

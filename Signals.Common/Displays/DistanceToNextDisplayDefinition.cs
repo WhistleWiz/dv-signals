@@ -3,7 +3,7 @@
 namespace Signals.Common.Displays
 {
     [AddComponentMenu("DV Signals/Displays/Distance To Next (Display)")]
-    public class DistanceToNextDisplayDefinition : InfoDisplayDefinition
+    public class DistanceToNextDisplayDefinition : DisplayBaseDefinition
     {
         private void Reset()
         {

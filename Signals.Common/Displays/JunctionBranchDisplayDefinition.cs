@@ -3,7 +3,7 @@
 namespace Signals.Common.Displays
 {
     [AddComponentMenu("DV Signals/Displays/Junction Branch (Display)")]
-    public class JunctionBranchDisplayDefinition : InfoDisplayDefinition
+    public class JunctionBranchDisplayDefinition : DisplayBaseDefinition
     {
         public enum BranchDisplayMode
         {
