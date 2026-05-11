@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Signals.Common
+namespace Signals.Game
 {
     public interface IHudDisplayable
     {

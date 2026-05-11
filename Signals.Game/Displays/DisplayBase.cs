@@ -1,5 +1,4 @@
-﻿using Signals.Common;
-using Signals.Common.Displays;
+﻿using Signals.Common.Displays;
 using Signals.Game.Controllers;
 using UnityEngine;
 

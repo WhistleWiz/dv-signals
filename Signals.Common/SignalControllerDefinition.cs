@@ -8,14 +8,19 @@ namespace Signals.Common
         private const float HalfGauge = 1.435f / 2.0f;
         private static readonly Vector3 TrainSize = new Vector3(3.5f, 5.0f, 1.0f);
         private static readonly Vector3 TrainUp = new Vector3(0, TrainSize.y / 2, 0);
+        private static readonly Vector3 TrackSize = new Vector3(0.05f, 0.20f, 10.00f);
+        private static readonly Vector3 TrackSide = new Vector3(TrackSize.x / 2, 0, 0);
+        private static readonly Vector3 TrackUp = new Vector3(0, TrackSize.y / -2, 0);
+        private static readonly Vector3 CatenaryUp = new Vector3(0, 6 - TrackUp.y, 0);
 
-        public float Offset = 2.05f;
         [Tooltip("The individual signals for this controller")]
         public SignalDefinition[] Signals = new SignalDefinition[0];
         [Tooltip("How aspects in signals should be treated between controllers\n" +
             " • Active: uses the aspect of the currently active signal (ex.: signal for the current junction branch)\n" +
             " • Most Restrictive: uses the most restrictive aspect from all signals")]
         public ControllerMode Mode = ControllerMode.Active;
+        [Tooltip("Negative numbers for right side, positive for left side")]
+        public float Offset = -2.05f;
 
         [Header("Optional")]
         [Tooltip("The shunting signal for this controller")]
@@ -30,11 +35,14 @@ namespace Signals.Common
 
             Gizmos.color = new Color(0.9f, 0.9f, 0.9f, 0.2f);
             Gizmos.DrawCube(TrainUp + offset, TrainSize);
+            Gizmos.DrawWireCube(TrackUp + TrackSide + trackOffset + offset, TrackSize);
+            Gizmos.DrawWireCube(TrackUp - TrackSide - trackOffset + offset, TrackSize);
+            Gizmos.DrawWireCube(CatenaryUp + offset, TrackSize);
 
             Gizmos.color = Color.white;
             Gizmos.DrawWireCube(TrainUp + offset, TrainSize);
-            Gizmos.DrawLine(Vector3.forward * 100 + trackOffset + offset, Vector3.back * 100 + trackOffset + offset);
-            Gizmos.DrawLine(Vector3.forward * 100 - trackOffset + offset, Vector3.back * 100 - trackOffset + offset);
+            Gizmos.DrawLine(Vector3.forward * 5 + trackOffset + offset, Vector3.back * 5 + trackOffset + offset);
+            Gizmos.DrawLine(Vector3.forward * 5 - trackOffset + offset, Vector3.back * 5 - trackOffset + offset);
         }
     }
 }

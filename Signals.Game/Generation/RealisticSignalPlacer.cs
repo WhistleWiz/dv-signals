@@ -81,11 +81,14 @@ namespace Signals.Game.Generation
                 // If it's not part of a station, then it requires a normal signal.
                 else if (!track.IsPartOfStation())
                 {
+                    // If the branch is a short dead end or comes from a station track and is short,
+                    // use a shunting signal.
+                    // Only place the mainline signal if the in track isn't a short dead end either.
                     if (IsShortDeadEnd(track) || ComesFromStationAndIsShort(track))
                     {
                         branchTrackKey.Add(track, GetPlacement(PrefabType.Shunting, old));
                     }
-                    else
+                    else if (!IsShortDeadEnd(inTrack))
                     {
                         branchTrackKey.Add(track, GetPlacement(PrefabType.Mainline, old));
                     }

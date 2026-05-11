@@ -1,7 +1,6 @@
 ﻿using Signals.Common;
 using Signals.Common.Aspects;
 using Signals.Common.Displays;
-using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -42,17 +41,18 @@ namespace Signals.Unity.Inspector
 
                         if (GUILayout.Button("Get Aspects From Children"))
                         {
-                            def.Aspects = def.GetComponentsInChildren<AspectBaseDefinition>().ToArray();
+                            def.Aspects = def.GetComponentsInChildren<AspectBaseDefinition>();
                             AssetHelper.SaveAsset(target);
                         }
                         break;
                     case nameof(SignalDefinition.Displays):
                         EditorHelper.DrawHeader("Optional");
+
                         _displayList.DoLayoutList();
 
                         if (GUILayout.Button("Get Displays From Children"))
                         {
-                            def.Displays = def.GetComponentsInChildren<DisplayBaseDefinition>().ToArray();
+                            def.Displays = def.GetComponentsInChildren<DisplayBaseDefinition>();
                             AssetHelper.SaveAsset(target);
                         }
                         break;

@@ -1,5 +1,4 @@
-﻿using Signals.Common;
-using Signals.Common.Aspects;
+﻿using Signals.Common.Aspects;
 using Signals.Game.Controllers;
 using Signals.Game.Railway;
 using System.Linq;
@@ -7,8 +6,6 @@ using UnityEngine;
 
 namespace Signals.Game.Aspects
 {
-
-
     /// <summary>
     /// Base class for a signal aspect. It handles lights, animation and sound from a
     /// <see cref="AspectBaseDefinition"/> automatically.
@@ -86,7 +83,6 @@ namespace Signals.Game.Aspects
         /// </summary>
         /// <remarks>
         /// When overriding, keep the call to the base version to correctly unapply the base features (lights).
-        /// <para>Animation state is only restored to default by the signal controller this state belongs to.</para>
         /// <para>It will also not play sound.</para>
         /// </remarks>
         public virtual void Unapply()
