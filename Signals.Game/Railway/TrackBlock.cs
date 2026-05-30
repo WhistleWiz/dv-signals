@@ -22,16 +22,23 @@ namespace Signals.Game.Railway
             return value;
         }
 
-        private string? _trackNumber;
-        private string? _trackType;
-        private string? _yard;
+        private bool _tracksCanChange;
         private string? _station;
+        private string? _yard;
+        private string? _trackNumber;
+        private string? _trackTrimmedNumber;
+        private string? _trackType;
+        private HashSet<RailTrack>? _tracks;
+        private HashSet<Junction>? _junctions;
 
         public readonly int Id;
         public TrackInfo[] Tracks { get; private set; }
         public RailTrack[] ExtraTracks { get; private set; }
         public BasicSignalController? NextController { get; private set; }
         public float Length { get; private set; }
+        public bool IsDeadEnd { get; private set; }
+        public bool IsSelfLoop { get; private set; }
+        public bool TracksCanChange => _tracksCanChange;
         /// <summary>
         /// Station covered by this block. Empty if not available.
         /// </summary>
@@ -69,6 +76,18 @@ namespace Signals.Game.Railway
             }
         }
         /// <summary>
+        /// Track number with trimmed leading zeros covered by this block. Empty if not available.
+        /// </summary>
+        public string TrackTrimmerNumber
+        {
+            get
+            {
+                _trackTrimmedNumber ??= TrackUtils.NextTrackTrimmedNumber(Tracks);
+
+                return _trackTrimmedNumber;
+            }
+        }
+        /// <summary>
         /// Track type covered by this block. Empty if not available.
         /// </summary>
         public string TrackType
@@ -84,13 +103,50 @@ namespace Signals.Game.Railway
         /// <summary>
         /// Includes both <see cref="Tracks"/> and <see cref="ExtraTracks"/>, without duplicates.
         /// </summary>
-        public IEnumerable<RailTrack> AllTracks
+        public HashSet<RailTrack> AllTracks
         {
             get
             {
-                var tracks = Tracks.Select(x => x.Track).ToHashSet();
-                tracks.UnionWith(ExtraTracks);
-                return tracks;
+                if (_tracks == null)
+                {
+                    _tracks = Tracks.Select(x => x.Track).ToHashSet();
+                    _tracks.UnionWith(ExtraTracks);
+                }
+
+                return _tracks;
+            }
+        }
+
+        public HashSet<Junction> AllJunctions
+        {
+            get
+            {
+                if (_junctions == null)
+                {
+                    _junctions = new HashSet<Junction>();
+
+                    foreach (var track in AllTracks)
+                    {
+                        if (track.inJunction != null)
+                        {
+                            _junctions.Add(track.inJunction);
+                        }
+
+                        if (track.outJunction != null)
+                        {
+                            _junctions.Add(track.outJunction);
+                        }
+                    }
+
+                    var junction = NextController?.GroupJunction;
+
+                    if (junction != null)
+                    {
+                        _junctions.Remove(junction);
+                    }
+                }
+
+                return _junctions;
             }
         }
 
@@ -103,6 +159,8 @@ namespace Signals.Game.Railway
             // Add all junction tracks to better handle diverging trains.
             ExtraTracks = tracks.Where(x => x.IsJunctionTrack).SelectMany(x => x.Track.inJunction.GetAllTracks()).ToArray();
             Length = (float)TrackUtils.GetTotalLength(Tracks);
+
+            CheckIfTracksCanChange();
         }
 
         private TrackBlock(BasicSignalController? nextSignal, float distance)
@@ -112,6 +170,25 @@ namespace Signals.Game.Railway
             ExtraTracks = System.Array.Empty<RailTrack>();
             NextController = nextSignal;
             Length = distance;
+
+            CheckIfTracksCanChange();
+        }
+
+        private void CheckIfTracksCanChange()
+        {
+            // Skip the first track, because if it is a junction signal, it'll update the blocks when the switch is changed.
+            for (int i = 1; i < Tracks.Length; i++)
+            {
+                var track = Tracks[i];
+
+                if (track.IsJunctionTrack && track.Direction.IsOut())
+                {
+                    _tracksCanChange = true;
+                    return;
+                }
+            }
+
+            _tracksCanChange = false;
         }
 
         public bool IsOccupied(CrossingCheckMode crossingMode)
@@ -119,27 +196,83 @@ namespace Signals.Game.Railway
             return Tracks.Any(x => x.Track.IsOccupied(crossingMode)) || ExtraTracks.Any(x => x.IsOccupied(crossingMode));
         }
 
+        /// <summary>
+        /// Creates a <see cref="TrackBlock"/> covering all tracks until a main signal.
+        /// </summary>
+        /// <param name="starting">The starting track.</param>
+        /// <param name="direction">The direction of the starting track.</param>
+        /// <param name="ignore">Optional controller to ignore.</param>
         public static TrackBlock CreateUntilMainSignal(RailTrack starting, TrackDirection direction, BasicSignalController? ignore = null)
         {
             var tracks = new List<TrackInfo> { new TrackInfo(starting, direction) };
             tracks.AddRange(TrackWalker.GetTracksUntilMainSignal(starting, direction, ignore, out var info));
 
-            return new TrackBlock(tracks, info.Signal);
+            return new TrackBlock(tracks, info.Signal) { IsDeadEnd = info.IsDeadEnd, IsSelfLoop = info.IsSelfLoop };
         }
 
-        public static TrackBlock CreateForDistant(BasicSignalController next, float distance)
+        /// <summary>
+        /// Creates a <see cref="TrackBlock"/> for a distant signal.
+        /// </summary>
+        /// <param name="home">The home signal.</param>
+        /// <param name="distance">The distance to the home signal.</param>
+        /// <returns></returns>
+        public static TrackBlock CreateForDistant(BasicSignalController home, float distance)
         {
-            return new TrackBlock(next, distance);
+            return new TrackBlock(home, distance);
         }
 
-        public static TrackBlock CreateForShunting(RailTrack track)
+        /// <summary>
+        /// Creates a <see cref="TrackBlock"/> covering all tracks until a shunting signal.
+        /// </summary>
+        /// <param name="starting">The starting track.</param>
+        /// <param name="direction">The direction of the starting track.</param>
+        /// <param name="ignore">Optional controller to ignore.</param>
+        public static TrackBlock CreateForShunting(RailTrack starting, TrackDirection direction, BasicSignalController? ignore = null)
         {
-            return new TrackBlock(new[] { new TrackInfo(track, TrackDirection.Out) }, null);
+            var tracks = new List<TrackInfo> { new TrackInfo(starting, direction) };
+            tracks.AddRange(TrackWalker.GetTracksUntilAnySignal(starting, direction, ignore, out var info));
+
+            return new TrackBlock(tracks, info.Signal) { IsDeadEnd = info.IsDeadEnd, IsSelfLoop = info.IsSelfLoop };
         }
 
-        public static TrackBlock CreateForShunting(Junction junction)
+        /// <summary>
+        /// Creates a <see cref="TrackBlock"/> covering all tracks until a spacing or main signal.
+        /// </summary>
+        /// <param name="starting"></param>
+        /// <param name="direction"></param>
+        /// <param name="ignore"></param>
+        /// <returns></returns>
+        public static TrackBlock CreateForSpacing(RailTrack starting, TrackDirection direction, BasicSignalController? ignore = null)
         {
-            return CreateForShunting(junction.GetCurrentBranch().track.outBranch.track);
+            var tracks = new List<TrackInfo> { new TrackInfo(starting, direction) };
+            tracks.AddRange(TrackWalker.GetTracksUntilMainOrSpacingSignal(starting, direction, ignore, out var info));
+
+            return new TrackBlock(tracks, info.Signal) { IsDeadEnd = info.IsDeadEnd, IsSelfLoop = info.IsSelfLoop };
+        }
+
+        // Honestly unsure if this is more optimised than not doing the check and replacing the block every time.
+        // After all, the blocks are still calculated...
+        public static bool TracksMatch(TrackBlock? a, TrackBlock? b)
+        {
+            if (a == null || b == null) return false;
+
+            if (!a.AllTracks.SetEquals(b.AllTracks)) return false;
+
+            if (a.ExtraTracks.Length != b.ExtraTracks.Length) return false;
+
+            if (a.Tracks.Length != b.Tracks.Length) return false;
+
+            for (int i = 0; i < a.ExtraTracks.Length; i++)
+            {
+                if (a.ExtraTracks[i] != b.ExtraTracks[i]) return false;
+            }
+
+            for (int i = 0; i < a.Tracks.Length; i++)
+            {
+                if (a.Tracks[i] != b.Tracks[i]) return false;
+            }
+
+            return true;
         }
     }
 }

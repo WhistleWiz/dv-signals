@@ -30,11 +30,26 @@ namespace Signals.Game.Controllers
 
         public override bool ShouldUpdate() => false;
 
-        private void UpdateFromHome(Signal signal, AspectBase? aspect) => Update(true, false);
+        private void UpdateFromHome(Signal signal, IAspect? aspect) => Update(true, false);
 
         public override BasicSignalController? GetNextController()
         {
             return Home;
+        }
+
+        public static DistantSignalController? Replace(DistantSignalController original, SignalControllerDefinition def)
+        {
+            if (!original.PlacementInfo.HasValue) return null;
+
+            var replacement = new DistantSignalController(def, original.Home, original.PlacementInfo.Value, original.Distance)
+            {
+                Group = original.Group,
+                ActingAsDistant = original.ActingAsDistant,
+                ShortDistance = original.ShortDistance
+            };
+            original.Destroy();
+
+            return replacement;
         }
     }
 }

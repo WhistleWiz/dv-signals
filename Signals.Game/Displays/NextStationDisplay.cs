@@ -3,9 +3,8 @@ using Signals.Game.Railway;
 
 namespace Signals.Game.Displays
 {
-    public class NextStationDisplay : DisplayBase
+    public class NextStationDisplay : DisplayBase<NextStationDisplayDefinition>
     {
-        private NextStationDisplayDefinition _fullDef;
         private string? _startingStation;
 
         private string StartingStation
@@ -18,10 +17,7 @@ namespace Signals.Game.Displays
             }
         }
 
-        public NextStationDisplay(DisplayBaseDefinition definition, Signal signal) : base(definition, signal)
-        {
-            _fullDef = (NextStationDisplayDefinition)definition;
-        }
+        public NextStationDisplay(DisplayBaseDefinition definition, Signal signal) : base(definition, signal) { }
 
         public override void UpdateDisplay()
         {
@@ -36,13 +32,13 @@ namespace Signals.Game.Displays
 
             if (nextSignal == null || nextSignal.Group == null)
             {
-                DisplayText = _fullDef.NoValidResultValue;
+                DisplayText = Definition.NoValidResultValue;
                 return;
             }
 
             var name = TrackUtils.JunctionStation(nextSignal.Group.Junction);
 
-            DisplayText = _fullDef.DisplayMode switch
+            DisplayText = Definition.DisplayMode switch
             {
                 NextStationDisplayDefinition.StationDisplayMode.FirstLetter => name.Substring(0, 1),
                 _ => name,

@@ -2,9 +2,9 @@
 
 namespace Signals.Game.Aspects
 {
-    public class RequiredBranchAspect : AspectBase
+    public class RequiredBranchAspect : AspectBase<RequiredBranchAspectDefinition>
     {
-        public RequiredBranchAspect(AspectBaseDefinition def, Signal signal) : base(def, signal) { }
+        public RequiredBranchAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal) { }
 
         public override bool MeetsConditions()
         {
@@ -12,7 +12,9 @@ namespace Signals.Game.Aspects
 
             if (junction == null || !Controller.RequiredJunctionBranch.HasValue) return false;
 
-            return Controller.RequiredJunctionBranch.Value == junction.selectedBranch;
+            return Definition.Invert ?
+                Controller.RequiredJunctionBranch.Value != junction.selectedBranch :
+                Controller.RequiredJunctionBranch.Value == junction.selectedBranch;
         }
     }
 }

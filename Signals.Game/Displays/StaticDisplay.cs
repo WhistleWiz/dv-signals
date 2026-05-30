@@ -1,16 +1,12 @@
 ﻿using Signals.Common.Displays;
-using Signals.Game.Controllers;
 
 namespace Signals.Game.Displays
 {
-    public class StaticDisplay : DisplayBase
+    public class StaticDisplay : DisplayBase<StaticDisplayDefinition>
     {
-        private StaticDisplayDefinition _fullDef;
-
         public StaticDisplay(DisplayBaseDefinition definition, Signal signal) : base(definition, signal)
         {
-            _fullDef = (StaticDisplayDefinition)definition;
-            DisplayText = _fullDef.DisplayedText;
+            DisplayText = Definition.DisplayedText;
         }
 
         public override void UpdateDisplay() { }

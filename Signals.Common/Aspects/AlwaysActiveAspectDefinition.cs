@@ -7,7 +7,7 @@ namespace Signals.Common.Aspects
     {
         private void Reset()
         {
-            Id = "OPEN";
+            Id = "CLEAR";
         }
     }
 }

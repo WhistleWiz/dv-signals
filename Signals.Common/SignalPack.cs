@@ -15,13 +15,15 @@ namespace Signals.Common
         public string Repository = string.Empty;
 
         [Header("Required Signals")]
-        [Tooltip("Used on all junctions in mainlines, facing the joined track\n" +
-            "It's also used as the fallback for all other signals if they're missing, except shunting ones")]
+        [Tooltip("Used on all junctions in mainlines, on the through track towards the junction\n" +
+            "It's also used as the fallback for all other signals if they're missing, unless specified")]
         public SignalControllerDefinition Signal = null!;
         [Tooltip("Used on junctions inside yards")]
         public SignalControllerDefinition ShuntingSignal = null!;
 
         [Header("Optional Signals")]
+        [Tooltip("Used on all junctions on the diverging track in mainlines, facing towards the junction")]
+        public SignalControllerDefinition? DivergingSignal;
         [Tooltip("Used on all junctions with a track diverging to the left in mainlines, facing the junction branches")]
         public SignalControllerDefinition? LeftJunctionSignal;
         [Tooltip("Used on all junctions with a track diverging to the right in mainlines, facing the junction branches")]
@@ -30,22 +32,56 @@ namespace Signals.Common
         public SignalControllerDefinition? EntrySignal;
         [Tooltip("Used when leaving yards")]
         public SignalControllerDefinition? ExitSignal;
-        [Tooltip("Used when leaving passenger tracks")]
+        [Tooltip("Used when leaving passenger tracks\n" +
+            "Falls back to exit signals")]
         public SignalControllerDefinition? PassengerSignal;
+        [Tooltip("Used on mainline station tracks\n" +
+            "Falls back to exit signals")]
+        public SignalControllerDefinition? StationMainlineSignal;
+        [Tooltip("Used on very long station tracks\n" +
+            "Does not fall back if missing")]
+        public SignalControllerDefinition? SpacingSignal;
+        [Tooltip("Used on turntables\n" +
+            "Does not fall back if missing")]
+        public SignalControllerDefinition? TurntableSignal;
+
+        [Header("Optional Distant Signals")]
         [Tooltip("Used to warn about the state of mainline signals")]
         public SignalControllerDefinition? DistantSignal;
-        [Tooltip("The distance a Distant Signal must be from its corresponding signal"), Min(300.0f)]
-        public float DistantSignalDistance = 300.0f;
+        [Tooltip("The distance a distant signal must be from its corresponding signal"), Min(300.0f)]
+        public float DistantSignalDistance = 400.0f;
         [Tooltip("The minimum length of a track to be eligible for a distant signal"), Min(100.0f)]
-        public float DistantSignalMinimumDistance = 100.0f;
-        [Tooltip("The tolerance in case another signal is placed before"), Min(10.0f)]
-        public float DistantTolerance = 100.0f;
+        public float DistantSignalMinimumDistance = 200.0f;
+        [Tooltip("The tolerance in case a regular signal has distant signal function"), Min(50.0f)]
+        public float DistantTolerance = 200.0f;
+        [Tooltip("Used to warn about the state of mainline signals where there is low visibility")]
+        public SignalControllerDefinition? RepeaterSignal;
+        [Tooltip("The distance a repeater signal must be from its corresponding signal"), Min(50.0f)]
+        public float RepeaterSignalDistance = 100.0f;
+        [Tooltip("The minimum length of a track to be eligible for a repeater signal"), Min(100.0f)]
+        public float RepeaterSignalMinimumDistance = 200.0f;
 
-        [Header("Optional Alternate Versions")]
+        [Header("Optional Combined Signals")]
+        [Tooltip("Used on all junctions in mainlines where the main signal should also act as a distant signal, facing the joined track")]
+        public SignalControllerDefinition? CombinedSignal;
+        [Tooltip("Used on all junctions with a track diverging to the left in mainlines where the main signal should also act as a distant signal, " +
+            "facing the junction branches")]
+        public SignalControllerDefinition? CombinedLeftJunctionSignal;
+        [Tooltip("Used on all junctions with a track diverging to the right in mainlines where the main signal should also act as a distant signal, " +
+            "facing the junction branches")]
+        public SignalControllerDefinition? CombinedRightJunctionSignal;
+
+        [Header("Optional Old Versions")]
+        [Tooltip("If false, the normal signals will be used in all spots, skipping the need to duplicate optional prefabs")]
+        public bool EnableOldVersions = false;
         [Tooltip("Used on all junctions in mainlines")]
         public SignalControllerDefinition? OldSignal;
         [Tooltip("Used on junctions inside yards")]
         public SignalControllerDefinition? OldShuntingSignal;
+
+        [Space]
+        [Tooltip("Used on all junctions on the diverging track in mainlines, facing towards the junction")]
+        public SignalControllerDefinition? OldDivergingSignal;
         [Tooltip("Used on all junctions with a track diverging to the left in mainlines, facing the junction branches")]
         public SignalControllerDefinition? OldLeftJunctionSignal;
         [Tooltip("Used on all junctions with a track diverging to the right in mainlines, facing the junction branches")]
@@ -54,10 +90,34 @@ namespace Signals.Common
         public SignalControllerDefinition? OldEntrySignal;
         [Tooltip("Used when leaving yards")]
         public SignalControllerDefinition? OldExitSignal;
-        [Tooltip("Used when leaving passenger tracks")]
+        [Tooltip("Used when leaving passenger tracks\n" +
+            "Falls back to exit signals")]
         public SignalControllerDefinition? OldPassengerSignal;
+        [Tooltip("Used on mainline station tracks\n" +
+            "Falls back to exit signals")]
+        public SignalControllerDefinition? OldStationMainlineSignal;
+        [Tooltip("Used on very long station tracks\n" +
+            "Does not fall back if missing")]
+        public SignalControllerDefinition? OldSpacingSignal;
+        [Tooltip("Used on turntables\n" +
+            "Does not fall back if missing")]
+        public SignalControllerDefinition? OldTurntableSignal;
+
+        [Space]
         [Tooltip("Used to warn about the state of mainline signals")]
         public SignalControllerDefinition? OldDistantSignal;
+        [Tooltip("Used to warn about the state of mainline signals where there is low visibility")]
+        public SignalControllerDefinition? OldRepeaterSignal;
+
+        [Space]
+        [Tooltip("Used on all junctions in mainlines where the main signal should also act as a distant signal, facing the joined track")]
+        public SignalControllerDefinition? OldCombinedSignal;
+        [Tooltip("Used on all junctions with a track diverging to the left in mainlines where the main signal should also act as a distant signal, " +
+            "facing the junction branches")]
+        public SignalControllerDefinition? OldCombinedLeftJunctionSignal;
+        [Tooltip("Used on all junctions with a track diverging to the right in mainlines where the main signal should also act as a distant signal, " +
+            "facing the junction branches")]
+        public SignalControllerDefinition? OldCombinedRightJunctionSignal;
 
         [Header("Extras")]
         [Tooltip("Any additional signals included in this pack\n" +
@@ -79,22 +139,50 @@ namespace Signals.Common
         {
             get
             {
+                // Main.
                 yield return Signal;
+                yield return ShuntingSignal;
 
+                // Optional.
+                if (DivergingSignal != null) yield return DivergingSignal;
                 if (LeftJunctionSignal != null) yield return LeftJunctionSignal;
                 if (RightJunctionSignal != null) yield return RightJunctionSignal;
                 if (EntrySignal != null) yield return EntrySignal;
-                if (ShuntingSignal != null) yield return ShuntingSignal;
+                if (ExitSignal != null) yield return ExitSignal;
                 if (PassengerSignal != null) yield return PassengerSignal;
-                if (DistantSignal != null) yield return DistantSignal;
+                if (StationMainlineSignal != null) yield return StationMainlineSignal;
+                if (SpacingSignal != null) yield return SpacingSignal;
+                if (TurntableSignal != null) yield return TurntableSignal;
 
+                // Distant.
+                if (DistantSignal != null) yield return DistantSignal;
+                if (RepeaterSignal != null) yield return RepeaterSignal;
+
+                // Combined.
+                if (CombinedSignal != null) yield return CombinedSignal;
+                if (CombinedLeftJunctionSignal != null) yield return CombinedLeftJunctionSignal;
+                if (CombinedRightJunctionSignal != null) yield return CombinedRightJunctionSignal;
+
+                // Old main.
                 if (OldSignal != null) yield return OldSignal;
+                if (OldShuntingSignal != null) yield return OldShuntingSignal;
+                // Old optional.
+                if (OldDivergingSignal != null) yield return OldDivergingSignal;
                 if (OldLeftJunctionSignal != null) yield return OldLeftJunctionSignal;
                 if (OldRightJunctionSignal != null) yield return OldRightJunctionSignal;
                 if (OldEntrySignal != null) yield return OldEntrySignal;
-                if (OldShuntingSignal != null) yield return OldShuntingSignal;
+                if (OldExitSignal != null) yield return OldExitSignal;
                 if (OldPassengerSignal != null) yield return OldPassengerSignal;
+                if (OldStationMainlineSignal != null) yield return OldStationMainlineSignal;
+                if (OldSpacingSignal != null) yield return OldSpacingSignal;
+                if (OldTurntableSignal != null) yield return OldTurntableSignal;
+                // Old distant.
                 if (OldDistantSignal != null) yield return OldDistantSignal;
+                if (OldRepeaterSignal != null) yield return OldRepeaterSignal;
+                // Old combined.
+                if (OldCombinedSignal != null) yield return OldCombinedSignal;
+                if (OldCombinedLeftJunctionSignal != null) yield return OldCombinedLeftJunctionSignal;
+                if (OldCombinedRightJunctionSignal != null) yield return OldCombinedRightJunctionSignal;
 
                 foreach (var item in OtherSignals)
                 {
@@ -103,16 +191,27 @@ namespace Signals.Common
             }
         }
 
+        private bool OldAndEnabled(bool old) => EnableOldVersions && old;
+
         public SignalControllerDefinition GetMainlineSignal(bool old)
         {
-            if (old && OldSignal != null) return OldSignal;
+            if (OldAndEnabled(old) && OldSignal != null) return OldSignal;
 
             return Signal;
         }
 
+        public SignalControllerDefinition GetDivergingSignal(bool old)
+        {
+            if (OldAndEnabled(old) && OldDivergingSignal != null) return OldDivergingSignal;
+
+            if (DivergingSignal != null) return DivergingSignal;
+
+            return GetMainlineSignal(old);
+        }
+
         public SignalControllerDefinition GetLeftJunctionSignal(bool old)
         {
-            if (old && OldLeftJunctionSignal != null) return OldLeftJunctionSignal;
+            if (OldAndEnabled(old) && OldLeftJunctionSignal != null) return OldLeftJunctionSignal;
 
             if (LeftJunctionSignal != null) return LeftJunctionSignal;
 
@@ -121,7 +220,7 @@ namespace Signals.Common
 
         public SignalControllerDefinition GetRightJunctionSignal(bool old)
         {
-            if (old && OldRightJunctionSignal != null) return OldRightJunctionSignal;
+            if (OldAndEnabled(old) && OldRightJunctionSignal != null) return OldRightJunctionSignal;
 
             if (RightJunctionSignal != null) return RightJunctionSignal;
 
@@ -135,36 +234,65 @@ namespace Signals.Common
 
         public SignalControllerDefinition GetEntrySignal(bool old)
         {
-            if (old && OldEntrySignal != null) return OldEntrySignal;
+            if (OldAndEnabled(old) && OldEntrySignal != null) return OldEntrySignal;
 
             if (EntrySignal != null) return EntrySignal;
 
             return GetMainlineSignal(old);
         }
 
-        public SignalControllerDefinition GetPassengerSignal(bool old)
-        {
-            if (old && OldPassengerSignal != null) return OldPassengerSignal;
-
-            if (PassengerSignal != null) return PassengerSignal;
-
-            return GetExitSignal(old);
-        }
-
         public SignalControllerDefinition GetExitSignal(bool old)
         {
-            if (old && OldExitSignal != null) return OldExitSignal;
+            if (OldAndEnabled(old) && OldExitSignal != null) return OldExitSignal;
 
             if (ExitSignal != null) return ExitSignal;
 
             return GetMainlineSignal(old);
         }
 
+        public SignalControllerDefinition GetPassengerSignal(bool old)
+        {
+            if (OldAndEnabled(old) && OldPassengerSignal != null) return OldPassengerSignal;
+
+            if (PassengerSignal != null) return PassengerSignal;
+
+            return GetExitSignal(old);
+        }
+
+        public SignalControllerDefinition GetStationMainlineSignal(bool old)
+        {
+            if (OldAndEnabled(old) && OldStationMainlineSignal != null) return OldStationMainlineSignal;
+
+            if (StationMainlineSignal != null) return StationMainlineSignal;
+
+            return GetExitSignal(old);
+        }
+
         public SignalControllerDefinition GetShuntingSignal(bool old)
         {
-            if (old && OldShuntingSignal != null) return OldShuntingSignal;
+            if (OldAndEnabled(old) && OldShuntingSignal != null) return OldShuntingSignal;
 
             return ShuntingSignal;
+        }
+
+        public SignalControllerDefinition? GetDistantSignal(bool old)
+        {
+            return OldAndEnabled(old) ? OldDistantSignal : DistantSignal;
+        }
+
+        public SignalControllerDefinition? GetRepeaterSignal(bool old)
+        {
+            return OldAndEnabled(old) ? OldRepeaterSignal : RepeaterSignal;
+        }
+
+        public SignalControllerDefinition? GetSpacingSignal(bool old)
+        {
+            return OldAndEnabled(old) ? OldSpacingSignal : SpacingSignal;
+        }
+
+        public SignalControllerDefinition? GetTurntableSignal(bool old)
+        {
+            return OldAndEnabled(old) ? OldTurntableSignal : TurntableSignal;
         }
     }
 }

@@ -22,19 +22,26 @@ namespace Signals.Game.Railway
         {
             public BasicSignalController? Signal;
             public TrackDirection SignalDirection;
+            public bool IsDeadEnd;
+            public bool IsSelfLoop;
         }
 
         public const int MaxDepth = 64;
 
         private static bool HasMainSignal(BasicSignalController controller)
         {
-            return controller.GetControllerSignal() != null;
+            return controller.Type != SignalType.Shunting &&
+                controller.Type != SignalType.Spacing &&
+                controller.GetControllerSignal() != null;
         }
 
-        private static bool HasShuntingSignal(BasicSignalController controller)
+        private static bool HasMainOrSpacingSignal(BasicSignalController controller)
         {
-            return controller.ShuntingSignal != null;
+            return controller.Type != SignalType.Shunting &&
+                controller.GetControllerSignal() != null;
         }
+
+        private static bool Any(BasicSignalController controller) => controller.Signals.Length > 0 || controller.ShuntingSignals.Length > 0;
 
         private static bool ContainsTrack(RailTrack from, Branch branch, TrackDirection direction)
         {
@@ -102,6 +109,70 @@ namespace Signals.Game.Railway
             }
 
             return false;
+        }
+
+        public static bool RemainsInTheSameStation(RailTrack track, TrackDirection direction, string station)
+        {
+            int depth = 0;
+            var visited = new HashSet<RailTrack>();
+            Queue<Branch> branchQueue = new Queue<Branch>();
+
+            // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
+            while (depth++ < MaxDepth && track != null && !visited.Contains(track))
+            {
+                visited.Add(track);
+
+                Junction? junction = direction.IsOut() ? track.outJunction : track.inJunction;
+                Branch? branch;
+
+                // Found junction, check if we're going into. If we are, it's not a dead end.
+                if (junction != null)
+                {
+                    var other = junction.GetStation();
+
+                    if (string.IsNullOrEmpty(other) || station != other)
+                    {
+                        return false;
+                    }
+                }
+
+                branch = direction.IsOut() ? track.GetOutBranch() : track.GetInBranch();
+
+                // No branch means we reach a dead end.
+                if (branch == null || branch.track == null)
+                {
+                    // If there's no possible branches, end early.
+                    if (branchQueue.Count == 0) return true;
+
+                    branch = branchQueue.Dequeue();
+                    direction = TrackDirection.Out;
+                }
+                else
+                {
+                    // Add the other junction branches in case we just split.
+                    if (branch.track.isJunctionTrack && junction == branch.track.inJunction)
+                    {
+                        foreach (var possibleBranch in junction.outBranches)
+                        {
+                            if (possibleBranch.track != branch.track)
+                            {
+                                branchQueue.Enqueue(possibleBranch);
+                            }
+                        }
+                    }
+                }
+
+                // Check if the current track is the next track of the next branch.
+                if (ContainsTrack(track, branch, direction))
+                {
+                    // Direction must be flipped.
+                    direction = direction.Flipped();
+                }
+
+                track = branch.track;
+            }
+
+            return true;
         }
 
         public static List<TrackInfo> WalkTracks(RailTrack track, TrackDirection direction, int count)
@@ -197,6 +268,18 @@ namespace Signals.Game.Railway
             return GetTracksUntilSignal(track, direction, ignore, HasMainSignal, out info);
         }
 
+        public static List<TrackInfo> GetTracksUntilMainOrSpacingSignal(RailTrack track, TrackDirection direction,
+            BasicSignalController? ignore, out ControllerInfo info)
+        {
+            return GetTracksUntilSignal(track, direction, ignore, HasMainOrSpacingSignal, out info);
+        }
+
+        public static List<TrackInfo> GetTracksUntilAnySignal(RailTrack track, TrackDirection direction,
+            BasicSignalController? ignore, out ControllerInfo info)
+        {
+            return GetTracksUntilSignal(track, direction, ignore, Any, out info);
+        }
+
         private static List<TrackInfo> GetTracksUntilSignal(RailTrack track, TrackDirection direction,
             BasicSignalController? ignore, Predicate<BasicSignalController> condition, out ControllerInfo info)
         {
@@ -206,8 +289,15 @@ namespace Signals.Game.Railway
             info = new ControllerInfo();
 
             // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
-            while (depth++ < MaxDepth && track != null && !visited.Contains(track))
+            while (depth++ < MaxDepth && track != null)
             {
+                // Looped back into tracks already visited, stop checking.
+                if (visited.Contains(track))
+                {
+                    info.IsSelfLoop = true;
+                    break;
+                }
+
                 visited.Add(track);
 
                 Junction? junction = direction.IsOut() ? track.outJunction : track.inJunction;
@@ -243,7 +333,11 @@ namespace Signals.Game.Railway
                 branch = direction.IsOut() ? track.GetOutBranch() : track.GetInBranch();
 
                 // No branch means we have no track to go, stop looping.
-                if (branch == null || branch.track == null) break;
+                if (branch == null || branch.track == null)
+                {
+                    info.IsDeadEnd = true;
+                    break;
+                }
 
                 // Check if the current track is the next track of the next branch.
                 if (ContainsTrack(track, branch, direction))
@@ -366,6 +460,48 @@ namespace Signals.Game.Railway
             {
                 return controller != null && controller != ignore && condition(controller);
             }
+        }
+
+        public static Junction? GetNextJunction(RailTrack track, TrackDirection direction)
+        {
+            int depth = 0;
+            var visited = new HashSet<RailTrack>();
+            var tracks = new List<RailTrack>();
+
+            // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
+            while (depth++ < MaxDepth && track != null && !visited.Contains(track))
+            {
+                visited.Add(track);
+
+                Junction? junction = direction.IsOut() ? track.outJunction : track.inJunction;
+                Branch? branch;
+
+                // Found junction, return it. Track is comes from doesn't matter.
+                if (junction != null)
+                {
+                    return junction;
+                }
+
+                branch = direction.IsOut() ? track.GetOutBranch() : track.GetInBranch();
+
+                // No branch means we reach a dead end.
+                if (branch == null || branch.track == null)
+                {
+                    return null;
+                }
+
+                // Check if the current track is the next track of the next branch.
+                if (ContainsTrack(track, branch, direction))
+                {
+                    // Direction must be flipped.
+                    direction = direction.Flipped();
+                }
+
+                track = branch.track;
+                tracks.Add(track);
+            }
+
+            return null;
         }
     }
 }

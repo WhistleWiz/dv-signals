@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Signals.Game.Railway
 {
     /// <summary>
-    /// Helper class with track utility functions taht include track intersections.
+    /// Helper class with track utility functions that include track intersections.
     /// </summary>
     public static class TrackChecker
     {

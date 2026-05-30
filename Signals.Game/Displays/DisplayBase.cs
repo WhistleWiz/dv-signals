@@ -1,19 +1,32 @@
 ﻿using Signals.Common.Displays;
+using Signals.Game.Conditions;
 using Signals.Game.Controllers;
+using System.Linq;
 using UnityEngine;
 
 namespace Signals.Game.Displays
 {
-    public abstract class DisplayBase : IHudDisplayable
+    public interface IDisplay : IHudDisplayable
     {
-        private bool _hasUpdated = false;
-        private bool _off = false;
+        public bool CheckAndUpdate(bool aspectChanged);
 
-        public Signal Signal;
-        public DisplayBaseDefinition Definition;
+        public void UpdateDisplay();
+    }
+
+    public abstract class DisplayBase<T> : IDisplay
+        where T : DisplayBaseDefinition
+    {
+        private bool _conditionsChecked = false;
+        private bool _hasUpdated = false;
+        private bool _disabled = false;
+        private bool _off = false;
+        private ICondition[] _conditions;
+
+        public Signal Signal { get; private set; }
+        public T Definition { get; private set; }
 
         public string DisplayText { get => Definition.DisplayText; set => Definition.DisplayText = value; }
-        public bool ShouldDisplay => !_off && !string.IsNullOrEmpty(DisplayText) && Definition.HUDSprite != null;
+        public bool ShouldDisplay => !_disabled && !_off;
         public int DisplayOrder => Definition.HUDDisplayOrder;
         public Sprite? Sprite => Definition.HUDSprite;
         public Color TextColour => Definition.HUDTextColour;
@@ -22,7 +35,11 @@ namespace Signals.Game.Displays
         protected DisplayBase(DisplayBaseDefinition definition, Signal signal)
         {
             Signal = signal;
-            Definition = definition;
+            Definition = (T)definition;
+
+            if (Definition == null) throw new System.ArgumentException($"Type mismatch between definition and expected {typeof(T)}", nameof(definition));
+
+            _conditions = definition.Conditions.Select(x => ConditionCreator.Create(x)).Where(x => x != null).ToArray()!;
         }
 
         /// <summary>
@@ -32,7 +49,21 @@ namespace Signals.Game.Displays
         /// <returns></returns>
         public bool CheckAndUpdate(bool aspectChanged)
         {
-            if (Definition.DisableWhenSignalIsOff && !Signal.IsOn)
+            // If it has been disabled by conditions, it's never active or updated.
+            if (_disabled) return false;
+
+            if (!_conditionsChecked && _conditions.Any(x => !x.MeetsConditions(Signal)))
+            {
+                // Remove the child renderers from the signal hover, or they'll be highlighted while invisible.
+                Signal.Hover?.ForceRemoveRenderers(Definition.GetComponentsInChildren<Renderer>(true));
+                Definition.gameObject.SetActive(false);
+                _disabled = true;
+                return false;
+            }
+
+            _conditionsChecked = true;
+
+            if (Definition.DisableWhenSignalIsOff && Signal.IsOff)
             {
                 if (!_off)
                 {

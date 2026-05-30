@@ -3,15 +3,12 @@ using Signals.Game.Controllers;
 
 namespace Signals.Game.Displays
 {
-    public class JunctionBranchDisplay : DisplayBase
+    public class JunctionBranchDisplay : DisplayBase<JunctionBranchDisplayDefinition>
     {
-        private JunctionBranchDisplayDefinition _fullDef;
         private Junction? _junction;
 
         public JunctionBranchDisplay(DisplayBaseDefinition definition, Signal signal) : base(definition, signal)
         {
-            _fullDef = (JunctionBranchDisplayDefinition)definition;
-
             if (signal.Controller is JunctionSignalController junctionController)
             {
                 _junction = junctionController.GroupJunction;
@@ -26,7 +23,7 @@ namespace Signals.Game.Displays
         {
             if (_junction == null) return;
 
-            DisplayText = GetBranchDisplay(_junction, _fullDef.BranchDisplay);
+            DisplayText = GetBranchDisplay(_junction, Definition.BranchDisplay);
         }
 
         private static string GetBranchDisplay(Junction junction, JunctionBranchDisplayDefinition.BranchDisplayMode mode)

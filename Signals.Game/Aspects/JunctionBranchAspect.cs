@@ -2,14 +2,9 @@
 
 namespace Signals.Game.Aspects
 {
-    public class JunctionBranchAspect : AspectBase
+    public class JunctionBranchAspect : AspectBase<JunctionBranchAspectDefinition>
     {
-        private JunctionBranchAspectDefinition _fullDef;
-
-        public JunctionBranchAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal)
-        {
-            _fullDef = (JunctionBranchAspectDefinition)definition;
-        }
+        public JunctionBranchAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal) { }
 
         public override bool MeetsConditions()
         {
@@ -17,14 +12,14 @@ namespace Signals.Game.Aspects
 
             if (junction == null) return false;
 
-            return _fullDef.Mode switch
+            return Definition.Mode switch
             {
                 JunctionBranchAspectDefinition.JunctionAspectMode.ActiveOnThrough =>
                     junction.IsSetToThrough(),
                 JunctionBranchAspectDefinition.JunctionAspectMode.ActiveOnDiverging =>
                     !junction.IsSetToThrough(),
                 JunctionBranchAspectDefinition.JunctionAspectMode.ActiveOnBranch =>
-                    junction.selectedBranch == _fullDef.ActiveOnBranch,
+                    junction.selectedBranch == Definition.ActiveOnBranch,
                 _ => false,
             };
         }

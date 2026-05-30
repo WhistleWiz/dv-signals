@@ -2,21 +2,16 @@
 
 namespace Signals.Game.Displays
 {
-    public class SignalIdDisplay : DisplayBase
+    public class SignalIdDisplay : DisplayBase<SignalIdDisplayDefinition>
     {
-        private SignalIdDisplayDefinition _fullDef;
-
-        public SignalIdDisplay(DisplayBaseDefinition def, Signal signal) : base(def, signal)
-        {
-            _fullDef = (SignalIdDisplayDefinition)def;
-        }
+        public SignalIdDisplay(DisplayBaseDefinition def, Signal signal) : base(def, signal) { }
 
         public override void UpdateDisplay()
         {
             string text;
             var junction = Controller.GroupJunction;
 
-            if (_fullDef.WithJunction && junction != null)
+            if (Definition.WithStation && junction != null)
             {
                 var station = junction.GetStation();
                 text = $"{(string.IsNullOrEmpty(station) ? "W" : station)}-{Signal.Id}";

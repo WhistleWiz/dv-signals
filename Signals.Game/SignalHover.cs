@@ -2,6 +2,7 @@
 using DV.Hovering;
 using DV.Signs;
 using DV.UI.LocoHUD;
+using Signals.Game.Util;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -59,7 +60,7 @@ namespace Signals.Game
 
             foreach (var element in hudElements)
             {
-                if (element.Sprite == null || string.IsNullOrEmpty(element.DisplayText)) continue;
+                if (!element.ShouldDisplay || element.Sprite == null || string.IsNullOrEmpty(element.DisplayText)) continue;
 
                 var go = GetPrefabFromSprite(element.Sprite);
                 var text = go.GetComponentInChildren<TMP_Text>();
@@ -111,6 +112,13 @@ namespace Signals.Game
         {
             // Rework scalling to not always max out at 120px?
             return s_size * sprite.rect.size / 256.0f;
+        }
+
+        public void ForceRemoveRenderers(Renderer[] renderers)
+        {
+            var original = ReflectionHelpers.GetRenderers(this).ToList();
+            original.RemoveAll(x => renderers.Contains(x));
+            ReflectionHelpers.SetRenderers(this, original.ToArray());
         }
     }
 }

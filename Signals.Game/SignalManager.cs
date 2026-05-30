@@ -46,6 +46,8 @@ namespace Signals.Game
             new Dictionary<Junction, JunctionSignalGroup>();
         private List<DistantSignalController> _distantSignals =
             new List<DistantSignalController>();
+        private List<TurntableSignalController> _turntableSignals =
+            new List<TurntableSignalController>();
         private List<BasicSignalController> _controllerRegistry =
             new List<BasicSignalController>();
         private Dictionary<int, Signal> _signalRegistry =
@@ -147,9 +149,9 @@ namespace Signals.Game
                     ProcessSignal(signal);
                 }
 
-                if (controller.ShuntingSignal != null)
+                foreach (var signal in controller.ShuntingSignals)
                 {
-                    ProcessSignal(controller.ShuntingSignal);
+                    ProcessSignal(signal);
                 }
             }
 
@@ -206,10 +208,7 @@ namespace Signals.Game
             BasicSignalController.ResetIdGeneration();
             Signal.ResetIdGeneration();
 
-            if (Placer == null)
-            {
-                Placer = new ClassicSignalPlacer();
-            }
+            Placer ??= new RealisticSignalPlacer();
 
             // Initial placement.
             var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -243,6 +242,20 @@ namespace Signals.Game
             Placer.CreateDistantSignals(pack, _junctionSignals, _distantSignals);
             sw.Stop();
             SignalsMod.Log($"Finished creating {_distantSignals.Count} distant signal(s), " +
+                $"current total is {_controllerRegistry.Count} ({sw.Elapsed.TotalSeconds:F4}s)");
+
+            count = _distantSignals.Count;
+
+            sw.Restart();
+            Placer.CreateRepeaterSignals(pack, _junctionSignals, _distantSignals);
+            sw.Stop();
+            SignalsMod.Log($"Finished creating {_distantSignals.Count - count} repeater signal(s), " +
+                $"current total is {_controllerRegistry.Count} ({sw.Elapsed.TotalSeconds:F4}s)");
+
+            sw.Restart();
+            Placer.CreateTurntableSignals(pack, _turntableSignals);
+            sw.Stop();
+            SignalsMod.Log($"Finished creating {_turntableSignals.Count} turntable signal(s), " +
                 $"current total is {_controllerRegistry.Count} ({sw.Elapsed.TotalSeconds:F4}s)");
 
             // Track intersections.
@@ -285,6 +298,9 @@ namespace Signals.Game
                             current--;
                             continue;
                         }
+
+                        // Call this for any pre-update functions.
+                        controller.PreUpdate?.Invoke(controller);
 
                         // Skip updating if not needed.
                         var update = controller.ShouldUpdate();
@@ -348,7 +364,7 @@ namespace Signals.Game
                 // Skip drawing signals that are too far away.
                 if (controller.GetCameraDistanceSqr() > 16000000) continue;
 
-                foreach (var signal in controller.GetAllSignals())
+                foreach (var signal in controller.AllSignals)
                 {
                     // Only draw the hovered sign if the debug mod is set to hovered.
                     if (debugHovered && !signal.Hovered) continue;

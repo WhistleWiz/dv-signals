@@ -13,6 +13,8 @@ namespace Signals.Common.Aspects
         [Space]
         public bool DisallowPassing = false;
         public bool RequireAcknowledging = false;
+        public bool UsePassingSpeed = false;
+        public float PassingSpeed = 20;
 
         [Space]
         public SignalLightDefinition[] OnLights = new SignalLightDefinition[0];

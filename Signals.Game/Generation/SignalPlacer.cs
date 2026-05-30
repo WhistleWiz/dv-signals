@@ -14,14 +14,17 @@ namespace Signals.Game.Generation
         protected const string PaxNameEnd = "LP]";
         protected const string OutputEnd = "O]";
         protected const string InputEnd = "I]";
+        protected const string LoadingEnd = "L]";
         protected const float JunctionPlacementDistance = 2.0f;
+        protected const float LongJunctionPlacementDistance = 15.0f;
         protected const float BranchPlacementDistance = 17.5f;
         protected const float BranchDistanceThreshold = 4.5f * 4.5f;
         protected const float DeadEndThreshold = 100.0f;
         protected const float LongTrackThreshold = 300.0f;
-        protected const float ClosenessThreshold = 75.0f;
-        protected const float SmallTrackThreshold = 50.0f;
+        protected const float ClosenessThreshold = 125.0f;
+        protected const float SmallTrackThreshold = 60.0f;
         protected const float VerySmallTrackThreshold = 15.0f;
+        protected const float SpacingThreshold = 210.0f;
 
         #region Checks
 
@@ -67,6 +70,11 @@ namespace Signals.Game.Generation
             return IsOutputTrack(track) || IsInputTrack(track);
         }
 
+        public static bool IsLoadingTrack(RailTrack track)
+        {
+            return track.name.EndsWith(LoadingEnd);
+        }
+
         public static bool IsLogicYardTrack(RailTrack track)
         {
             return !track.GetId().IsGeneric();
@@ -97,18 +105,32 @@ namespace Signals.Game.Generation
             return OldAreaCalculator.IsWithinOldArea(junction.position);
         }
 
+        protected static bool GetsDistant(SignalType type)
+        {
+            switch (type)
+            {
+                case SignalType.Mainline:
+                case SignalType.Entry:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         #endregion
 
         #region Basic Creation Methods
 
         public static SignalControllerDefinition GetForType(SignalPack pack, PrefabType prefabType, bool old) => prefabType switch
         {
+            PrefabType.Diverging => pack.GetDivergingSignal(old),
             PrefabType.JunctionLeft => pack.GetLeftJunctionSignal(old),
             PrefabType.JunctionRight => pack.GetRightJunctionSignal(old),
             PrefabType.Entry => pack.GetEntrySignal(old),
             PrefabType.Exit => pack.GetExitSignal(old),
             PrefabType.ExitPax => pack.GetPassengerSignal(old),
             PrefabType.Shunting => pack.GetShuntingSignal(old),
+            PrefabType.StationMainline => pack.GetStationMainlineSignal(old),
             _ => pack.GetMainlineSignal(old),
         };
 
@@ -150,12 +172,13 @@ namespace Signals.Game.Generation
             return startingDistance;
         }
 
-        protected static JunctionSignalController? CreateSignalAtJunction(Junction junction, SignalControllerDefinition definition)
+        protected static JunctionSignalController? CreateSignalAtJunction(Junction junction, SignalControllerDefinition definition,
+            float distance = JunctionPlacementDistance)
         {
             var track = junction.inBranch.track;
             var kpSet = track.GetKinkedPointSet();
             var tDirJ = TrackUtils.TrackDirectionFromJunction(track, junction);
-            var tSpan = kpSet.GetSpan(JunctionPlacementDistance, tDirJ);
+            var tSpan = kpSet.GetSpan(distance, tDirJ);
             var index = kpSet.GetPointIndexForSpan(tSpan);
             var point = kpSet.points[index];
 
@@ -320,6 +343,7 @@ namespace Signals.Game.Generation
             {
                 SignalType.Shunting => false,
                 SignalType.Distant => false,
+                SignalType.Other => false,
                 _ => target.Type switch
                 {
                     SignalType.Mainline => true,
@@ -356,6 +380,7 @@ namespace Signals.Game.Generation
             if (Check(PrefabType.Exit)) return PrefabType.Exit;
             if (Check(PrefabType.JunctionLeft)) return PrefabType.JunctionLeft;
             if (Check(PrefabType.JunctionRight)) return PrefabType.JunctionRight;
+            if (Check(PrefabType.Diverging)) return PrefabType.Diverging;
             if (Check(PrefabType.Mainline)) return PrefabType.Mainline;
 
             return a;
@@ -401,10 +426,23 @@ namespace Signals.Game.Generation
             return controller;
         }
 
+        protected static TrackSignalController? Merge(SignalPack pack, TrackSignalController remain, TrackSignalController remove)
+        {
+            if (!remain.PlacementInfo.HasValue) return null;
+
+            return Merge(pack, remain, new HashSet<TrackSignalController> { remove });
+        }
+
         #endregion
 
         public abstract void CreateSignals(SignalPack pack, Dictionary<Junction, JunctionSignalGroup> registry);
 
+        /// <summary>
+        /// Create distant signals for valid candidates.
+        /// </summary>
+        /// <param name="pack">The current pack in use.</param>
+        /// <param name="registry">The existing junction signals.</param>
+        /// <param name="distantSignals">The list in which the distant signals will be added.</param>
         public virtual void CreateDistantSignals(SignalPack pack, Dictionary<Junction, JunctionSignalGroup> registry, List<DistantSignalController> distantSignals)
         {
             var skip = new HashSet<BasicSignalController>();
@@ -414,21 +452,12 @@ namespace Signals.Game.Generation
             {
                 foreach (var controller in junction.Value.AllControllers)
                 {
-                    // Exit signals should not have the distant signal included.
-                    if (controller.Type == SignalType.ExitPax || controller.Type == SignalType.Exit)
-                    {
-                        foreach (var signal in controller.Signals)
-                        {
-                            signal.DestroyDistant();
-                        }
-
-                        continue;
-                    }
-
                     foreach (var (signal, controllers) in controller.GetPotentialNextControllers())
                     {
+                        var prefab = GetPrefabForControllerType(pack, controller);
+
                         // Signal doesn't have a distant part, skip.
-                        if (signal.DistantSignal == null && !signal.Definition.SelfActsAsDistant) continue;
+                        if (signal.DistantSignal == null && !signal.Definition.SelfActsAsDistant && prefab == null) continue;
 
                         var hasDistant = false;
 
@@ -445,13 +474,44 @@ namespace Signals.Game.Generation
 
                             // Controller within tolerance, flag it to keep the distant signal,
                             // and flag the next to not need its own signal.
+                            controller.ActingAsDistant = true;
                             hasDistant = true;
                             skip.Add(next);
+
+                            // Very close, mark as such.
+                            if (length < pack.DistantSignalDistance)
+                            {
+                                controller.ShortDistance = true;
+                            }
                         }
 
-                        if (hasDistant) continue;
+                        if (!hasDistant)
+                        {
+                            signal.DestroyDistant();
+                            continue;
+                        }
 
-                        signal.DestroyDistant();
+                        if (prefab != null && controller.PlacementInfo.HasValue)
+                        {
+                            var info = controller.PlacementInfo.Value;
+                            var point = info.Track.GetKinkedPointSet().points[info.PointIndex];
+                            var instance = InstantiateFromDef(prefab, point.position, controller.Definition.transform.forward, info.OppositeSide, info.Track);
+
+                            switch (controller)
+                            {
+                                case JunctionSignalController jController:
+                                    JunctionSignalController.Replace(jController, instance);
+                                    break;
+                                case TrackSignalController tController:
+                                    TrackSignalController.Replace(tController, instance);
+                                    break;
+                                default:
+                                    break;
+                            }
+
+                            // Stop the loop since the whole controller was replaced.
+                            break;
+                        }
                     }
                 }
             }
@@ -462,6 +522,9 @@ namespace Signals.Game.Generation
             {
                 foreach (var controller in junction.Value.AllControllers)
                 {
+                    // Signal type doesn't have a distant signal to match it.
+                    if (!GetsDistant(controller.Type)) continue;
+
                     // We already have a signal handling it.
                     if (skip.Contains(controller)) continue;
 
@@ -470,7 +533,7 @@ namespace Signals.Game.Generation
                     if (!controller.PlacementInfo.HasValue) continue;
 
                     // Prefab isn't available.
-                    var prefab = controller.IsOld ? pack.OldDistantSignal : pack.DistantSignal;
+                    var prefab = pack.GetDistantSignal(controller.IsOld);
                     if (prefab == null) continue;
 
                     // Don't place distant signals in tracks inside stations.
@@ -487,6 +550,95 @@ namespace Signals.Game.Generation
 
                     // Actually place one.
                     distantSignals.Add(CreateDistantForSignal(controller, prefab, pack.DistantSignalDistance));
+                }
+            }
+
+            static SignalControllerDefinition? GetPrefabForControllerType(SignalPack pack, BasicSignalController controller) => controller.PrefabType switch
+            {
+                PrefabType.Mainline => controller.IsOld ? pack.OldCombinedSignal : pack.CombinedSignal,
+                PrefabType.JunctionLeft => controller.IsOld ? pack.OldCombinedLeftJunctionSignal : pack.CombinedLeftJunctionSignal,
+                PrefabType.JunctionRight => controller.IsOld ? pack.OldCombinedRightJunctionSignal : pack.CombinedRightJunctionSignal,
+                _ => null,
+            };
+        }
+
+        /// <summary>
+        /// Create repeater signals for valid candidates.
+        /// </summary>
+        /// <param name="pack">The current pack in use.</param>
+        /// <param name="registry">The existing junction signals.</param>
+        /// <param name="repeaterSignals">The list in which the repeaters will be added.</param>
+        public virtual void CreateRepeaterSignals(SignalPack pack, Dictionary<Junction, JunctionSignalGroup> registry, List<DistantSignalController> repeaterSignals)
+        {
+            if (pack.RepeaterSignal == null && pack.OldRepeaterSignal == null) return;
+
+            foreach (var junction in registry)
+            {
+                foreach (var controller in junction.Value.AllControllers)
+                {
+                    // Signal type doesn't have a repeater signal to match it.
+                    if (!GetsDistant(controller.Type)) continue;
+
+                    // No signal to use or signal has no placement information.
+                    if (controller.Signals.Length == 0) continue;
+                    if (!controller.PlacementInfo.HasValue) continue;
+
+                    // Prefab isn't available.
+                    var prefab = pack.GetRepeaterSignal(controller.IsOld);
+                    if (prefab == null) continue;
+
+                    // Don't place repeater signals in tracks inside stations.
+                    var placement = controller.PlacementInfo.Value;
+                    if (placement.Track.IsPartOfStation()) continue;
+
+                    // Check the minimum track length.
+                    var kpSet = placement.Track.GetKinkedPointSet();
+                    if (kpSet.span < pack.RepeaterSignalMinimumDistance) continue;
+
+                    // If the placement falls outside the track bounds...
+                    var tSpan = placement.Span + (placement.Direction.IsOut() ? pack.RepeaterSignalDistance : -pack.RepeaterSignalDistance);
+                    if (tSpan < 0 || tSpan > kpSet.span) continue;
+
+                    var pointA = placement.Direction.IsOut() ? kpSet.points[0] : kpSet.points[kpSet.points.Length - 1];
+                    var pointB = kpSet.points[kpSet.GetPointIndexForSpan(tSpan)];
+
+                    // Visibility should be good, don't place.
+                    if (Vector3.Dot(pointA.forward, pointB.forward) > 0.75f) continue;
+
+                    // Actually place one.
+                    repeaterSignals.Add(CreateDistantForSignal(controller, prefab, pack.RepeaterSignalDistance));
+                }
+            }
+        }
+
+        public void CreateTurntableSignals(SignalPack pack, List<TurntableSignalController> turntableSignals)
+        {
+            var tracks = Object.FindObjectsOfType<TurntableRailTrack>();
+
+            foreach (var turntableTrack in tracks)
+            {
+                // Exclude CS museum turntable.
+                if (turntableTrack.uniqueID == "T-CS-1") continue;
+
+                var prefab = pack.GetTurntableSignal(pack.EnableOldVersions && OldAreaCalculator.IsWithinOldArea(turntableTrack.visuals.position));
+
+                if (prefab == null) continue;
+
+                var track = turntableTrack.Track;
+                var kpSet = track.GetKinkedPointSet();
+
+                Create(0, TrackDirection.Out);
+                Create(kpSet.points.Length - 1, TrackDirection.In);
+
+                void Create(int index, TrackDirection direction)
+                {
+                    var point = kpSet.points[index];
+                    var instance = InstantiateFromDef(prefab, point.position, direction.IsOut() ? point.forward : -point.forward, false, track);
+                    var placement = new SignalPlacementInfo(track, direction, index, point.span);
+                    var controller = new TurntableSignalController(instance, turntableTrack, direction, placement);
+
+                    turntableSignals.Add(controller);
+                    instance.transform.parent = turntableTrack.visuals;
                 }
             }
         }

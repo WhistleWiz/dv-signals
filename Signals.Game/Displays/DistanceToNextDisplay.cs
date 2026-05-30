@@ -4,7 +4,7 @@ using System;
 
 namespace Signals.Game.Displays
 {
-    public class DistanceToNextDisplay : DisplayBase
+    public class DistanceToNextDisplay : DisplayBase<DistanceToNextDisplayDefinition>
     {
         private DistantSignalController? _distant;
 
@@ -17,12 +17,7 @@ namespace Signals.Game.Displays
         {
             var distance = _distant != null ? _distant.Distance : (Signal.Block != null ? Signal.Block.Length : 0);
             var rounded = Math.Round(distance * 0.001, 1);
-            var text = rounded > 0 ? $"{rounded}" : string.Empty;
-
-            if (text != DisplayText)
-            {
-                DisplayText = text;
-            }
+            DisplayText = rounded > 0 ? $"{rounded}" : string.Empty;
         }
     }
 }

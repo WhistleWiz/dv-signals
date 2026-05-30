@@ -18,8 +18,6 @@ namespace Signals.Game.Controllers
             StartingTrack = starting;
             Direction = startingDirection;
 
-            ShuntingSignal?.SetBlock(TrackBlock.CreateForShunting(starting));
-
             if (starting.isJunctionTrack)
             {
                 var junction = starting.inJunction;
@@ -50,7 +48,22 @@ namespace Signals.Game.Controllers
         {
             foreach (var signal in Signals)
             {
-                signal.SetBlock(TrackBlock.CreateUntilMainSignal(StartingTrack, Direction, this));
+                var block = signal.Block;
+
+                if (block != null && !block.TracksCanChange) continue;
+
+                signal.SetBlock(Type == SignalType.Spacing ?
+                    TrackBlock.CreateForSpacing(StartingTrack, Direction, this) :
+                    TrackBlock.CreateUntilMainSignal(StartingTrack, Direction, this));
+            }
+
+            foreach (var signal in ShuntingSignals)
+            {
+                var block = signal.Block;
+
+                if (block != null && !block.TracksCanChange) continue;
+
+                signal.SetBlock(TrackBlock.CreateForShunting(StartingTrack, Direction, this));
             }
         }
 
@@ -60,6 +73,35 @@ namespace Signals.Game.Controllers
             {
                 yield return (signal, TrackWalker.GetAllPossibleMainControllers(StartingTrack, Direction, this));
             }
+        }
+
+        public static TrackSignalController? Replace(TrackSignalController original, SignalControllerDefinition def)
+        {
+            if (!original.PlacementInfo.HasValue) return null;
+
+            var replacement = new TrackSignalController(def, original.StartingTrack, original.Direction, original.PlacementInfo.Value)
+            {
+                ActingAsDistant = original.ActingAsDistant,
+                ShortDistance = original.ShortDistance
+            };
+            var group = original.Group;
+
+            if (group != null)
+            {
+                replacement.Group = group;
+
+                if (group.ReverseJunctionSignal == original)
+                {
+                    group.ReverseJunctionSignal = replacement;
+                }
+                if (group.BranchSignals.Contains(original))
+                {
+                    group.BranchSignals.Add(replacement);
+                }
+            }
+
+            original.Destroy();
+            return replacement;
         }
     }
 }

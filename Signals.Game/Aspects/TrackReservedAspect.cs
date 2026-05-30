@@ -3,20 +3,15 @@ using Signals.Game.Railway;
 
 namespace Signals.Game.Aspects
 {
-    public class TrackReservedAspect : AspectBase
+    public class TrackReservedAspect : AspectBase<TrackReservedAspectDefinition>
     {
-        private TrackReservedAspectDefinition _fullDef;
-
-        public TrackReservedAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal)
-        {
-            _fullDef = (TrackReservedAspectDefinition)definition;
-        }
+        public TrackReservedAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal) { }
 
         public override bool MeetsConditions()
         {
             var another = TrackReserver.IsSignalReservedByAnother(Signal);
 
-            return _fullDef.Invert ? !another && TrackReserver.HasReservation(Signal) : another;
+            return Definition.Invert ? !another && TrackReserver.HasReservation(Signal) : another;
         }
     }
 }

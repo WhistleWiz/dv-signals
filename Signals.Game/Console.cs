@@ -21,7 +21,7 @@ namespace Signals.Game
 
             foreach (var controller in SignalManager.Instance.AllControllers)
             {
-                foreach (var signal in controller.GetAllSignals())
+                foreach (var signal in controller.AllSignals)
                 {
                     signal.ChangeToMostRestrictive(true);
                     signal.ChangeOperationMode(SignalOperationMode.TempOverride);
@@ -42,7 +42,7 @@ namespace Signals.Game
 
             foreach (var controller in SignalManager.Instance.AllControllers)
             {
-                foreach (var signal in controller.GetAllSignals())
+                foreach (var signal in controller.AllSignals)
                 {
                     signal.ChangeToMostRestrictive(true);
                     signal.ChangeOperationMode(SignalOperationMode.SemiManual);

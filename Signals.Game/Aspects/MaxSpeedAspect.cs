@@ -4,14 +4,9 @@ using UnityEngine;
 
 namespace Signals.Game.Aspects
 {
-    public class MaxSpeedAspect : AspectBase
+    public class MaxSpeedAspect : AspectBase<MaxSpeedAspectDefinition>
     {
-        private MaxSpeedAspectDefinition _fullDef;
-
-        public MaxSpeedAspect(AspectBaseDefinition def, Signal signal) : base(def, signal)
-        {
-            _fullDef = (MaxSpeedAspectDefinition)def;
-        }
+        public MaxSpeedAspect(AspectBaseDefinition def, Signal signal) : base(def, signal) { }
 
         public override bool MeetsConditions()
         {
@@ -34,7 +29,7 @@ namespace Signals.Game.Aspects
                 }
 
                 // Skip track if it is in a yard and we want to ignore those.
-                if (_fullDef.IgnoreYards && track.Track.IsPartOfStation()) continue;
+                if (Definition.IgnoreYards && track.Track.IsPartOfStation()) continue;
 
                 // Get the maximum speed of the track.
                 max = Mathf.Min(max, SpeedCalculator.GetSpeed(track.Track, track.Direction));
@@ -43,7 +38,7 @@ namespace Signals.Game.Aspects
                 // If we walked enough, compare with the lowest maximum.
                 if (length >= SpeedCalculator.EndDistance)
                 {
-                    return _fullDef.Maximum <= max;
+                    return max <= Definition.Maximum;
                 }
             }
 
@@ -51,7 +46,7 @@ namespace Signals.Game.Aspects
             if (!first.HasValue) return false;
 
             // We only reach here in case the option to skip yards was true, and there were no non-yard tracks at all.
-            return _fullDef.Maximum <= SpeedCalculator.GetSpeed(first.Value.Track, first.Value.Direction);
+            return SpeedCalculator.GetSpeed(first.Value.Track, first.Value.Direction) <= Definition.Maximum;
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using DV.Logic.Job;
 using DV.PointSet;
 using Signals.Common;
+using Signals.Game.Lights;
 using Signals.Game.Railway;
 using Signals.Game.Util;
 using System.Linq;
@@ -24,23 +25,31 @@ namespace Signals.Game
 
         #region Definitions
 
-        public static SignalLight GetController(this SignalLightDefinition definition)
+        public static SignalLight GetController(this SignalLightDefinition definition, Signal signal)
         {
             if (!definition.TryGetComponent(out SignalLight controller))
             {
-                controller = definition.gameObject.AddComponent<SignalLight>();
-                controller.Initialize(definition);
+                if (definition.NightOnly)
+                {
+                    controller = definition.gameObject.AddComponent<SignalNightLight>();
+                }
+                else
+                {
+                    controller = definition.gameObject.AddComponent<SignalLight>();
+                }
+
+                controller.Initialize(definition, signal);
             }
 
             return controller;
         }
 
-        public static SignalLightSequence GetController(this SignalLightSequenceDefinition definition)
+        public static SignalLightSequence GetController(this SignalLightSequenceDefinition definition, Signal signal)
         {
             if (!definition.TryGetComponent(out SignalLightSequence controller))
             {
                 controller = definition.gameObject.AddComponent<SignalLightSequence>();
-                controller.Initialize(definition);
+                controller.Initialize(definition, signal);
             }
 
             return controller;
@@ -98,6 +107,7 @@ namespace Signals.Game
         #region Junctions
 
         private const string JunctionLeft = "junc-l";
+        private const string TrackThrough = "[track through]";
 
         public static Branch GetCurrentBranch(this Junction junction)
         {
@@ -116,7 +126,7 @@ namespace Signals.Game
 
         public static bool IsSetToThrough(this Junction junction)
         {
-            return junction.GetCurrentBranch().track.name == "[track through]";
+            return junction.GetCurrentBranch().track.name == TrackThrough;
         }
 
         public static bool IsLeft(this Junction junction)
@@ -127,6 +137,11 @@ namespace Signals.Game
         public static string GetStation(this Junction junction)
         {
             return TrackUtils.JunctionStation(junction);
+        }
+
+        public static bool IsThroughTrack(this Branch branch)
+        {
+            return branch.track.name == TrackThrough;
         }
 
         #endregion

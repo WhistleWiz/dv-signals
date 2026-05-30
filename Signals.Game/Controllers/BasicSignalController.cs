@@ -50,6 +50,9 @@ namespace Signals.Game.Controllers
 
         #region Members
 
+        private string _orientationSimple = string.Empty;
+        private string _orientation = string.Empty;
+
         protected string InternalName = string.Empty;
         protected int UpdateRequested = 0;
 
@@ -57,6 +60,8 @@ namespace Signals.Game.Controllers
         public SignalType Type = SignalType.NotSet;
         public PrefabType PrefabType = PrefabType.NotSet;
         public bool IsOld;
+        public bool ActingAsDistant = false;
+        public bool ShortDistance = false;
         /// <summary>
         /// Override the name of this signal.
         /// </summary>
@@ -83,13 +88,28 @@ namespace Signals.Game.Controllers
         /// <summary>
         /// The shunting signal belonging to this controller.
         /// </summary>
-        public Signal? ShuntingSignal { get; private set; }
+        public Signal[] ShuntingSignals { get; private set; }
         /// <summary>
         /// Information about where this signal was placed.
         /// </summary>
         public SignalPlacementInfo? PlacementInfo { get; private set; }
         public int? RequiredJunctionBranch { get; private set; } = null;
         public Junction? GroupJunction => Group?.Junction;
+        public IEnumerable<Signal> AllSignals
+        {
+            get
+            {
+                foreach (var signal in Signals)
+                {
+                    yield return signal;
+                }
+
+                foreach (var signal in ShuntingSignals)
+                {
+                    yield return signal;
+                }
+            }
+        }
 
         public virtual string Name => string.IsNullOrEmpty(NameOverride) ? InternalName : NameOverride;
         /// <summary>
@@ -102,12 +122,38 @@ namespace Signals.Game.Controllers
         /// </summary>
         public Vector3 Position => Definition.transform.position;
 
+        public string OrientationSimple
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_orientationSimple))
+                {
+                    _orientationSimple = Helpers.OrientationSimple(Vector3.forward, -Definition.transform.forward);
+                }
+
+                return _orientationSimple;
+            }
+        }
+        public string Orientation
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_orientation))
+                {
+                    _orientation = Helpers.Orientation(Vector3.forward, -Definition.transform.forward);
+                }
+
+                return _orientation;
+            }
+        }
+
         #endregion
 
         #region Events
 
         public Action<BasicSignalController>? Destroyed;
-        public Action<Signal, AspectBase?>? AnyAspectChanged;
+        public Action<BasicSignalController>? PreUpdate;
+        public Action<Signal, IAspect?>? AnyAspectChanged;
         public Action<int?>? RequiredBranchChanged;
 
         #endregion
@@ -119,11 +165,7 @@ namespace Signals.Game.Controllers
             PlacementInfo = placementInfo;
 
             Signals = def.Signals.Select(x => new Signal(this, x)).ToArray();
-
-            if (def.ShuntingSignal != null)
-            {
-                ShuntingSignal = new Signal(this, def.ShuntingSignal);
-            }
+            ShuntingSignals = def.ShuntingSignals.Select(x => new Signal(this, x)).ToArray();
 
             TrackChecker.OnMapBuilt += FixPositionDueToCrossing;
             SignalManager.Instance.RegisterController(this);
@@ -254,7 +296,7 @@ namespace Signals.Game.Controllers
                 Group.BranchSignals.RemoveAll(x => x == this);
             }
 
-            foreach (var signal in GetAllSignals())
+            foreach (var signal in AllSignals)
             {
                 signal.Destroy();
             }
@@ -293,7 +335,7 @@ namespace Signals.Game.Controllers
         {
             UpdateBlocks();
 
-            foreach (var signal in Signals)
+            foreach (var signal in AllSignals)
             {
                 // Update the reservation.
                 if (TrackReserver.HasReservation(signal) && !TrackReserver.UpdateReservation(signal))
@@ -303,8 +345,6 @@ namespace Signals.Game.Controllers
 
                 signal.UpdateAspect(forced);
             }
-
-            ShuntingSignal?.UpdateAspect(forced);
 
             // Request the next signal to be updated to propagate out of range.
             UpdateRequested = Mathf.Max(UpdateRequested - 1, 0);
@@ -414,19 +454,6 @@ namespace Signals.Game.Controllers
             }
         }
 
-        public IEnumerable<Signal> GetAllSignals()
-        {
-            foreach(var signal in Signals)
-            {
-                yield return signal;
-            }
-
-            if (ShuntingSignal != null)
-            {
-                yield return ShuntingSignal;
-            }
-        }
-
         public TrackBlock? GetLongestBlock()
         {
             if (Signals.Length == 0) return null;
@@ -446,6 +473,21 @@ namespace Signals.Game.Controllers
             }
 
             return block;
+        }
+
+        public static BasicSignalController? Replace(BasicSignalController original, SignalControllerDefinition def)
+        {
+            if (!original.PlacementInfo.HasValue) return null;
+
+            var replacement = new BasicSignalController(def, original.PlacementInfo.Value)
+            {
+                Group = original.Group,
+                ActingAsDistant = original.ActingAsDistant,
+                ShortDistance = original.ShortDistance
+            };
+            original.Destroy();
+
+            return replacement;
         }
     }
 }

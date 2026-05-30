@@ -16,6 +16,7 @@ namespace Signals.Unity.Inspector
         private class SignalResults
         {
             public string Name;
+            public bool Expanded = true;
             public List<Result> Results;
 
             public SignalResults(string name)
@@ -143,7 +144,9 @@ namespace Signals.Unity.Inspector
 
             EditorGUILayout.BeginVertical(GUI.skin.box);
 
-            EditorGUILayout.LabelField(results.Name, EditorStyles.boldLabel);
+            results.Expanded = EditorGUILayout.BeginFoldoutHeaderGroup(results.Expanded, results.Name);
+
+            if (!results.Expanded) goto End;
 
             foreach (var result in results.Results)
             {
@@ -158,6 +161,8 @@ namespace Signals.Unity.Inspector
                 }
             }
 
+        End:
+            EditorGUILayout.EndFoldoutHeaderGroup();
             EditorGUILayout.EndVertical();
         }
 
@@ -179,22 +184,56 @@ namespace Signals.Unity.Inspector
                 goto Widths;
             }
 
-            ValidateController(_pack.Signal, "Main Signal");
+            if (_pack.ShuntingSignal == null)
+            {
+                var entry = new Result("Controller");
+                entry.AddCritical("Shunting controller cannot be null");
+                var result = new SignalResults(name);
+                result.Results.Add(entry);
+                _results.Add(result);
+                _hasErrors = true;
+                goto Widths;
+            }
 
+            ValidateController(_pack.Signal, "Main Signal");
+            ValidateController(_pack.ShuntingSignal, "Shunting Signal");
+
+            ValidateController(_pack.DivergingSignal, "Diverging Signal");
             ValidateController(_pack.LeftJunctionSignal, "Left Junction Signal");
             ValidateController(_pack.RightJunctionSignal, "Right Junction Signal");
-            ValidateController(_pack.EntrySignal, "Into Yard Signal");
-            ValidateController(_pack.ShuntingSignal, "Shunting Signal");
+            ValidateController(_pack.EntrySignal, "Entry Signal");
+            ValidateController(_pack.ExitSignal, "Exit Signal");
             ValidateController(_pack.PassengerSignal, "Passenger Signal");
+            ValidateController(_pack.StationMainlineSignal, "Station Signal");
+            ValidateController(_pack.SpacingSignal, "Spacing Signal");
+            ValidateController(_pack.TurntableSignal, "Turntable Signal");
+
             ValidateController(_pack.DistantSignal, "Distant Signal");
+            ValidateController(_pack.RepeaterSignal, "Repeater Signal");
+
+            ValidateController(_pack.CombinedSignal, "Combined Main Signal");
+            ValidateController(_pack.CombinedLeftJunctionSignal, "Combined Left Junction Signal");
+            ValidateController(_pack.CombinedRightJunctionSignal, "Combined Right Junction Signal");
 
             ValidateController(_pack.OldSignal, "Old Main Signal");
+            ValidateController(_pack.OldShuntingSignal, "Old Shunting Signal");
+
+            ValidateController(_pack.OldDivergingSignal, "Old Diverging Signal");
             ValidateController(_pack.OldLeftJunctionSignal, "Old Left Junction Signal");
             ValidateController(_pack.OldRightJunctionSignal, "Old Right Junction Signal");
-            ValidateController(_pack.OldEntrySignal, "Old Into Yard Signal");
-            ValidateController(_pack.OldShuntingSignal, "Old Shunting Signal");
+            ValidateController(_pack.OldEntrySignal, "Old Entry Signal");
+            ValidateController(_pack.OldExitSignal, "Old Exit Signal");
             ValidateController(_pack.OldPassengerSignal, "Old Passenger Signal");
+            ValidateController(_pack.OldStationMainlineSignal, "Old Station Signal");
+            ValidateController(_pack.OldSpacingSignal, "Old Spacing Signal");
+            ValidateController(_pack.OldTurntableSignal, "Old Turntable Signal");
+
             ValidateController(_pack.OldDistantSignal, "Old Distant Signal");
+            ValidateController(_pack.OldRepeaterSignal, "Old Repeater Signal");
+
+            ValidateController(_pack.OldCombinedSignal, "Old Combined Main Signal");
+            ValidateController(_pack.OldCombinedLeftJunctionSignal, "Old Combined Left Junction Signal");
+            ValidateController(_pack.OldCombinedRightJunctionSignal, "Old Combined Right Junction Signal");
 
         Widths:
 
@@ -226,6 +265,7 @@ namespace Signals.Unity.Inspector
 
             if (controller == null)
             {
+                results.Expanded = false;
                 results.Results.Add(Result.Skip("Controller"));
                 return;
             }

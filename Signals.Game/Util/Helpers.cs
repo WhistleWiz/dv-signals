@@ -74,5 +74,59 @@ namespace Signals.Game.Util
         {
             return Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
         }
+
+        public static string OrientationSimple(Vector3 north, Vector3 direction)
+        {
+            var angle = Vector3.SignedAngle(direction, north, Vector3.up);
+
+            if (angle < -135 || angle >= 135)
+            {
+                return "S";
+            }
+            if (angle < -45)
+            {
+                return "E";
+            }
+            if (angle >= 45)
+            {
+                return "W";
+            }
+            return "N";
+        }
+
+        public static string Orientation(Vector3 north, Vector3 direction)
+        {
+            var angle = Vector3.SignedAngle(direction, north, Vector3.up);
+
+            if (angle < -157.5 || angle >= 157.5)
+            {
+                return "S";
+            }
+            if (angle < -112.5)
+            {
+                return "SE";
+            }
+            if (angle >= 112.5)
+            {
+                return "SW";
+            }
+            if (angle < -67.5)
+            {
+                return "E";
+            }
+            if (angle >= 67.5)
+            {
+                return "W";
+            }
+            if (angle < -22.5)
+            {
+                return "NE";
+            }
+            if (angle >= 22.5)
+            {
+                return "NW";
+            }
+            return "N";
+        }
     }
 }

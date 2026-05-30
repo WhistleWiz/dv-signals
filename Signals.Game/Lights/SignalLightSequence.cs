@@ -2,7 +2,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace Signals.Game
+namespace Signals.Game.Lights
 {
     public class SignalLightSequence : MonoBehaviour
     {
@@ -11,9 +11,12 @@ namespace Signals.Game
 
         public SignalLightSequenceDefinition Definition = null!;
 
-        public void Initialize(SignalLightSequenceDefinition definition)
+        public Signal Signal { get; private set; } = null!;
+
+        public void Initialize(SignalLightSequenceDefinition definition, Signal signal)
         {
             Definition = definition;
+            Signal = signal;
 
             int length = Definition.Lights.Length;
             _lights = new (SignalLight? Light, bool InitialState)[length];
@@ -22,7 +25,7 @@ namespace Signals.Game
             {
                 var light = Definition.Lights[i];
 
-                _lights[i] = light != null ? (light.GetController(), Definition.States[i]) : (null, Definition.States[i]);
+                _lights[i] = light != null ? (light.GetController(signal), Definition.States[i]) : (null, Definition.States[i]);
             }
         }
 

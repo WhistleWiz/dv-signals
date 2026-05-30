@@ -4,14 +4,9 @@ using UnityEngine;
 
 namespace Signals.Game.Displays
 {
-    public class SpeedLimitDisplay : DisplayBase
+    public class SpeedLimitDisplay : DisplayBase<SpeedLimitDisplayDefinition>
     {
-        private SpeedLimitDisplayDefinition _fullDef;
-
-        public SpeedLimitDisplay(DisplayBaseDefinition def, Signal signal) : base(def, signal)
-        {
-            _fullDef = (SpeedLimitDisplayDefinition)def;
-        }
+        public SpeedLimitDisplay(DisplayBaseDefinition def, Signal signal) : base(def, signal) { }
 
         public override void UpdateDisplay()
         {
@@ -19,7 +14,7 @@ namespace Signals.Game.Displays
 
             if (block == null)
             {
-                DisplayText = _fullDef.NoValidResultValue;
+                DisplayText = Definition.NoValidResultValue;
                 return;
             }
 
@@ -38,7 +33,7 @@ namespace Signals.Game.Displays
                 }
 
                 // Skip track if it is in a yard and we want to ignore those.
-                if (_fullDef.IgnoreYards && track.Track.IsPartOfStation()) continue;
+                if (Definition.IgnoreYards && track.Track.IsPartOfStation()) continue;
 
                 // Get the maximum speed of the track.
                 max = Mathf.Min(max, SpeedCalculator.GetSpeed(track.Track, track.Direction));
@@ -55,7 +50,7 @@ namespace Signals.Game.Displays
             // If somehow there wasn't a track at all, it's not a valid result.
             if (!first.HasValue)
             {
-                DisplayText = _fullDef.NoValidResultValue;
+                DisplayText = Definition.NoValidResultValue;
                 return;
             }
 
@@ -64,7 +59,9 @@ namespace Signals.Game.Displays
 
             void SetValue(float value)
             {
-                DisplayText = (_fullDef.DivideBy10 ? value / 10.0f : value).ToString("F0");
+                DisplayText = value > Definition.MaximumDisplayed ?
+                    Definition.NoValidResultValue :
+                    (Definition.DivideBy10 ? value / 10.0f : value).ToString("F0");
             }
         }
     }

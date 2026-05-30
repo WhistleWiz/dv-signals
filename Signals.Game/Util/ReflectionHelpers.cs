@@ -10,6 +10,22 @@ namespace Signals.Game.Util
         private const BindingFlags PrivateFlags = BindingFlags.Instance | BindingFlags.NonPublic;
 
         // TrackID.
+        private static FieldInfo? s_trackIdOrderNumber;
+        private static FieldInfo TrackIdOrderNumber
+        {
+            get
+            {
+                if (s_trackIdOrderNumber == null)
+                {
+                    s_trackIdOrderNumber = typeof(TrackID).GetField("orderNumber", PrivateFlags);
+                }
+
+                return s_trackIdOrderNumber;
+            }
+        }
+
+        public static string GetOrderNumber(TrackID trackID) => (string)TrackIdOrderNumber.GetValue(trackID);
+
         private static PropertyInfo? s_trackIdTrimmedOrderNumber;
         private static PropertyInfo TrackIdTrimmedOrderNumber
         {
@@ -77,5 +93,7 @@ namespace Signals.Game.Util
         }
 
         public static MeshRenderer[] GetRenderers(SignHover sign) => (MeshRenderer[])SignHoveredRenderers.GetValue(sign);
+
+        public static void SetRenderers(SignHover sign, MeshRenderer[] renderers) => SignHoveredRenderers.SetValue(sign, renderers);
     }
 }

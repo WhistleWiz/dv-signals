@@ -1,328 +1,333 @@
-﻿using DV.PointSet;
-using Signals.Common;
-using Signals.Game.Controllers;
-using Signals.Game.Railway;
-using System.Collections.Generic;
-using System.Linq;
+﻿//using DV.PointSet;
+//using Signals.Common;
+//using Signals.Game.Controllers;
+//using Signals.Game.Railway;
+//using System.Collections.Generic;
+//using System.Linq;
 
-namespace Signals.Game.Generation
-{
-    public sealed class ClassicSignalPlacer : SignalPlacer
-    {
-        private enum SignalCreationMode
-        {
-            None,
-            Mainline,
-            IntoYard,
-            IntoYardReverse,
-            IntoPax,
-            Shunting
-        }
+//namespace Signals.Game.Generation
+//{
+//    public sealed class ClassicSignalPlacer : SignalPlacer
+//    {
+//        private enum SignalCreationMode
+//        {
+//            None,
+//            Mainline,
+//            IntoYard,
+//            IntoYardReverse,
+//            IntoPax,
+//            Shunting
+//        }
 
-        public override void CreateSignals(SignalPack pack, Dictionary<Junction, JunctionSignalGroup> registry)
-        {
-            foreach (var junction in RailTrackRegistry.Junctions)
-            {
-                switch (ShouldMakeSignal(registry, junction))
-                {
-                    case SignalCreationMode.Mainline:
-                        registry.Add(junction, CreateMainlineSignals(pack, junction));
-                        break;
-                    case SignalCreationMode.IntoYard:
-                        registry.Add(junction, CreateIntoYardSignals(pack, junction));
-                        break;
-                    case SignalCreationMode.IntoYardReverse:
-                        registry.Add(junction, CreateIntoYardReverseSignals(pack, junction));
-                        break;
-                    case SignalCreationMode.IntoPax:
-                        registry.Add(junction, CreateIntoPaxSignals(pack, junction));
-                        break;
-                    case SignalCreationMode.Shunting:
-                        registry.Add(junction, CreateShuntingSignals(pack, junction));
-                        break;
-                    default:
-                        continue;
-                }
-            }
-        }
+//        private new const string YardNameStart = "[Y]";
+//        private new const float BranchPlacementDistance = 17.5f;
+//        private new const float BranchDistanceThreshold = 4.5f * 4.5f;
+//        private new const float SmallTrackThreshold = 60.0f;
 
-        private SignalCreationMode ShouldMakeSignal(Dictionary<Junction, JunctionSignalGroup> registry, Junction junction)
-        {
-            var inName = junction.inBranch.track.name;
-            SignalsMod.LogVerbose($"Testing track '{inName}' for signals...");
+//        public override void CreateSignals(SignalPack pack, Dictionary<Junction, JunctionSignalGroup> registry)
+//        {
+//            foreach (var junction in RailTrackRegistry.Junctions)
+//            {
+//                switch (ShouldMakeSignal(registry, junction))
+//                {
+//                    case SignalCreationMode.Mainline:
+//                        registry.Add(junction, CreateMainlineSignals(pack, junction));
+//                        break;
+//                    case SignalCreationMode.IntoYard:
+//                        registry.Add(junction, CreateIntoYardSignals(pack, junction));
+//                        break;
+//                    case SignalCreationMode.IntoYardReverse:
+//                        registry.Add(junction, CreateIntoYardReverseSignals(pack, junction));
+//                        break;
+//                    case SignalCreationMode.IntoPax:
+//                        registry.Add(junction, CreateIntoPaxSignals(pack, junction));
+//                        break;
+//                    case SignalCreationMode.Shunting:
+//                        registry.Add(junction, CreateShuntingSignals(pack, junction));
+//                        break;
+//                    default:
+//                        continue;
+//                }
+//            }
+//        }
 
-            // Don't duplicate junctions and don't make signals at short dead ends.
-            if (registry.ContainsKey(junction) || InIsShortDeadEnd(junction))
-            {
-                return SignalCreationMode.None;
-            }
+//        private SignalCreationMode ShouldMakeSignal(Dictionary<Junction, JunctionSignalGroup> registry, Junction junction)
+//        {
+//            var inName = junction.inBranch.track.name;
+//            SignalsMod.LogVerbose($"Testing track '{inName}' for signals...");
 
-            // If the in track belongs to a yard...
-            if (inName.StartsWith(YardNameStart))
-            {
-                // Check all out branches.
-                foreach (var branch in junction.outBranches)
-                {
-                    // Track ends after a switch for some reason, plop signal.
-                    if (!branch.track.outIsConnected)
-                    {
-                        return SignalCreationMode.IntoYard;
-                    }
+//            // Don't duplicate junctions and don't make signals at short dead ends.
+//            if (registry.ContainsKey(junction) || InIsShortDeadEnd(junction))
+//            {
+//                return SignalCreationMode.None;
+//            }
 
-                    // Get the track after the switch track.
-                    var outName = branch.track.outBranch.track.name;
+//            // If the in track belongs to a yard...
+//            if (inName.StartsWith(YardNameStart))
+//            {
+//                // Check all out branches.
+//                foreach (var branch in junction.outBranches)
+//                {
+//                    // Track ends after a switch for some reason, plop signal.
+//                    if (!branch.track.outIsConnected)
+//                    {
+//                        return SignalCreationMode.IntoYard;
+//                    }
 
-                    SignalsMod.LogVerbose($"Testing branch '{outName}' for signals...");
+//                    // Get the track after the switch track.
+//                    var outName = branch.track.outBranch.track.name;
 
-                    // If this yard track goes to a non yard track...
-                    if (!outName.StartsWith(YardNameStart))
-                    {
-                        return SignalCreationMode.IntoYardReverse;
-                    }
-                }
+//                    SignalsMod.LogVerbose($"Testing branch '{outName}' for signals...");
 
-                // Switch branches stay in the same yard, no signal needed.
-                return SignalCreationMode.Shunting;
-            }
+//                    // If this yard track goes to a non yard track...
+//                    if (!outName.StartsWith(YardNameStart))
+//                    {
+//                        return SignalCreationMode.IntoYardReverse;
+//                    }
+//                }
 
-            // Count very small branches as if they were a yard.
-            // There's no regular mainline tracks fulfilling this condition.
-            if (AreAllBranchesSmallNonSign(junction))
-            {
-                return SignalCreationMode.IntoYard;
-            }
+//                // Switch branches stay in the same yard, no signal needed.
+//                return SignalCreationMode.Shunting;
+//            }
 
-            // In case we are in a mainline, check all out branches for yards.
-            foreach (var branch in junction.outBranches)
-            {
-                // Track ends after a switch for some reason, plop signal.
-                if (!branch.track.outIsConnected)
-                {
-                    return SignalCreationMode.IntoYard;
-                }
+//            // Count very small branches as if they were a yard.
+//            // There's no regular mainline tracks fulfilling this condition.
+//            if (AreAllBranchesSmallNonSign(junction))
+//            {
+//                return SignalCreationMode.IntoYard;
+//            }
 
-                // Get the track after the switch track.
-                var outName = branch.track.outBranch.track.name;
+//            // In case we are in a mainline, check all out branches for yards.
+//            foreach (var branch in junction.outBranches)
+//            {
+//                // Track ends after a switch for some reason, plop signal.
+//                if (!branch.track.outIsConnected)
+//                {
+//                    return SignalCreationMode.IntoYard;
+//                }
 
-                SignalsMod.LogVerbose($"Testing branch '{outName}' for signals...");
+//                // Get the track after the switch track.
+//                var outName = branch.track.outBranch.track.name;
 
-                // If this non yard track goes to a yard track...
-                if (outName.StartsWith(YardNameStart))
-                {
-                    // Special signals for passenger tracks.
-                    if (junction.outBranches.Any(x => IsPaxTrack(x.track.outBranch.track)))
-                    {
-                        return SignalCreationMode.IntoPax;
-                    }
+//                SignalsMod.LogVerbose($"Testing branch '{outName}' for signals...");
 
-                    return SignalCreationMode.IntoYard;
-                }
-            }
+//                // If this non yard track goes to a yard track...
+//                if (outName.StartsWith(YardNameStart))
+//                {
+//                    // Special signals for passenger tracks.
+//                    if (junction.outBranches.Any(x => IsPaxTrack(x.track.outBranch.track)))
+//                    {
+//                        return SignalCreationMode.IntoPax;
+//                    }
 
-            return SignalCreationMode.Mainline;
-        }
+//                    return SignalCreationMode.IntoYard;
+//                }
+//            }
 
-        private static JunctionSignalGroup CreateMainlineSignals(SignalPack pack, Junction junction)
-        {
-            SignalsMod.LogVerbose($"Making mainline signals for junction '{junction.junctionData.junctionIdLong}'");
+//            return SignalCreationMode.Mainline;
+//        }
 
-            var old = IsOld(junction);
-            var left = junction.IsLeft();
-            var group = new JunctionSignalGroup(junction,
-                CreateSignalAtJunction(junction, pack.GetJunctionSignal(old, left)),
-                CreateBranchSignals(junction, pack.GetMainlineSignal(old)));
+//        private static JunctionSignalGroup CreateMainlineSignals(SignalPack pack, Junction junction)
+//        {
+//            SignalsMod.LogVerbose($"Making mainline signals for junction '{junction.junctionData.junctionIdLong}'");
 
-            foreach (var signal in group.AllControllers)
-            {
-                signal.IsOld = old;
-                signal.Type = SignalType.Mainline;
-                signal.PrefabType = PrefabType.Mainline;
-            }
+//            var old = IsOld(pack, junction);
+//            var left = junction.IsLeft();
+//            var group = new JunctionSignalGroup(junction,
+//                CreateSignalAtJunction(junction, pack.GetJunctionSignal(old, left)),
+//                CreateBranchSignals(junction, pack.GetMainlineSignal(old)));
 
-            if (group.JunctionSignal != null)
-            {
-                group.JunctionSignal.PrefabType = left ? PrefabType.JunctionLeft : PrefabType.JunctionRight;
-            }
+//            foreach (var signal in group.AllControllers)
+//            {
+//                signal.IsOld = old;
+//                signal.Type = SignalType.Mainline;
+//                signal.PrefabType = PrefabType.Mainline;
+//            }
 
-            return group;
-        }
+//            if (group.JunctionSignal != null)
+//            {
+//                group.JunctionSignal.PrefabType = left ? PrefabType.JunctionLeft : PrefabType.JunctionRight;
+//            }
 
-        private static JunctionSignalGroup CreateIntoYardSignals(SignalPack pack, Junction junction)
-        {
-            var smallBranches = AreAllBranchesSmallNonSign(junction);
+//            return group;
+//        }
 
-            // Create more regular signals rather than the full into yard group.
-            if (!smallBranches && junction.outBranches.Any(x => !x.track.outBranch.track.IsPartOfYard()))
-            {
-                return CreateIntoYardMainlineSignals(pack, junction);
-            }
+//        private static JunctionSignalGroup CreateIntoYardSignals(SignalPack pack, Junction junction)
+//        {
+//            var smallBranches = AreAllBranchesSmallNonSign(junction);
 
-            SignalsMod.LogVerbose($"Making into {(smallBranches ? "small branches" : string.Empty)} " +
-                $"yard signals for junction '{junction.junctionData.junctionIdLong}'");
+//            // Create more regular signals rather than the full into yard group.
+//            if (!smallBranches && junction.outBranches.Any(x => !x.track.outBranch.track.IsPartOfYard()))
+//            {
+//                return CreateIntoYardMainlineSignals(pack, junction);
+//            }
 
-            var old = IsOld(junction);
-            var group = new JunctionSignalGroup(junction,
-                CreateSignalAtJunction(junction, smallBranches ? pack.GetMainlineSignal(old) : pack.GetEntrySignal(old)),
-                CreateSignalFromJunction(junction, pack.GetMainlineSignal(old)));
+//            SignalsMod.LogVerbose($"Making into {(smallBranches ? "small branches" : string.Empty)} " +
+//                $"yard signals for junction '{junction.junctionData.junctionIdLong}'");
 
-            if (group.JunctionSignal != null)
-            {
-                group.JunctionSignal.IsOld = old;
-                group.JunctionSignal.Type = smallBranches ? SignalType.Mainline : SignalType.Entry;
-                group.JunctionSignal.PrefabType = smallBranches ? PrefabType.Mainline : PrefabType.Entry;
-            }
+//            var old = IsOld(pack, junction);
+//            var group = new JunctionSignalGroup(junction,
+//                CreateSignalAtJunction(junction, smallBranches ? pack.GetMainlineSignal(old) : pack.GetEntrySignal(old)),
+//                CreateSignalFromJunction(junction, pack.GetMainlineSignal(old)));
 
-            if (group.ReverseJunctionSignal != null)
-            {
-                group.ReverseJunctionSignal.IsOld = old;
-                group.ReverseJunctionSignal.Type = SignalType.Mainline;
-                group.ReverseJunctionSignal.PrefabType = PrefabType.Mainline;
-            }
+//            if (group.JunctionSignal != null)
+//            {
+//                group.JunctionSignal.IsOld = old;
+//                group.JunctionSignal.Type = smallBranches ? SignalType.Mainline : SignalType.Entry;
+//                group.JunctionSignal.PrefabType = smallBranches ? PrefabType.Mainline : PrefabType.Entry;
+//            }
 
-            return group;
-        }
+//            if (group.ReverseJunctionSignal != null)
+//            {
+//                group.ReverseJunctionSignal.IsOld = old;
+//                group.ReverseJunctionSignal.Type = SignalType.Mainline;
+//                group.ReverseJunctionSignal.PrefabType = PrefabType.Mainline;
+//            }
 
-        private static JunctionSignalGroup CreateIntoYardMainlineSignals(SignalPack pack, Junction junction)
-        {
-            SignalsMod.LogVerbose($"Making into yard mainline signals for junction '{junction.junctionData.junctionIdLong}'");
+//            return group;
+//        }
 
-            var old = IsOld(junction);
-            var group = new JunctionSignalGroup(junction,
-                CreateSignalAtJunction(junction, pack.GetEntrySignal(old)),
-                CreateBranchSignals(junction, pack.GetMainlineSignal(old)));
+//        private static JunctionSignalGroup CreateIntoYardMainlineSignals(SignalPack pack, Junction junction)
+//        {
+//            SignalsMod.LogVerbose($"Making into yard mainline signals for junction '{junction.junctionData.junctionIdLong}'");
 
-            foreach (var signal in group.AllControllers)
-            {
-                signal.IsOld = old;
-                signal.Type = SignalType.Mainline;
-                signal.PrefabType = PrefabType.Mainline;
-            }
+//            var old = IsOld(pack, junction);
+//            var group = new JunctionSignalGroup(junction,
+//                CreateSignalAtJunction(junction, pack.GetEntrySignal(old)),
+//                CreateBranchSignals(junction, pack.GetMainlineSignal(old)));
 
-            if (group.JunctionSignal != null)
-            {
-                group.JunctionSignal.Type = SignalType.Entry;
-                group.JunctionSignal.PrefabType = PrefabType.Entry;
-            }
+//            foreach (var signal in group.AllControllers)
+//            {
+//                signal.IsOld = old;
+//                signal.Type = SignalType.Mainline;
+//                signal.PrefabType = PrefabType.Mainline;
+//            }
 
-            return group;
-        }
+//            if (group.JunctionSignal != null)
+//            {
+//                group.JunctionSignal.Type = SignalType.Entry;
+//                group.JunctionSignal.PrefabType = PrefabType.Entry;
+//            }
 
-        private static JunctionSignalGroup CreateIntoYardReverseSignals(SignalPack pack, Junction junction)
-        {
-            SignalsMod.LogVerbose($"Making into yard reverse signals for junction '{junction.junctionData.junctionIdLong}'");
+//            return group;
+//        }
 
-            var old = IsOld(junction);
-            var left = junction.IsLeft();
-            var inPax = IsPaxTrack(junction.inBranch.track) && (old ? pack.OldPassengerSignal : pack.PassengerSignal) != null;
-            var group = new JunctionSignalGroup(junction,
-                CreateSignalAtJunction(junction, inPax ? pack.GetPassengerSignal(old) : pack.GetJunctionSignal(old, left)),
-                CreateBranchSignals(junction, pack.GetMainlineSignal(old)));
+//        private static JunctionSignalGroup CreateIntoYardReverseSignals(SignalPack pack, Junction junction)
+//        {
+//            SignalsMod.LogVerbose($"Making into yard reverse signals for junction '{junction.junctionData.junctionIdLong}'");
 
-            foreach (var signal in group.AllControllers)
-            {
-                signal.IsOld = old;
-                signal.Type = SignalType.Mainline;
-                signal.PrefabType = PrefabType.Mainline;
-            }
+//            var old = IsOld(pack, junction);
+//            var left = junction.IsLeft();
+//            var inPax = IsPaxTrack(junction.inBranch.track) && (old ? pack.OldPassengerSignal : pack.PassengerSignal) != null;
+//            var group = new JunctionSignalGroup(junction,
+//                CreateSignalAtJunction(junction, inPax ? pack.GetPassengerSignal(old) : pack.GetJunctionSignal(old, left)),
+//                CreateBranchSignals(junction, pack.GetMainlineSignal(old)));
 
-            if (group.JunctionSignal != null)
-            {
-                group.JunctionSignal.Type = inPax ? SignalType.ExitPax : SignalType.Mainline;
-                group.JunctionSignal.PrefabType = inPax ? PrefabType.ExitPax : (left ? PrefabType.JunctionLeft : PrefabType.JunctionRight);
-            }
+//            foreach (var signal in group.AllControllers)
+//            {
+//                signal.IsOld = old;
+//                signal.Type = SignalType.Mainline;
+//                signal.PrefabType = PrefabType.Mainline;
+//            }
 
-            return group;
-        }
+//            if (group.JunctionSignal != null)
+//            {
+//                group.JunctionSignal.Type = inPax ? SignalType.ExitPax : SignalType.Mainline;
+//                group.JunctionSignal.PrefabType = inPax ? PrefabType.ExitPax : (left ? PrefabType.JunctionLeft : PrefabType.JunctionRight);
+//            }
 
-        private static JunctionSignalGroup CreateIntoPaxSignals(SignalPack pack, Junction junction)
-        {
-            SignalsMod.LogVerbose($"Making into pax signals for junction '{junction.junctionData.junctionIdLong}'");
+//            return group;
+//        }
 
-            var old = IsOld(junction);
-            var group = new JunctionSignalGroup(junction,
-                CreateSignalAtJunction(junction, pack.GetEntrySignal(old)),
-                CreateBranchSignalsPax(junction, pack.GetPassengerSignal(old), pack.GetMainlineSignal(old)));
+//        private static JunctionSignalGroup CreateIntoPaxSignals(SignalPack pack, Junction junction)
+//        {
+//            SignalsMod.LogVerbose($"Making into pax signals for junction '{junction.junctionData.junctionIdLong}'");
 
-            foreach (var signal in group.AllControllers)
-            {
-                signal.IsOld = old;
-            }
+//            var old = IsOld(pack, junction);
+//            var group = new JunctionSignalGroup(junction,
+//                CreateSignalAtJunction(junction, pack.GetEntrySignal(old)),
+//                CreateBranchSignalsPax(junction, pack.GetPassengerSignal(old), pack.GetMainlineSignal(old)));
 
-            if (group.JunctionSignal != null)
-            {
-                group.JunctionSignal.Type = SignalType.Entry;
-                group.JunctionSignal.PrefabType = PrefabType.Entry;
-            }
+//            foreach (var signal in group.AllControllers)
+//            {
+//                signal.IsOld = old;
+//            }
 
-            return group;
-        }
+//            if (group.JunctionSignal != null)
+//            {
+//                group.JunctionSignal.Type = SignalType.Entry;
+//                group.JunctionSignal.PrefabType = PrefabType.Entry;
+//            }
 
-        private static JunctionSignalGroup CreateShuntingSignals(SignalPack pack, Junction junction)
-        {
-            SignalsMod.LogVerbose($"Making shunting signals for junction '{junction.junctionData.junctionIdLong}'");
+//            return group;
+//        }
 
-            var old = IsOld(junction);
-            var def = pack.GetShuntingSignal(old);
+//        private static JunctionSignalGroup CreateShuntingSignals(SignalPack pack, Junction junction)
+//        {
+//            SignalsMod.LogVerbose($"Making shunting signals for junction '{junction.junctionData.junctionIdLong}'");
 
-            if (def == null) return new JunctionSignalGroup(junction);
+//            var old = IsOld(pack, junction);
+//            var def = pack.GetShuntingSignal(old);
 
-            var group = new JunctionSignalGroup(junction, null,
-                //CreateSignalAtJunction(junction, def),
-                CreateShuntingBranchSignals());
+//            if (def == null) return new JunctionSignalGroup(junction);
 
-            return group;
+//            var group = new JunctionSignalGroup(junction, null,
+//                //CreateSignalAtJunction(junction, def),
+//                CreateShuntingBranchSignals());
 
-            List<TrackSignalController> CreateShuntingBranchSignals()
-            {
-                EquiPointSet.Point? prev = null;
-                float baseSpan = BranchPlacementDistance;
-                var list = new List<TrackSignalController>();
+//            return group;
 
-                // Check potential placements to see if they're too close to eachother.
-                foreach (var branch in junction.outBranches)
-                {
-                    var track = branch.track.outBranch.track;
-                    var kpSet = track.GetKinkedPointSet();
-                    var tDirT = TrackUtils.TrackDirectionFromTrack(track, branch.track);
-                    var index = kpSet.GetPointIndexForSpan(kpSet.GetSpan(BranchPlacementDistance, tDirT));
-                    var point = kpSet.points[index];
+//            List<TrackSignalController> CreateShuntingBranchSignals()
+//            {
+//                EquiPointSet.Point? prev = null;
+//                float baseSpan = BranchPlacementDistance;
+//                var list = new List<TrackSignalController>();
 
-                    if (prev != null)
-                    {
-                        var distance = (point.position - prev.Value.position).sqrMagnitude;
+//                // Check potential placements to see if they're too close to eachother.
+//                foreach (var branch in junction.outBranches)
+//                {
+//                    var track = branch.track.outBranch.track;
+//                    var kpSet = track.GetKinkedPointSet();
+//                    var tDirT = TrackUtils.TrackDirectionFromTrack(track, branch.track);
+//                    var index = kpSet.GetPointIndexForSpan(kpSet.GetSpan(BranchPlacementDistance, tDirT));
+//                    var point = kpSet.points[index];
 
-                        // Just 1 confirmation is needed, so all of them are moved.
-                        if (distance < BranchDistanceThreshold)
-                        {
-                            baseSpan = BranchPlacementDistance + 10;
-                            break;
-                        }
-                    }
+//                    if (prev != null)
+//                    {
+//                        var distance = (point.position - prev.Value.position).sqrMagnitude;
 
-                    prev = point;
-                }
+//                        // Just 1 confirmation is needed, so all of them are moved.
+//                        if (distance < BranchDistanceThreshold)
+//                        {
+//                            baseSpan = BranchPlacementDistance + 10;
+//                            break;
+//                        }
+//                    }
 
-                foreach (var branch in junction.outBranches)
-                {
-                    var track = branch.track.outBranch.track;
+//                    prev = point;
+//                }
 
-                    // Don't spam switches with them, only the actual numbered tracks and big ones.
-                    if (!IsLogicYardTrack(track) && track.GetLength() <= SmallTrackThreshold) continue;
+//                foreach (var branch in junction.outBranches)
+//                {
+//                    var track = branch.track.outBranch.track;
 
-                    var kpSet = track.GetKinkedPointSet();
-                    var tDirT = TrackUtils.TrackDirectionFromTrack(track, branch.track);
-                    var tSpan = kpSet.GetSpan(baseSpan, tDirT);
-                    var index = kpSet.GetPointIndexForSpan(tSpan);
-                    var point = kpSet.points[index];
+//                    // Don't spam switches with them, only the actual numbered tracks and big ones.
+//                    if (!IsLogicYardTrack(track) && track.GetLength() <= SmallTrackThreshold) continue;
 
-                    var placement = new SignalPlacementInfo(track, tDirT, index, tSpan);
-                    var signal = InstantiateFromDef(def, point.position, tDirT.IsOut() ? point.forward : -point.forward, false, track);
+//                    var kpSet = track.GetKinkedPointSet();
+//                    var tDirT = TrackUtils.TrackDirectionFromTrack(track, branch.track);
+//                    var tSpan = kpSet.GetSpan(baseSpan, tDirT);
+//                    var index = kpSet.GetPointIndexForSpan(tSpan);
+//                    var point = kpSet.points[index];
 
-                    list.Add(new TrackSignalController(signal, branch.track, tDirT, placement));
-                }
+//                    var placement = new SignalPlacementInfo(track, tDirT, index, tSpan);
+//                    var signal = InstantiateFromDef(def, point.position, tDirT.IsOut() ? point.forward : -point.forward, false, track);
 
-                return list;
-            }
-        }
-    }
-}
+//                    list.Add(new TrackSignalController(signal, branch.track, tDirT, placement));
+//                }
+
+//                return list;
+//            }
+//        }
+//    }
+//}

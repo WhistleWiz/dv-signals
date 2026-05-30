@@ -23,8 +23,8 @@ namespace Signals.Common
         public float Offset = -2.05f;
 
         [Header("Optional")]
-        [Tooltip("The shunting signal for this controller")]
-        public SignalDefinition? ShuntingSignal;
+        [Tooltip("The shunting signals for this controller")]
+        public SignalDefinition[] ShuntingSignals = new SignalDefinition[0];
 
         private void OnDrawGizmos()
         {

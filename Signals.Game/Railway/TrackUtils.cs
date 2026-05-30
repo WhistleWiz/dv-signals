@@ -143,7 +143,7 @@ namespace Signals.Game.Railway
 
                 if (id.IsGeneric()) continue;
 
-                var text = ReflectionHelpers.GetTrimmedOrderNumber(id);
+                var text = ReflectionHelpers.GetOrderNumber(id);
 
                 if (!string.IsNullOrEmpty(text))
                 {
@@ -160,6 +160,54 @@ namespace Signals.Game.Railway
         /// <param name="tracks">The tracks to check.</param>
         /// <returns>The first track valid result found, or <see cref="string.Empty"/> if no result is found.</returns>
         public static string NextTrackNumber(IEnumerable<TrackInfo> tracks)
+        {
+            foreach (var track in tracks)
+            {
+                var id = track.GetId();
+
+                if (id.IsGeneric()) continue;
+
+                var text = ReflectionHelpers.GetOrderNumber(id);
+
+                if (!string.IsNullOrEmpty(text))
+                {
+                    return text;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Finds the first track number with trimmed leading zeros in a <see cref="RailTrack"/> collection.
+        /// </summary>
+        /// <param name="tracks">The tracks to check.</param>
+        /// <returns>The first track valid result found, or <see cref="string.Empty"/> if no result is found.</returns>
+        public static string NextTrackTrimmedNumber(IEnumerable<RailTrack> tracks)
+        {
+            foreach (var track in tracks)
+            {
+                var id = track.GetId();
+
+                if (id.IsGeneric()) continue;
+
+                var text = ReflectionHelpers.GetTrimmedOrderNumber(id);
+
+                if (!string.IsNullOrEmpty(text))
+                {
+                    return text;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Finds the first track number with trimmed leading zeros in a <see cref="TrackInfo"/> collection.
+        /// </summary>
+        /// <param name="tracks">The tracks to check.</param>
+        /// <returns>The first track valid result found, or <see cref="string.Empty"/> if no result is found.</returns>
+        public static string NextTrackTrimmedNumber(IEnumerable<TrackInfo> tracks)
         {
             foreach (var track in tracks)
             {

@@ -1,8 +1,6 @@
-﻿using DV.UI;
-using Signals.Common;
+﻿using Signals.Common;
 using Signals.Game.Railway;
 using System.Collections.Generic;
-using static Junction;
 
 namespace Signals.Game.Controllers
 {
@@ -14,6 +12,8 @@ namespace Signals.Game.Controllers
     /// </remarks>
     public class JunctionSignalController : TrackSignalController
     {
+        private bool _junctionFlag = false;
+
         /// <summary>
         /// If not <see langword="null"/>, the block will start at the specified track rather than the junction branches.
         /// </summary>
@@ -30,8 +30,6 @@ namespace Signals.Game.Controllers
             Junction = junction;
             Left = junction.IsLeft();
 
-            ShuntingSignal?.SetBlock(TrackBlock.CreateForShunting(junction));
-
             Junction.Switched += JunctionSwitched;
             Destroyed += (x) => Junction.Switched -= JunctionSwitched;
 
@@ -40,6 +38,9 @@ namespace Signals.Game.Controllers
 
         private void JunctionSwitched(Junction.SwitchMode mode, int branch)
         {
+            // This forces the track block to be considered as changed.
+            _junctionFlag = true;
+
             // Force update the display because of junction branch updates even if
             // the state didn't change.
             Update(true, true);
@@ -49,24 +50,67 @@ namespace Signals.Game.Controllers
         {
             StartingTrack = OverrideStart ?? Junction.GetCurrentBranch().track;
 
-            ShuntingSignal?.SetBlock(TrackBlock.CreateForShunting(Junction));
-
             if (Signals.Length == 1)
             {
-                base.UpdateBlocks();
-                return;
+                CreateSingle(Signals[0], Type);
             }
-
-            var selected = Junction.selectedBranch;
-
-            for (byte i = 0; i < Signals.Length; i++)
+            else
             {
-                Junction.selectedBranch = (byte)(i % Junction.outBranches.Count);
-                var track = OverrideStart ?? Junction.GetCurrentBranch().track;
-                Signals[i].SetBlock(TrackBlock.CreateUntilMainSignal(track, Direction, this));
+                CreateMulti(Signals, Type);
             }
 
-            Junction.selectedBranch = selected;
+            if (ShuntingSignals.Length == 1)
+            {
+                CreateSingle(ShuntingSignals[0], SignalType.Shunting);
+            }
+            else
+            {
+                CreateMulti(ShuntingSignals, SignalType.Shunting);
+            }
+
+            _junctionFlag = false;
+
+            void CreateSingle(Signal signal, SignalType type)
+            {
+                var block = signal.Block;
+
+                if (block != null && !block.TracksCanChange && !_junctionFlag) return;
+
+                block = type switch
+                {
+                    SignalType.Spacing => TrackBlock.CreateForSpacing(StartingTrack, Direction, this),
+                    SignalType.Shunting => TrackBlock.CreateForShunting(StartingTrack, Direction, this),
+                    _ => TrackBlock.CreateUntilMainSignal(StartingTrack, Direction, this),
+                };
+
+                signal.SetBlock(block);
+            }
+
+            void CreateMulti(Signal[] signals, SignalType type)
+            {
+                var selected = Junction.selectedBranch;
+
+                for (byte i = 0; i < signals.Length; i++)
+                {
+                    var block = signals[i].Block;
+
+                    // No need to remake the block in this case.
+                    if (block != null && !block.TracksCanChange && !_junctionFlag) continue;
+
+                    Junction.selectedBranch = (byte)(i % Junction.outBranches.Count);
+                    var track = OverrideStart ?? Junction.GetCurrentBranch().track;
+                    block = type switch
+                    {
+                        SignalType.Spacing => TrackBlock.CreateForSpacing(track, Direction, this),
+                        SignalType.Shunting => TrackBlock.CreateForShunting(track, Direction, this),
+                        _ => TrackBlock.CreateUntilMainSignal(track, Direction, this),
+                    };
+
+                    signals[i].SetBlock(block);
+                }
+
+                Junction.selectedBranch = selected;
+            }
         }
 
         public override IEnumerable<TrackBlock> GetPotentialBlocks()
@@ -109,6 +153,40 @@ namespace Signals.Game.Controllers
 
                 Junction.selectedBranch = selected;
             }
+        }
+
+        public static JunctionSignalController? Replace(JunctionSignalController original, SignalControllerDefinition def)
+        {
+            if (!original.PlacementInfo.HasValue) return null;
+
+            var replacement = new JunctionSignalController(def, original.Junction, original.OverrideStart, original.PlacementInfo.Value)
+            {
+                ActingAsDistant = original.ActingAsDistant,
+                ShortDistance = original.ShortDistance
+            };
+
+            var group = original.Group;
+
+            if (group != null)
+            {
+                replacement.Group = group;
+
+                if (group.JunctionSignal == original)
+                {
+                    group.JunctionSignal = replacement;
+                }
+                if (group.ReverseJunctionSignal == original)
+                {
+                    group.ReverseJunctionSignal = replacement;
+                }
+                if (group.BranchSignals.Contains(original))
+                {
+                    group.BranchSignals.Add(replacement);
+                }
+            }
+
+            original.Destroy();
+            return replacement;
         }
     }
 }

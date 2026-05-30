@@ -2,14 +2,9 @@
 
 namespace Signals.Game.Aspects
 {
-    public class IsNextAspectAspect : AspectBase
+    public class IsNextAspectAspect : AspectBase<IsNextAspectAspectDefinition>
     {
-        private IsNextAspectAspectDefinition _fullDef;
-
-        public IsNextAspectAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal)
-        {
-            _fullDef = (IsNextAspectAspectDefinition)definition;
-        }
+        public IsNextAspectAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal) { }
 
         public override bool MeetsConditions()
         {
@@ -24,7 +19,7 @@ namespace Signals.Game.Aspects
             var state = signal.CurrentAspect;
 
             // Turned off signal can never meet conditions.
-            return state != null && state.Id == _fullDef.NextId;
+            return state != null && state.Id == Definition.NextId;
         }
     }
 }

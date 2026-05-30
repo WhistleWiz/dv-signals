@@ -13,5 +13,8 @@ namespace Signals.Common.Displays
         [Tooltip("Displayed when the track information is not available\n" +
             "Use a space to display an empty HUD icon, or no text to hide the HUD icon")]
         public string NoValidResultValue = "-";
+        [Tooltip("The maximum speed displayed\n" +
+            "Values above will be treated as not valid")]
+        public float MaximumDisplayed = 90;
     }
 }

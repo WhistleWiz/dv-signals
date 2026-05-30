@@ -10,12 +10,15 @@
     {
         NotSet,
         Mainline,
+        Diverging,
         JunctionLeft,
         JunctionRight,
         Entry,
         Exit,
         ExitPax,
+        StationMainline,
         Shunting,
+        Spacing,
     }
 
     public enum SignalType
@@ -25,8 +28,10 @@
         Entry,
         Exit,
         ExitPax,
+        Spacing,
         Shunting,
         Distant,
+        Repeater,
         Other
     }
 

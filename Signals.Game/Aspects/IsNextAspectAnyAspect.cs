@@ -3,14 +3,9 @@ using System.Linq;
 
 namespace Signals.Game.Aspects
 {
-    public class IsNextAspectAnyAspect : AspectBase
+    public class IsNextAspectAnyAspect : AspectBase<IsNextAspectAnyAspectDefinition>
     {
-        private IsNextAspectAnyAspectDefinition _fullDef;
-
-        public IsNextAspectAnyAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal)
-        {
-            _fullDef = (IsNextAspectAnyAspectDefinition)definition;
-        }
+        public IsNextAspectAnyAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal) { }
 
         public override bool MeetsConditions()
         {
@@ -25,7 +20,7 @@ namespace Signals.Game.Aspects
             var state = signal.CurrentAspect;
 
             // Turned off signal can never meet conditions.
-            return state != null && _fullDef.NextIds.Contains(state.Id);
+            return state != null && Definition.NextIds.Contains(state.Id);
         }
     }
 }

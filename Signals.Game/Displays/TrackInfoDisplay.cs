@@ -1,29 +1,47 @@
 ﻿using Signals.Common.Displays;
 using Signals.Game.Railway;
+using Signals.Game.Util;
 
 namespace Signals.Game.Displays
 {
-    public class TrackInfoDisplay : DisplayBase
+    public class TrackInfoDisplay : DisplayBase<TrackInfoDisplayDefinition>
     {
-        private TrackInfoDisplayDefinition _fullDef;
-
-        public TrackInfoDisplay(DisplayBaseDefinition definition, Signal signal) : base(definition, signal)
-        {
-            _fullDef = (TrackInfoDisplayDefinition)definition;
-        }
+        public TrackInfoDisplay(DisplayBaseDefinition definition, Signal signal) : base(definition, signal) { }
 
         public override void UpdateDisplay()
         {
-            DisplayText = _fullDef.NoValidResultValue;
+            string text = GetText(Signal.Block, Definition.Format);
 
-            string text = GetText(Signal.Block, _fullDef.Format);
-
-            DisplayText = string.IsNullOrEmpty(text) ? _fullDef.NoValidResultValue : text;
+            DisplayText = string.IsNullOrEmpty(text) ? Definition.NoValidResultValue : text;
         }
 
-        private static string GetText(TrackBlock? block, string format)
+        private string GetText(TrackBlock? block, string format)
         {
-            return block != null ? string.Format(format, block.Station, block.Yard, block.TrackNumber, block.TrackType) : string.Empty;
+            var isOut = !Controller.PlacementInfo.HasValue || Controller.PlacementInfo.Value.Direction.IsOut();
+
+            if (Definition.FromPlacement)
+            {
+                if (!Controller.PlacementInfo.HasValue) goto Empty;
+
+                var id = Controller.PlacementInfo.Value.Track.GetId();
+
+                if (id.IsGeneric()) goto Empty;
+
+                return string.Format(format, id.yardId, id.SignIDSubYardPart,
+                    ReflectionHelpers.GetOrderNumber(id), ReflectionHelpers.GetTrimmedOrderNumber(id), ReflectionHelpers.GetTrackType(id),
+                    Controller.OrientationSimple, Controller.Orientation, isOut ? "A" : "B");
+            }
+
+            if (block != null)
+            {
+                return string.Format(format, block.Station, block.Yard, block.TrackNumber, block.TrackTrimmerNumber, block.TrackType,
+                    Controller.OrientationSimple, Controller.Orientation, isOut ? "A" : "B");
+            }
+
+        Empty:
+
+            return string.Format(format, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty,
+                Controller.OrientationSimple, Controller.Orientation, isOut ? "A" : "B");
         }
     }
 }

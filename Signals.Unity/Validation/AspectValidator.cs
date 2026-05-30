@@ -52,6 +52,22 @@ namespace Signals.Unity.Validation
                 result.AddFailure($"{name}/{aspect.Id} - Light Sequences has null entries");
             }
 
+            if (aspect is CombinationAspectDefinition combination)
+            {
+                for (int i = 0; i < combination.Conditions.Length; i++)
+                {
+                    var condition = combination.Conditions[i];
+
+                    if (condition == null)
+                    {
+                        result.AddFailure($"{name}/{aspect.Id} - condition {i} is null");
+                        continue;
+                    }
+
+                    result.Merge(CheckAspect(condition, $"{name}/{aspect.Id}"));
+                }
+            }
+
             return result;
         }
     }

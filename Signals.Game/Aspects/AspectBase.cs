@@ -1,5 +1,6 @@
 ﻿using Signals.Common.Aspects;
 using Signals.Game.Controllers;
+using Signals.Game.Lights;
 using Signals.Game.Railway;
 using System.Linq;
 using UnityEngine;
@@ -7,21 +8,36 @@ using UnityEngine;
 namespace Signals.Game.Aspects
 {
     /// <summary>
+    /// Helper interface to handle generics. Do not implement directly, use <see cref="AspectBase"/> instead.
+    /// </summary>
+    public interface IAspect : IHudDisplayable
+    {
+        public string Id { get; }
+        public bool MeetsConditions();
+        public void Apply();
+        public void Unapply();
+    }
+
+    /// <summary>
     /// Base class for a signal aspect. It handles lights, animation and sound from a
     /// <see cref="AspectBaseDefinition"/> automatically.
     /// </summary>
-    public abstract class AspectBase : IHudDisplayable
+    /// <typeparam name="T">The <see cref="AspectBaseDefinition"/> for the aspect.</typeparam>
+    public abstract class AspectBase<T> : IAspect
+        where T : AspectBaseDefinition
     {
-        public AspectBaseDefinition Definition;
-        public Signal Signal;
 
         private SignalLight[] _on = null!;
         private SignalLight[] _blink = null!;
         private SignalLightSequence[] _sequences = null!;
 
+        public T Definition { get; private set; }
+        public Signal Signal { get; private set; }
+
         public string Id => Definition.Id;
         public TrackBlock? Block => Signal.Block;
         public bool Active { get; private set; }
+        public bool ShouldDisplay => true;
         public int DisplayOrder => Signal.DisplayOrder;
         public string? DisplayText => Signal.DisplayText;
         public Sprite? Sprite => Definition.HUDSprite;
@@ -30,15 +46,19 @@ namespace Signals.Game.Aspects
 
         public AspectBase(AspectBaseDefinition definition, Signal signal)
         {
-            Definition = definition;
             Signal = signal;
+            Definition = (T)definition;
 
-            _on = definition.OnLights.Select(x => x.GetController()).ToArray();
-            _blink = definition.BlinkingLights.Select(x => x.GetController()).ToArray();
-            _sequences = definition.LightSequences.Select(x => x.GetController()).ToArray();
+            if (Definition == null) throw new System.ArgumentException($"Type mismatch between definition and expected {typeof(T)}", nameof(definition));
+
+            _on = definition.OnLights.Select(x => x.GetController(signal)).ToArray();
+            _blink = definition.BlinkingLights.Select(x => x.GetController(signal)).ToArray();
+            _sequences = definition.LightSequences.Select(x => x.GetController(signal)).ToArray();
 
             Active = false;
         }
+
+        public AspectBaseDefinition GetDefinition() => Definition;
 
         /// <summary>
         /// Checks if the conditions for this aspect to be used are true.

@@ -2,20 +2,15 @@
 
 namespace Signals.Game.Aspects
 {
-    public class TrainDetectedAspect : AspectBase
+    public class TrainDetectedAspect : AspectBase<TrainDetectedAspectDefinition>
     {
-        private TrainDetectedAspectDefinition _fullDef;
-
-        public TrainDetectedAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal)
-        {
-            _fullDef = (TrainDetectedAspectDefinition)definition;
-        }
+        public TrainDetectedAspect(AspectBaseDefinition definition, Signal signal) : base(definition, signal) { }
 
         public override bool MeetsConditions()
         {
             var block = Block;
 
-            return block != null && block.IsOccupied(_fullDef.CrossingCheckMode);
+            return block != null && block.IsOccupied(Definition.CrossingCheckMode);
         }
     }
 }

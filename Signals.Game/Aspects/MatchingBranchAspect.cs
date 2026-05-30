@@ -2,14 +2,9 @@
 
 namespace Signals.Game.Aspects
 {
-    public class MatchingBranchAspect : AspectBase
+    public class MatchingBranchAspect : AspectBase<MatchingBranchAspectDefinition>
     {
-        private MatchingBranchAspectDefinition _fullDef;
-
-        public MatchingBranchAspect(AspectBaseDefinition def, Signal signal) : base(def, signal)
-        {
-            _fullDef = (MatchingBranchAspectDefinition)def;
-        }
+        public MatchingBranchAspect(AspectBaseDefinition def, Signal signal) : base(def, signal) { }
 
         public override bool MeetsConditions()
         {
@@ -17,9 +12,11 @@ namespace Signals.Game.Aspects
 
             if (group == null) return false;
 
+            if (Controller == group.JunctionSignal || Controller == group.ReverseJunctionSignal) return false;
+
             if (!group.TryGetControllerForTrack(group.Junction.GetCurrentBranch().track, out var branchController)) return false;
 
-            return _fullDef.Invert ? branchController != Controller : branchController == Controller;
+            return Definition.Invert ? branchController != Controller : branchController == Controller;
         }
     }
 }

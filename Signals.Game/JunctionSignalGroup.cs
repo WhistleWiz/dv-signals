@@ -30,7 +30,9 @@ namespace Signals.Game
                 if (JunctionSignal != null) yield return JunctionSignal;
                 if (ReverseJunctionSignal != null) yield return ReverseJunctionSignal;
 
-                foreach (var item in BranchSignals)
+                var temp = BranchSignals.ToArray();
+
+                foreach (var item in temp)
                 {
                     yield return item;
                 }

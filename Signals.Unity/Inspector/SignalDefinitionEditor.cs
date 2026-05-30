@@ -1,6 +1,7 @@
 ﻿using Signals.Common;
 using Signals.Common.Aspects;
 using Signals.Common.Displays;
+using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -41,7 +42,10 @@ namespace Signals.Unity.Inspector
 
                         if (GUILayout.Button("Get Aspects From Children"))
                         {
-                            def.Aspects = def.GetComponentsInChildren<AspectBaseDefinition>();
+                            var aspects = def.GetComponentsInChildren<AspectBaseDefinition>().ToList();
+                            var conditions = aspects.OfType<CombinationAspectDefinition>().SelectMany(x => x.Conditions).ToHashSet();
+                            aspects.RemoveAll(conditions.Contains);
+                            def.Aspects = aspects.ToArray();
                             AssetHelper.SaveAsset(target);
                         }
                         break;

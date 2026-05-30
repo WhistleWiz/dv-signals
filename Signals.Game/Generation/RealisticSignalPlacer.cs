@@ -2,6 +2,7 @@
 using Signals.Game.Controllers;
 using Signals.Game.Railway;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Signals.Game.Generation
 {
@@ -32,8 +33,12 @@ namespace Signals.Game.Generation
             }
         }
 
+        private static HashSet<RailTrack> s_stationTracks = new HashSet<RailTrack>();
+
         public override void CreateSignals(SignalPack pack, Dictionary<Junction, JunctionSignalGroup> registry)
         {
+            s_stationTracks.Clear();
+
             foreach (var junction in RailTrackRegistry.Junctions)
             {
                 if (registry.ContainsKey(junction)) continue;
@@ -54,28 +59,40 @@ namespace Signals.Game.Generation
             var inTrack = junction.inBranch.track;
             var anyYard = false;
             var old = IsOld(junction);
+            var deadEnd = false;
+            var deadCheck = false;
+            var stationEnd = false;
+            var stationCheck = false;
 
             // Check branches.
             foreach (var branch in junction.outBranches)
             {
                 var track = branch.track.outBranch.track;
-                var deadEnd = false;
-                var deadCheck = false;
+                deadCheck = false;
+                stationCheck = false;
 
                 // If it's any of the logic yard tracks, it needs a signal for exit.
-                if (IsPaxTrack(track) && !GoesToDeadEnd())
+                if (IsPaxTrack(track) && !GoesToDeadEndIn() && LeavesStationIn())
                 {
                     branchTrackKey.Add(track, GetPlacement(PrefabType.ExitPax, old));
                     anyYard = true;
                 }
-                else if (IsInOrOutTrack(track) && !GoesToDeadEnd())
+                else if (IsInOrOutTrack(track) && !GoesToDeadEndIn() && LeavesStationIn())
                 {
                     branchTrackKey.Add(track, GetPlacement(PrefabType.Exit, old));
                     anyYard = true;
                 }
                 else if (IsLogicYardTrack(track))
                 {
-                    branchTrackKey.Add(track, GetPlacement(PrefabType.Shunting, old));
+                    if (IsLoadingTrack(track) && !inTrack.IsPartOfStation())
+                    {
+                        branchTrackKey.Add(track, ShuntingOrSpacing(track));
+                    }
+                    else
+                    {
+                        branchTrackKey.Add(track, GetPlacement(PrefabType.Shunting, old));
+                    }
+
                     anyYard = true;
                 }
                 // If it's not part of a station, then it requires a normal signal.
@@ -83,57 +100,75 @@ namespace Signals.Game.Generation
                 {
                     // If the branch is a short dead end or comes from a station track and is short,
                     // use a shunting signal.
-                    // Only place the mainline signal if the in track isn't a short dead end either.
                     if (IsShortDeadEnd(track) || ComesFromStationAndIsShort(track))
                     {
+                        anyYard = true;
                         branchTrackKey.Add(track, GetPlacement(PrefabType.Shunting, old));
                     }
-                    else if (!IsShortDeadEnd(inTrack))
+                    else if (!IsMainlineCountedAsYard(track) && (IsMainlineCountedAsYard(inTrack) || inTrack.IsPartOfStation()))
                     {
-                        branchTrackKey.Add(track, GetPlacement(PrefabType.Mainline, old));
+                        branchTrackKey.Add(track, GetPlacement(PrefabType.Entry, old));
                     }
-                }
-                // If it's a station track between 2 mains, it needs a normal signal.
-                else if (IsBetweenMains(track))
-                {
-                    branchTrackKey.Add(track, GetPlacement(PrefabType.Mainline, old));
+                    else if (IsMainlineCountedAsYard(track))
+                    {
+                        anyYard = true;
+                        branchTrackKey.Add(track, ShuntingOrSpacing(track));
+                    }
+                    else
+                    {
+                        // Only place the mainline signal if the in track isn't a short dead end either.
+                        if (!IsShortDeadEnd(inTrack))
+                        {
+                            branchTrackKey.Add(track, GetPlacement(branch.IsThroughTrack() ? PrefabType.Mainline : PrefabType.Diverging, old));
+                        }
+                    }
                 }
                 else
                 {
-                    if (track.GetLength() < LongTrackThreshold)
-                    {
-                        anyYard = true;
-                    }
+                    anyYard = true;
 
                     // Generic yard tracks required a certain length to have a signal.
-                    if (track.GetLength() > SmallTrackThreshold)
+                    if (track.GetLength() <= SmallTrackThreshold) continue;
+
+                    // If this track can be considered a mainline through the yard, then give it proper signals.
+                    if (IsYardTrackMainline(branch) && !GoesToDeadEndIn() && LeavesStationIn())
                     {
-                        // If this track can be considered a mainline through the yard, then give it proper signals.
-                        if (IsYardTrackMainline(branch))
-                        {
-                            // Manually change the type.
-                            var placement = GetPlacement(PrefabType.Exit, old);
-                            placement.SignalType = SignalType.Mainline;
-                            branchTrackKey.Add(track, placement);
-                        }
-                        else
-                        {
-                            branchTrackKey.Add(track, GetPlacement(PrefabType.Shunting, old));
-                        }
+                        branchTrackKey.Add(track, GetPlacement(PrefabType.StationMainline, old));
+                    }
+                    else
+                    {
+                        // If it goes to a dead end just use a shunting signal as usual, else do the spacing thingy.
+                        branchTrackKey.Add(track, GoesToDeadEndIn() ? GetPlacement(PrefabType.Shunting, old) : ShuntingOrSpacing(track));
                     }
                 }
 
                 // Quick function to prevent running this loop multiple times.
-                bool GoesToDeadEnd()
+                bool GoesToDeadEndIn()
                 {
                     if (!deadCheck)
                     {
                         deadEnd = TrackWalker.GoesToDeadEnd(branch.track, TrackDirection.In);
+                        deadCheck = true;
                     }
 
                     return deadEnd;
                 }
+
+                // Same for station.
+                bool LeavesStationIn()
+                {
+                    if (!stationCheck)
+                    {
+                        stationEnd = !TrackWalker.RemainsInTheSameStation(branch.track, TrackDirection.In, junction.GetStation());
+                        stationCheck = true;
+                    }
+
+                    return stationEnd;
+                }
             }
+
+            deadCheck = false;
+            stationCheck = false;
 
             // If the in track is a generic yard track it doesn't get a signal, unless it's big.
             if (inTrack.IsPartOfYard() && !IsLogicYardTrack(inTrack) && inTrack.GetLength() < SmallTrackThreshold)
@@ -146,13 +181,14 @@ namespace Signals.Game.Generation
             }
 
             PlacementHelper junctionSignal;
+            var isMain = false;
 
             // For the junction side, do the same checks for inputs and outputs.
-            if (IsPaxTrack(inTrack))
+            if (IsPaxTrack(inTrack) && !GoesToDeadEndOut() && LeavesStationOut())
             {
                 junctionSignal = GetPlacement(PrefabType.ExitPax, old);
             }
-            else if (IsInOrOutTrack(inTrack))
+            else if (IsInOrOutTrack(inTrack) && !GoesToDeadEndOut() && LeavesStationOut())
             {
                 junctionSignal = GetPlacement(PrefabType.Exit, old);
             }
@@ -164,19 +200,41 @@ namespace Signals.Game.Generation
                     return new JunctionSignalGroup(junction, null, CreateBranchSignals(junction, branchTrackKey, branchDistance));
                 }
 
-                junctionSignal = GetPlacement(PrefabType.Shunting, old);
+                // Special handling for loading tracks as they may act as mainlines (IME, CME...).
+                if (IsLoadingTrack(inTrack) || inTrack.IsNonSign())
+                {
+                    junctionSignal = ShuntingOrSpacing(inTrack);
+                }
+                else
+                {
+                    junctionSignal = GetPlacement(PrefabType.Shunting, old);
+                }
             }
             // If the track goes into any yard track...
             else if (anyYard)
             {
-                junctionSignal = GetPlacement(PrefabType.Entry, old);
+                // If the track is marked as mainline but is actually short and within station tracks,
+                // then fall back to either shunting or spacing signals.
+                // Same with yard tracks.
+                if (IsMainlineCountedAsYard(inTrack) || inTrack.IsPartOfStation())
+                {
+                    junctionSignal = ShuntingOrSpacing(inTrack);
+                }
+                else
+                {
+                    // Otherwise it's an entrance into a station, so entry signal.
+                    junctionSignal = GetPlacement(PrefabType.Entry, old);
+                    isMain = true;
+                }
             }
             else
             {
                 junctionSignal = junction.IsLeft() ? GetPlacement(PrefabType.JunctionLeft, old) : GetPlacement(PrefabType.JunctionRight, old);
+                isMain = true;
             }
 
-            var junctionController = CreateSignalAtJunction(junction, junctionSignal.Definition);
+            var junctionController = CreateSignalAtJunction(junction, junctionSignal.Definition,
+                isMain ? LongJunctionPlacementDistance : JunctionPlacementDistance);
             junctionSignal.Apply(junctionController);
 
             return new JunctionSignalGroup(junction, junctionController,
@@ -186,49 +244,59 @@ namespace Signals.Game.Generation
             {
                 return new PlacementHelper(GetForType(pack, prefabType, old), prefabType, old);
             }
+
+            PlacementHelper ShuntingOrSpacing(RailTrack track)
+            {
+                var spacing = pack.GetSpacingSignal(old);
+
+                if (spacing != null && track.GetLength() > SpacingThreshold)
+                {
+                    return new PlacementHelper(spacing, PrefabType.Spacing, old);
+                }
+                else
+                {
+                    return GetPlacement(PrefabType.Shunting, old);
+                }
+            }
+
+            bool GoesToDeadEndOut()
+            {
+                if (!deadCheck)
+                {
+                    deadEnd = junction.outBranches.Any(x => TrackWalker.GoesToDeadEnd(x.track, TrackDirection.Out));
+                    deadCheck = true;
+                }
+
+                return deadEnd;
+            }
+
+            bool LeavesStationOut()
+            {
+                if (!stationCheck)
+                {
+                    var station = junction.GetStation();
+                    stationEnd = junction.outBranches.Any(x => !TrackWalker.RemainsInTheSameStation(x.track, TrackDirection.Out, station));
+                    stationCheck = true;
+                }
+
+                return stationEnd;
+            }
         }
 
         private static SignalType GetSignalType(PrefabType prefab) => prefab switch
         {
             PrefabType.Mainline => SignalType.Mainline,
+            PrefabType.Diverging => SignalType.Mainline,
             PrefabType.JunctionLeft => SignalType.Mainline,
             PrefabType.JunctionRight => SignalType.Mainline,
             PrefabType.Entry => SignalType.Entry,
             PrefabType.Exit => SignalType.Exit,
             PrefabType.ExitPax => SignalType.ExitPax,
             PrefabType.Shunting => SignalType.Shunting,
+            PrefabType.StationMainline => SignalType.Mainline,
+            PrefabType.Spacing => SignalType.Spacing,
             _ => SignalType.NotSet,
         };
-
-        private static bool IsBetweenMains(RailTrack track)
-        {
-            //var inBranch = track.GetInBranch();
-            //var outBranch = track.GetOutBranch();
-
-            //if (inBranch == null || outBranch == null || !inBranch.track.isJunctionTrack || !outBranch.track.isJunctionTrack)
-            //{
-            //    return false;
-            //}
-
-            //inBranch = inBranch.track.GetInBranch();
-            //outBranch = outBranch.track.GetInBranch();
-
-            //if (inBranch == null || outBranch == null)
-            //{
-            //    return false;
-            //}
-
-            //return !IsPartOfStation(inBranch.track) && !IsPartOfStation(outBranch.track);
-
-            var inSide = TrackWalker.WalkTracks(track, TrackDirection.In, 2);
-            // Not enough tracks.
-            if (inSide.Count < 2) return false;
-
-            var outSide = TrackWalker.WalkTracks(track, TrackDirection.Out, 2);
-            if (outSide.Count < 2) return false;
-
-            return !inSide[1].Track.IsPartOfStation() && !outSide[1].Track.IsPartOfStation();
-        }
 
         private static bool ComesFromStationAndIsShort(RailTrack track)
         {
@@ -247,13 +315,69 @@ namespace Signals.Game.Generation
         {
             if (!branch.track.outBranch.track.IsPartOfYard()) return false;
 
-            if (branch.track.name != "[track through]") return false;
+            if (!branch.IsThroughTrack()) return false;
 
             var tracks = TrackWalker.WalkTracks(branch.track, TrackDirection.In, 3);
 
             if (tracks.Count < 3 || !tracks[0].Track.IsPartOfStation()) return false;
 
             return !tracks[2].Track.IsPartOfYard();
+        }
+
+        private static bool IsMainlineCountedAsYard(RailTrack track)
+        {
+            if (s_stationTracks.Contains(track)) return true;
+
+            var j1 = TrackWalker.GetNextJunction(track, TrackDirection.In);
+            var j2 = TrackWalker.GetNextJunction(track, TrackDirection.Out);
+
+            if (j1 != null)
+            {
+                var station = j1.GetStation();
+
+                if (!string.IsNullOrEmpty(station) && (j2 == null || station == j2.GetStation()))
+                {
+                    s_stationTracks.Add(track);
+                    return true;
+                }
+
+                return false;
+            }
+
+            if (j2 != null && !string.IsNullOrEmpty(j2.GetStation()))
+            {
+                s_stationTracks.Add(track);
+                return true;
+            }
+
+            return false;
+
+            //var j1 = track.inJunction ?? (track.GetInBranch()?.track?.inJunction);
+            //var j2 = track.outJunction ?? (track.GetOutBranch()?.track?.inJunction);
+
+            //if (j1 != null && j2 != null)
+            //{
+            //    var station = j1.GetStation();
+
+            //    if (!string.IsNullOrEmpty(station) && station == j2.GetStation())
+            //    {
+            //        s_stationTracks.Add(track);
+            //        return true;
+            //    }
+            //}
+
+            //if (track.GetLength() > SmallTrackThreshold) return false;
+
+            //var tracks = TrackWalker.WalkTracks(track, TrackDirection.In, 2);
+
+            //if (tracks.Count < 2 || !tracks[1].Track.IsPartOfStation()) return false;
+
+            //tracks = TrackWalker.WalkTracks(track, TrackDirection.Out, 2);
+
+            //if (tracks.Count < 2 || !tracks[1].Track.IsPartOfStation()) return false;
+
+            //s_stationTracks.Add(track);
+            //return true;
         }
 
         private static List<TrackSignalController> CreateBranchSignals(Junction junction,

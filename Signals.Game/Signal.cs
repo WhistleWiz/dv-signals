@@ -2,6 +2,7 @@
 using Signals.Game.Aspects;
 using Signals.Game.Controllers;
 using Signals.Game.Displays;
+using Signals.Game.Lights;
 using Signals.Game.Railway;
 using Signals.Game.Util;
 using System;
@@ -17,6 +18,7 @@ namespace Signals.Game
 
         private static int s_idGen = 0;
         private static object s_lock = new object();
+        private static Renderer[] s_emptyRenderers = Array.Empty<Renderer>();
 
         // Get a unique ID for the signal.
         private static int GetGenId()
@@ -45,12 +47,13 @@ namespace Signals.Game
 
         #region Members
 
-        private SignalHover? _hover;
         private SignalDefinitionToInstance? _comp;
         private SignalOperationMode _operation = SignalOperationMode.Automatic;
         private int _manualOverride = 0;
 
         protected string InternalName = string.Empty;
+
+        internal SignalHover? Hover;
 
         public readonly int Id;
         /// <summary>
@@ -63,14 +66,14 @@ namespace Signals.Game
         #region Properties
 
         // Used for comms radio highlighting.
-        internal Renderer[] HighlightRenderers => _hover != null ? ReflectionHelpers.GetRenderers(_hover) : Array.Empty<Renderer>();
+        internal Renderer[] HighlightRenderers => Hover != null ? ReflectionHelpers.GetRenderers(Hover) : s_emptyRenderers;
 
         public BasicSignalController Controller { get; private set; }
         public SignalDefinition Definition { get; private set; }
         public SignalLight[] AllLights { get; private set; }
-        public AspectBase[] AllAspects { get; private set; }
-        public DisplayBase[] AllDisplays { get; private set; }
-        public AspectBase[] AllIndicators { get; private set; }
+        public IAspect[] AllAspects { get; private set; }
+        public IDisplay[] AllDisplays { get; private set; }
+        public IAspect[] AllIndicators { get; private set; }
         /// <summary>
         /// The block of tracks this signal works with.
         /// </summary>
@@ -80,15 +83,16 @@ namespace Signals.Game
         public int CurrentAspectIndex { get; private set; }
 
         // Getters only.
-        public AspectBase? CurrentAspect => IsOn ? AllAspects[CurrentAspectIndex] : null;
+        public IAspect? CurrentAspect => IsOn ? AllAspects[CurrentAspectIndex] : null;
         public SignalOperationMode Operation => _operation;
-        public bool Hovered => _hover != null && ReflectionHelpers.IsHovered(_hover);
+        public bool Hovered => Hover != null && ReflectionHelpers.IsHovered(Hover);
         public bool IsOff => CurrentAspectIndex < 0;
         public bool IsOn => CurrentAspectIndex >= 0;
         public int ManualOverrideAspect => _manualOverride;
         public string Name => string.IsNullOrEmpty(NameOverride) ? InternalName : NameOverride;
 
         // IHudDisplayable implementation.
+        public bool ShouldDisplay => true;
         public int DisplayOrder => Definition.HUDDisplayOrder;
         public string? DisplayText => " ";
         public Sprite? Sprite => Definition.OffStateHUDSprite;
@@ -98,8 +102,8 @@ namespace Signals.Game
 
         #region Events
 
-        public Action<AspectBase?>? AspectChanged;
-        public Action<DisplayBase[]>? DisplaysUpdated;
+        public Action<IAspect?>? AspectChanged;
+        public Action<IDisplay[]>? DisplaysUpdated;
         public Action<SignalOperationMode>? OperationModeChanged;
         public Action<int>? OverrideChanged;
 
@@ -130,9 +134,9 @@ namespace Signals.Game
 
             SignalManager.Instance.RegisterSignal(this);
 
-            if (Definition.gameObject.TryGetComponent(out _hover))
+            if (Definition.gameObject.TryGetComponent(out Hover))
             {
-                _hover!.Initialise(Definition.OffStateHUDSprite);
+                Hover!.Initialise(Definition.OffStateHUDSprite);
             }
         }
 
@@ -165,7 +169,10 @@ namespace Signals.Game
 
         public void DestroyDistant()
         {
-            DistantSignal?.Destroy();
+            if (DistantSignal == null) return;
+
+            Hover?.ForceRemoveRenderers(DistantSignal.Definition.GetComponentsInChildren<Renderer>(true));
+            DistantSignal.Destroy();
             DistantSignal = null;
         }
 
@@ -234,7 +241,7 @@ namespace Signals.Game
             CurrentAspect?.Unapply();
 
             var aspect = AllAspects[newAspect];
-            SignalsMod.LogVerbose($"Setting signal '{Name}' to aspect '{aspect.Definition.Id}'");
+            SignalsMod.LogVerbose($"Setting signal '{Name}' to aspect '{aspect.Id}'");
             aspect.Apply();
             CurrentAspectIndex = newAspect;
             AspectChanged?.Invoke(aspect);
@@ -253,7 +260,9 @@ namespace Signals.Game
 
             for (int i = 0; i < AllAspects.Length; i++)
             {
-                if (IsAspectManuallyOverriden(i) || AllAspects[i].MeetsConditions())
+                var aspect = AllAspects[i];
+
+                if (IsAspectManuallyOverriden(i) || aspect.MeetsConditions())
                 {
                     changed = ChangeAspect(i);
 
@@ -315,7 +324,7 @@ namespace Signals.Game
 
         public void UpdateHoverDisplay()
         {
-            _hover?.UpdateStateDisplay(this);
+            Hover?.UpdateStateDisplay(this);
         }
 
         public bool SetAspectOverride(int index)

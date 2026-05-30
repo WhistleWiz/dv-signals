@@ -1,10 +1,11 @@
 ﻿using Signals.Common;
 using UnityEngine;
 
-namespace Signals.Game
+namespace Signals.Game.Lights
 {
     public class SignalLight : MonoBehaviour
     {
+
         private static Transform? s_glare;
         private static Transform Glare
         {
@@ -20,12 +21,17 @@ namespace Signals.Game
             }
         }
 
+        protected LampControl.LampState InternalState = LampControl.LampState.None;
+
         public LampControl Lamp = null!;
         public SignalLightDefinition Definition = null!;
 
-        public void Initialize(SignalLightDefinition def)
+        public Signal Signal { get; private set; } = null!;
+
+        public virtual void Initialize(SignalLightDefinition def, Signal signal)
         {
             Definition = def;
+            Signal = signal;
 
             // Prevent Awake from running on the indicator and lamp control.
             def.gameObject.SetActive(false);
@@ -63,24 +69,29 @@ namespace Signals.Game
         /// Turns on the light.
         /// </summary>
         /// <param name="blink">Optional blinking state.</param>
-        public void TurnOn(bool blink = false)
+        public virtual void TurnOn(bool blink = false)
         {
-            if (blink)
-            {
-                Lamp.SetLampState(LampControl.LampState.Blinking);
-            }
-            else
-            {
-                Lamp.SetLampState(LampControl.LampState.On);
-            }
+            InternalState = blink ? LampControl.LampState.Blinking : LampControl.LampState.On;
+            UpdateFromState();
         }
 
         /// <summary>
         /// Turns off the light.
         /// </summary>
-        public void TurnOff()
+        public virtual void TurnOff()
+        {
+            InternalState = LampControl.LampState.Off;
+            UpdateFromState();
+        }
+
+        protected void ForceOff()
         {
             Lamp.SetLampState(LampControl.LampState.Off);
+        }
+
+        protected void UpdateFromState()
+        {
+            Lamp.SetLampState(InternalState);
         }
     }
 }

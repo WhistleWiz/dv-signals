@@ -14,26 +14,34 @@ namespace Signals.Game
         private static Type[] s_defaultTypes;
         private static HashSet<Type> s_failedDisplays = new HashSet<Type>();
 
-        internal static Dictionary<Type, Func<DisplayBaseDefinition, Signal, DisplayBase>> CreatorFunctions;
+        internal static Dictionary<Type, Func<DisplayBaseDefinition, Signal, IDisplay>> CreatorFunctions;
 
         static DisplayCreator()
         {
-            CreatorFunctions = new Dictionary<Type, Func<DisplayBaseDefinition, Signal, DisplayBase>>
-            {
-                { typeof(SignalIdDisplayDefinition), (x, y) => new SignalIdDisplay(x, y) },
-                { typeof(JunctionBranchDisplayDefinition), (x, y) => new JunctionBranchDisplay(x, y) },
-                { typeof(JunctionIdDisplayDefinition), (x, y) => new JunctionIdDisplay(x, y) },
-                { typeof(TrackInfoDisplayDefinition), (x, y) => new TrackInfoDisplay(x, y) },
-                { typeof(DistanceToNextDisplayDefinition), (x, y) => new DistanceToNextDisplay(x, y) },
-                { typeof(StaticDisplayDefinition), (x, y) => new StaticDisplay(x, y) },
-                { typeof(NextStationDisplayDefinition), (x, y) => new NextStationDisplay(x, y) },
-                { typeof(SpeedLimitDisplayDefinition), (x, y) => new SpeedLimitDisplay(x, y) }
-            };
+            CreatorFunctions = new Dictionary<Type, Func<DisplayBaseDefinition, Signal, IDisplay>>();
+
+            Add((x, y) => new StaticDisplay(x, y));
+            Add((x, y) => new SignalIdDisplay(x, y));
+
+            Add((x, y) => new JunctionBranchDisplay(x, y));
+            Add((x, y) => new JunctionIdDisplay(x, y));
+
+            Add((x, y) => new DistanceToNextDisplay(x, y));
+            Add((x, y) => new NextStationDisplay(x, y));
+            Add((x, y) => new SpeedLimitDisplay(x, y));
+            Add((x, y) => new TrackInfoDisplay(x, y));
 
             s_defaultTypes = CreatorFunctions.Keys.ToArray();
+
+            static void Add<T>(Func<DisplayBaseDefinition, Signal, DisplayBase<T>> func)
+                where T : DisplayBaseDefinition
+            {
+                CreatorFunctions.Add(typeof(T), func);
+            }
         }
 
-        internal static DisplayBase? Create(Signal signal, DisplayBaseDefinition? def)
+        internal static IDisplay? Create<T>(Signal signal, T? def)
+            where T : DisplayBaseDefinition
         {
             if (def == null) return null;
 
@@ -63,7 +71,7 @@ namespace Signals.Game
         /// <para>Inputs are the definition and the controller.</para>
         /// </param>
         /// <returns><see langword="true"/> if the type was sucessfully added, otherwise <see langword="false"/>.</returns>
-        public static bool AddCreatorFunction<T>(Func<DisplayBaseDefinition, Signal, DisplayBase> func)
+        public static bool AddCreatorFunction<T>(Func<DisplayBaseDefinition, Signal, DisplayBase<T>> func)
             where T : DisplayBaseDefinition
         {
             var t = typeof(T);
@@ -82,7 +90,7 @@ namespace Signals.Game
         /// <summary>
         /// Remove your custom display creators.
         /// </summary>
-        /// <returns><see langword="true"/> if the tpe was sucessfully removed, otherwise <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the type was sucessfully removed, otherwise <see langword="false"/>.</returns>
         /// <remarks>This method will not remove the default types.</remarks>
         public static bool RemoveCreatorFunction<T>()
             where T : DisplayBaseDefinition

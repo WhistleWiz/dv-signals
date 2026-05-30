@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using Signals.Common.Conditions;
+using TMPro;
 using UnityEngine;
 
 namespace Signals.Common.Displays
@@ -31,6 +32,8 @@ namespace Signals.Common.Displays
         public int HUDDisplayOrder = 1;
         [Tooltip("Optional world text object to assign the value of this display")]
         public TMP_Text? Text;
+        [Tooltip("Optional conditions to limit when this display is active")]
+        public ConditionBaseDefinition[] Conditions = new ConditionBaseDefinition[0];
 
         public string DisplayText
         {

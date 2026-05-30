@@ -53,17 +53,12 @@ namespace Signals.Unity.Validation
 
             foreach (var signal in definition.Signals)
             {
-                if (signal == null)
-                {
-                    return Fail("null signals in controller");
-                }
-
                 result.Merge(ValidateSignal(signal));
             }
 
-            if (definition.ShuntingSignal != null)
+            foreach (var signal in definition.ShuntingSignals)
             {
-                result.Merge(ValidateSignal(definition.ShuntingSignal));
+                result.Merge(ValidateSignal(signal));
             }
 
             return result;
