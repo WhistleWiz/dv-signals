@@ -1,8 +1,10 @@
-﻿using Signals.Common;
+﻿using DV.Signs;
+using Signals.Common;
 using Signals.Game.Aspects;
 using Signals.Game.Controllers;
 using Signals.Game.Displays;
 using Signals.Game.Lights;
+using Signals.Game.Misc;
 using Signals.Game.Railway;
 using Signals.Game.Util;
 using System;
@@ -116,14 +118,14 @@ namespace Signals.Game
             Definition = def;
             CurrentAspectIndex = OffValue;
 
-            // Get an array of all lights.
-            AllLights = def.GetComponentsInChildren<SignalLight>(true);
             // Instantiate all aspect implementations.
             AllAspects = def.Aspects.Select(x => AspectCreator.Create(this, x)).Where(x => x != null).ToArray()!;
             // Same but for displays.
             AllDisplays = def.Displays.Select(x => DisplayCreator.Create(this, x)).Where(x => x != null).ToArray()!;
             // And finally the same for indicators.
             AllIndicators = def.Indicators.Select(x => AspectCreator.Create(this, x)).Where(x => x != null).ToArray()!;
+            // Get an array of all lights after they were created by the aspects.
+            AllLights = def.GetComponentsInChildren<SignalLight>(true);
 
             if (def.DistantSignal != null)
             {
@@ -137,6 +139,11 @@ namespace Signals.Game
             if (Definition.gameObject.TryGetComponent(out Hover))
             {
                 Hover!.Initialise(Definition.OffStateHUDSprite);
+            }
+
+            if (Definition.PhysicalReserver != null)
+            {
+                SignalReservingObject.Create(Definition.PhysicalReserver, this);
             }
         }
 

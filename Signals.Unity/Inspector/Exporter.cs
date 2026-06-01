@@ -105,9 +105,24 @@ namespace Signals.Unity.Inspector
 
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
 
+            var oldReached = false;
+            var otherReached = false;
+
             foreach (var result in _results)
             {
-                DrawResults(result);
+                if (!oldReached && result.Name.StartsWith("Old"))
+                {
+                    oldReached = true;
+                    EditorHelper.DrawSeparator();
+                }
+
+                if (!otherReached && result.Name.StartsWith("Other"))
+                {
+                    otherReached = true;
+                    EditorHelper.DrawSeparator();
+                }
+
+                DrawResults(result, _widths.ToOptions());
             }
 
             EditorGUILayout.EndScrollView();
@@ -138,10 +153,8 @@ namespace Signals.Unity.Inspector
             GUI.enabled = true;
         }
 
-        private void DrawResults(SignalResults results)
+        private void DrawResults(SignalResults results, GUILayoutOption[] options)
         {
-            var options = _widths.ToOptions();
-
             EditorGUILayout.BeginVertical(GUI.skin.box);
 
             results.Expanded = EditorGUILayout.BeginFoldoutHeaderGroup(results.Expanded, results.Name);
@@ -234,6 +247,11 @@ namespace Signals.Unity.Inspector
             ValidateController(_pack.OldCombinedSignal, "Old Combined Main Signal");
             ValidateController(_pack.OldCombinedLeftJunctionSignal, "Old Combined Left Junction Signal");
             ValidateController(_pack.OldCombinedRightJunctionSignal, "Old Combined Right Junction Signal");
+
+            for (int i = 0; i < _pack.OtherSignals.Length; i++)
+            {
+                ValidateController(_pack.OtherSignals[i], $"Other {i}");
+            }
 
         Widths:
 

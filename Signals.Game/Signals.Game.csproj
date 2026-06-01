@@ -17,10 +17,12 @@
 		<Reference Include="UnityEngine.AssetBundleModule" />
 		<Reference Include="UnityEngine.AudioModule" />
 		<Reference Include="UnityEngine.CoreModule" />
+		<Reference Include="UnityEngine.IMGUIModule" />
 		<Reference Include="UnityEngine.PhysicsModule" />
     <Reference Include="UnityEngine.UI" />
     <Reference Include="Unity.TextMeshPro" />
 		<Reference Include="DV.Common" />
+		<Reference Include="DV.CabControls.Spec" />
 		<Reference Include="DV.Interaction" />
 		<Reference Include="DV.Localization" />
 		<Reference Include="DV.NAudio" />

@@ -17,6 +17,7 @@ namespace Signals.Common
         [Header("Optional"), Tooltip("Centre position of the light's glare\n" +
             "Positive Z points to the visible direction")]
         public Transform? Glare;
+        public Light? Light;
 
         private void Reset()
         {

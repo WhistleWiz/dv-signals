@@ -16,6 +16,8 @@ namespace Signals.Common
         public Sprite? OffStateHUDSprite;
         [Tooltip("Lower values are placed above higher values")]
         public int HUDDisplayOrder = 0;
+        [Tooltip("If true, will synchronise lamp states when changing aspect")]
+        public bool SynchroniseLamps = true;
 
         [Header("Optional")]
         [Tooltip("Displays that aren't part of aspects")]
@@ -27,5 +29,7 @@ namespace Signals.Common
         public SignalDefinition? DistantSignal;
         [Tooltip("In case this signal displays distant state by itself")]
         public bool SelfActsAsDistant = false;
+        [Tooltip("A physical object that can reserve the signal")]
+        public SignalReservingObjectDefinition? PhysicalReserver;
     }
 }

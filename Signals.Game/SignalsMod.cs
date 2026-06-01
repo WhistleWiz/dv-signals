@@ -24,7 +24,7 @@ namespace Signals.Game
                 return false;
             }
 
-            Instance.OnGUI += Settings.Draw;
+            Instance.OnGUI += Settings.DrawGUI;
             Instance.OnSaveGUI += Settings.Save;
             Instance.OnUnload += Unload;
 

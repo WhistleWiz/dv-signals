@@ -155,13 +155,12 @@ namespace Signals.Game
                 }
             }
 
-            static bool ProcessSignal(SignalDefinition signal)
+            static void ProcessSignal(SignalDefinition signal)
             {
-                if (signal.TryGetComponent<SignalHover>(out var hover)) return false;
+                if (signal.TryGetComponent<SignalHover>(out var hover)) return;
 
                 hover = signal.gameObject.AddComponent<SignalHover>();
                 hover.gameObject.layer = LaserPointerTargetLayer;
-                return true;
             }
         }
 

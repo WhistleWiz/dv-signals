@@ -5,6 +5,7 @@ namespace Signals.Game.Lights
 {
     public class SignalLight : MonoBehaviour
     {
+        public const float SmallFloat = 0.0009999871f;
 
         private static Transform? s_glare;
         private static Transform Glare
@@ -28,6 +29,8 @@ namespace Signals.Game.Lights
 
         public Signal Signal { get; private set; } = null!;
 
+        public bool IsActive => Lamp.lampInd.EmissionValue > SmallFloat;
+
         public virtual void Initialize(SignalLightDefinition def, Signal signal)
         {
             Definition = def;
@@ -40,6 +43,7 @@ namespace Signals.Game.Lights
             indicator.lag = def.Lag;
             indicator.lightIntensity = def.LightIntensity;
             indicator.emissionColor = def.Colour;
+            indicator.emissionLight = def.Light;
             indicator.glareColor = def.Colour;
             indicator.renderers = def.Renderers;
 

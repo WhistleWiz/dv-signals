@@ -1,22 +1,26 @@
 ﻿using Signals.Common.Aspects;
+using Signals.Game.Controllers;
 
 namespace Signals.Game.Aspects
 {
     public class MatchingBranchAspect : AspectBase<MatchingBranchAspectDefinition>
     {
+
         public MatchingBranchAspect(AspectBaseDefinition def, Signal signal) : base(def, signal) { }
 
         public override bool MeetsConditions()
         {
+            if (!(Controller is TrackSignalController tController)) return false;
+
             var group = Controller.Group;
 
             if (group == null) return false;
 
             if (Controller == group.JunctionSignal || Controller == group.ReverseJunctionSignal) return false;
 
-            if (!group.TryGetControllerForTrack(group.Junction.GetCurrentBranch().track, out var branchController)) return false;
+            var trackMatch = group.Junction.GetCurrentBranch().track == tController.StartingTrack;
 
-            return Definition.Invert ? branchController != Controller : branchController == Controller;
+            return Definition.Invert ? !trackMatch : trackMatch;
         }
     }
 }

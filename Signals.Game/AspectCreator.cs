@@ -37,6 +37,7 @@ namespace Signals.Game
             Add((x, y) => new JunctionPathAspect(x, y));
             Add((x, y) => new MatchingPathAspect(x, y));
             Add((x, y) => new RequiredPathAspect(x, y));
+            Add((x, y) => new SpecialMatchingPathAspect(x, y));
 
             Add((x, y) => new MaxSpeedAspect(x, y));
             Add((x, y) => new CombinationAspect(x, y));

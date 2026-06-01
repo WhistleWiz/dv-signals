@@ -33,6 +33,11 @@ namespace Signals.Unity
             EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
         }
 
+        public static void DrawSeparator()
+        {
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+        }
+
         public static GUIStyle StyleWithTextColour(Color c, GUIStyle original)
         {
             return new GUIStyle(original) { normal = new GUIStyleState() { textColor = c } };

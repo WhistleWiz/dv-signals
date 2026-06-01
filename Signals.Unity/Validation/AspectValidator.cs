@@ -37,6 +37,7 @@ namespace Signals.Unity.Validation
         {
             var result = Pass();
 
+            // Check nulls.
             if (aspect.OnLights.Any(x => x == null))
             {
                 result.AddFailure($"{name}/{aspect.Id} - On Lights has null entries");
@@ -52,6 +53,33 @@ namespace Signals.Unity.Validation
                 result.AddFailure($"{name}/{aspect.Id} - Light Sequences has null entries");
             }
 
+            // Check overlaps between on/blinking/sequences.
+            foreach (var light in aspect.OnLights)
+            {
+                if (light == null) continue;
+
+                if (aspect.BlinkingLights.Contains(light))
+                {
+                    result.AddWarning($"{name}/{aspect.Id} - On light {light.name} overlaps with Blinking Lights");
+                }
+
+                if (aspect.LightSequences.Any(x => x != null && x.Lights.Contains(light)))
+                {
+                    result.AddWarning($"{name}/{aspect.Id} - On light {light.name} overlaps with Light Sequences");
+                }
+            }
+
+            foreach (var light in aspect.BlinkingLights)
+            {
+                if (light == null) continue;
+
+                if (aspect.LightSequences.Any(x => x != null && x.Lights.Contains(light)))
+                {
+                    result.AddWarning($"{name}/{aspect.Id} - Blinking light {light.name} overlaps with Light Sequences");
+                }
+            }
+
+            // Check child aspects for combinations.
             if (aspect is CombinationAspectDefinition combination)
             {
                 for (int i = 0; i < combination.Conditions.Length; i++)

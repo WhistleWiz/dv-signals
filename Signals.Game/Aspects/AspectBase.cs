@@ -26,7 +26,7 @@ namespace Signals.Game.Aspects
     public abstract class AspectBase<T> : IAspect
         where T : AspectBaseDefinition
     {
-
+        private Coroutine? _sync;
         private SignalLight[] _on = null!;
         private SignalLight[] _blink = null!;
         private SignalLightSequence[] _sequences = null!;
@@ -73,19 +73,18 @@ namespace Signals.Game.Aspects
         /// </remarks>
         public virtual void Apply()
         {
+            if (Signal.Definition.SynchroniseLamps && CheckLamps())
+            {
+                Signal.Definition.StartCoroutine(SynchoniseLamps());
+            }
+            else
+            {
+                ApplyBlinkingLamps();
+            }
+
             foreach (SignalLight light in _on)
             {
                 light.TurnOn(false);
-            }
-
-            foreach (SignalLight light in _blink)
-            {
-                light.TurnOn(true);
-            }
-
-            foreach (SignalLightSequence sequence in _sequences)
-            {
-                sequence.Activate();
             }
 
             foreach (var t in Definition.Movers)
@@ -107,6 +106,11 @@ namespace Signals.Game.Aspects
         /// </remarks>
         public virtual void Unapply()
         {
+            if (_sync != null)
+            {
+                Signal.Definition.StopCoroutine(_sync);
+            }
+
             foreach (SignalLight light in _on)
             {
                 light.TurnOff();
@@ -138,6 +142,41 @@ namespace Signals.Game.Aspects
             if (Definition.ActivationAudios.Length > 0)
             {
                 Definition.ActivationAudios.Play(Definition.transform.position, mixerGroup: AudioManager.Instance.switchGroup);
+            }
+        }
+
+        private System.Collections.IEnumerator SynchoniseLamps()
+        {
+            while (true)
+            {
+                if (CheckLamps())
+                {
+                    yield return null;
+                    continue;
+                }
+
+                break;
+            }
+
+            ApplyBlinkingLamps();
+            _sync = null;
+        }
+
+        private bool CheckLamps()
+        {
+            return _blink.Any(x => x.IsActive) || _sequences.Any(x => x.AnyLightActive());
+        }
+
+        private void ApplyBlinkingLamps()
+        {
+            foreach (SignalLight light in _blink)
+            {
+                light.TurnOn(true);
+            }
+
+            foreach (SignalLightSequence sequence in _sequences)
+            {
+                sequence.Activate();
             }
         }
     }

@@ -35,18 +35,23 @@ namespace Signals.Game.Aspects
                 max = Mathf.Min(max, SpeedCalculator.GetSpeed(track.Track, track.Direction));
                 length += track.Length;
 
-                // If we walked enough, compare with the lowest maximum.
-                if (length >= SpeedCalculator.EndDistance)
-                {
-                    return max <= Definition.Maximum;
-                }
+                // If we walked enough, stop looping.
+                if (length >= SpeedCalculator.EndDistance) goto End;
             }
 
             // If somehow there wasn't a track at all, return false.
             if (!first.HasValue) return false;
 
             // We only reach here in case the option to skip yards was true, and there were no non-yard tracks at all.
-            return SpeedCalculator.GetSpeed(first.Value.Track, first.Value.Direction) <= Definition.Maximum;
+            max = SpeedCalculator.GetSpeed(first.Value.Track, first.Value.Direction);
+
+        End:
+            if (Definition.DynamicPassingSpeed)
+            {
+                Definition.PassingSpeed = max;
+            }
+
+            return max <= Definition.Maximum;
         }
     }
 }

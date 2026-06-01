@@ -1,5 +1,6 @@
 ﻿using Signals.Common;
 using System.Collections;
+using System.Linq;
 using UnityEngine;
 
 namespace Signals.Game.Lights
@@ -79,6 +80,11 @@ namespace Signals.Game.Lights
 
                 light.Light.TurnOff();
             }
+        }
+
+        public bool AnyLightActive()
+        {
+            return _lights.Any(x => x.Light != null && x.Light.IsActive);
         }
     }
 }
