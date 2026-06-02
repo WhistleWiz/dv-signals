@@ -11,6 +11,13 @@ namespace Signals.Game
         All
     }
 
+    public enum OutsideStationPlacement
+    {
+        None,
+        BranchOnly,
+        Full
+    }
+
     public class Settings : UnityModManager.ModSettings, IDrawable
     {
         private static readonly string[] NoCustomPack = new[] { "None" };
@@ -18,6 +25,8 @@ namespace Signals.Game
         public string CustomPack = string.Empty;
         [Draw("Enable Special Matching Path", Tooltip = "Enables the optional matching path aspects in signals")]
         public bool SpecialPath = false;
+        [Draw("Outside Station Placement", Tooltip = "Enables signals outside stations")]
+        public OutsideStationPlacement OutsideStationPlacement = OutsideStationPlacement.Full;
         //[Draw("Flip Speed Sign Side", Tooltip = "Speed signs are placed on the left side of the track rather than the right")]
         //public bool FlipSpeedSigns = false;
         [Draw("Use Verbose Logging", Tooltip = "Logs a lot more information\n" +
@@ -31,6 +40,9 @@ namespace Signals.Game
         private GUIContent _packText = new GUIContent("Custom Pack", "Use a custom signal pack from another mod");
         private GUILayoutOption _widthFull = GUILayout.MaxWidth(350);
         private GUILayoutOption? _widthLabel;
+
+        public bool PlaceSignalsInBranches => OutsideStationPlacement != OutsideStationPlacement.None;
+        public bool PlaceSignalsOutsideStations => OutsideStationPlacement == OutsideStationPlacement.Full;
 
         public override void Save(UnityModManager.ModEntry modEntry)
         {

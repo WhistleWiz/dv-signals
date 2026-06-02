@@ -108,6 +108,7 @@ namespace Signals.Game
 
         private const string JunctionLeft = "junc-l";
         private const string TrackThrough = "[track through]";
+        private const string DoubleTrackTag = "EXC-";
 
         public static Branch GetCurrentBranch(this Junction junction)
         {
@@ -132,6 +133,11 @@ namespace Signals.Game
         public static bool IsLeft(this Junction junction)
         {
             return junction.transform.parent.name.StartsWith(JunctionLeft);
+        }
+
+        public static bool IsFromDoubleTrackMod(this Junction junction)
+        {
+            return junction.junctionData.junctionIdLong.StartsWith(DoubleTrackTag);
         }
 
         public static string GetStation(this Junction junction)
