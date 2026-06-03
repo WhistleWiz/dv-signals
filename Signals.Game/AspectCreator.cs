@@ -42,6 +42,7 @@ namespace Signals.Game
             Add((x, y) => new MaxSpeedAspect(x, y));
             Add((x, y) => new CombinationAspect(x, y));
             Add((x, y) => new TurntableConnectedAspect(x, y));
+            Add((x, y) => new ShuntingAllowedAspect(x, y));
 
             s_defaultTypes = CreatorFunctions.Keys.ToArray();
 

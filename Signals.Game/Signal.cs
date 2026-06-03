@@ -1,5 +1,4 @@
-﻿using DV.Signs;
-using Signals.Common;
+﻿using Signals.Common;
 using Signals.Game.Aspects;
 using Signals.Game.Controllers;
 using Signals.Game.Displays;
@@ -52,6 +51,7 @@ namespace Signals.Game
         private SignalDefinitionToInstance? _comp;
         private SignalOperationMode _operation = SignalOperationMode.Automatic;
         private int _manualOverride = 0;
+        private bool _shuntingAllowed = false;
 
         protected string InternalName = string.Empty;
 
@@ -83,6 +83,7 @@ namespace Signals.Game
         public Signal? Parent { get; set; }
         public Signal? DistantSignal { get; private set; }
         public int CurrentAspectIndex { get; private set; }
+        public bool IsShunting { get; private set; }
 
         // Getters only.
         public IAspect? CurrentAspect => IsOn ? AllAspects[CurrentAspectIndex] : null;
@@ -90,6 +91,7 @@ namespace Signals.Game
         public bool Hovered => Hover != null && ReflectionHelpers.IsHovered(Hover);
         public bool IsOff => CurrentAspectIndex < 0;
         public bool IsOn => CurrentAspectIndex >= 0;
+        public bool ShuntingAllowed => _shuntingAllowed;
         public int ManualOverrideAspect => _manualOverride;
         public string Name => string.IsNullOrEmpty(NameOverride) ? InternalName : NameOverride;
 
@@ -108,10 +110,11 @@ namespace Signals.Game
         public Action<IDisplay[]>? DisplaysUpdated;
         public Action<SignalOperationMode>? OperationModeChanged;
         public Action<int>? OverrideChanged;
+        public Action<bool>? ShuntingAllowedChanged;
 
         #endregion
 
-        public Signal(BasicSignalController controller, SignalDefinition def)
+        public Signal(BasicSignalController controller, SignalDefinition def, bool isShunting)
         {
             Id = GetGenId();
             Controller = controller;
@@ -129,7 +132,7 @@ namespace Signals.Game
 
             if (def.DistantSignal != null)
             {
-                DistantSignal = new Signal(controller, def.DistantSignal) { Parent = this };
+                DistantSignal = new Signal(controller, def.DistantSignal, isShunting) { Parent = this };
             }
 
             _comp = SignalDefinitionToInstance.AddToDef(this);
@@ -145,6 +148,8 @@ namespace Signals.Game
             {
                 SignalReservingObject.Create(Definition.PhysicalReserver, this);
             }
+
+            IsShunting = isShunting;
         }
 
         protected bool IsAspectManuallyOverriden(int index)
@@ -332,6 +337,15 @@ namespace Signals.Game
         public void UpdateHoverDisplay()
         {
             Hover?.UpdateStateDisplay(this);
+        }
+
+        public bool SetShuntingStatus(bool allowed)
+        {
+            if (ShuntingAllowed == allowed) return false;
+
+            _shuntingAllowed = allowed;
+            ShuntingAllowedChanged?.Invoke(allowed);
+            return true;
         }
 
         public bool SetAspectOverride(int index)

@@ -53,6 +53,11 @@ namespace Signals.Unity.Validation
                 result.AddFailure($"{name}/{aspect.Id} - Light Sequences has null entries");
             }
 
+            if (aspect.Movers.Any(x => x == null))
+            {
+                result.AddFailure($"{name}/{aspect.Id} - Movers has null entries");
+            }
+
             // Check overlaps between on/blinking/sequences.
             foreach (var light in aspect.OnLights)
             {
@@ -76,6 +81,16 @@ namespace Signals.Unity.Validation
                 if (aspect.LightSequences.Any(x => x != null && x.Lights.Contains(light)))
                 {
                     result.AddWarning($"{name}/{aspect.Id} - Blinking light {light.name} overlaps with Light Sequences");
+                }
+            }
+
+            foreach (var mover in aspect.Movers)
+            {
+                if (mover == null) continue;
+
+                if (mover.Mover == null)
+                {
+                    result.AddFailure($"{name}/{aspect.Id}/{mover} - Mover is not assigned");
                 }
             }
 

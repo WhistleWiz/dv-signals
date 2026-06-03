@@ -108,7 +108,7 @@ namespace Signals.Game
 
         private const string JunctionLeft = "junc-l";
         private const string TrackThrough = "[track through]";
-        private const string DoubleTrackTag = "EXC-";
+        private const string DoubleTrackTag = "DT-";
 
         public static Branch GetCurrentBranch(this Junction junction)
         {

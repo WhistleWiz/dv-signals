@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Signals.Common
 {
-    [AddComponentMenu("DV Signals/Transform Mover")]
+    [AddComponentMenu("DV Signals/Transform Mover"), DisallowMultipleComponent]
     public class TransformMover : MonoBehaviour
     {
         [Header("Original")]
@@ -11,67 +11,52 @@ namespace Signals.Common
         public Vector3 OriginalRotation = Vector3.zero;
         public Vector3 OriginalScale = Vector3.one;
 
-        [Header("Transformed")]
-        public Vector3 TransformedPosition = Vector3.zero;
-        public Vector3 TransformedRotation = Vector3.zero;
-        public Vector3 TransformedScale = Vector3.one;
-
         [Header("Interpolation Settings")]
         public Tweening.EasingMode Mode = Tweening.EasingMode.Linear;
         [Min(0.0f)]
         public float Duration = 1.0f;
-        public bool UseAbsoluteValue = true;
         public AnimationCurve CustomCurve = AnimationCurve.Linear(0, 0, 1, 1);
 
-        private float _current = 0.0f;
-        private float _target = 0.0f;
         private Coroutine? _moveCoro;
+        private Vector3 _targetPosition;
+        private Vector3 _targetRotation;
+        private Vector3 _targetScale;
+        private Vector3 _lastPosition;
+        private Vector3 _lastRotation;
+        private Vector3 _lastScale;
+
+        public bool Moving => _moveCoro != null;
 
         public void Reset()
         {
             OriginalPosition = transform.localPosition;
             OriginalRotation = transform.localRotation.eulerAngles;
             OriginalScale = transform.localScale;
-
-            TransformedPosition = OriginalPosition;
-            TransformedRotation = OriginalRotation;
-            TransformedScale = OriginalScale;
         }
 
-        public void ToTransformed()
+        private void Awake()
         {
-            // Inactive gameobjects cannot run coroutines.
-            if (gameObject.activeInHierarchy)
+            transform.localPosition = _lastPosition = _targetPosition = OriginalPosition;
+            transform.localRotation = Quaternion.Euler(_lastRotation = _targetRotation = OriginalRotation);
+            transform.localScale = _lastScale = _targetScale = OriginalScale;
+        }
+
+        public void SetTarget(TransformMoverTarget? target)
+        {
+            if (target == null)
             {
-                SetTargetAndStart(1.0f);
+                _targetPosition = OriginalPosition;
+                _targetRotation = OriginalRotation;
+                _targetScale = OriginalScale;
             }
             else
             {
-                SetEnd(true);
+                _targetPosition = target.Position;
+                _targetRotation = target.Rotation;
+                _targetScale = target.Scale;
             }
-        }
 
-        public void ToOriginal()
-        {
-            // Inactive gameobjects cannot run coroutines.
-            if (gameObject.activeInHierarchy)
-            {
-                SetTargetAndStart(0.0f);
-            }
-            else
-            {
-                SetEnd(false);
-            }
-        }
-
-        private void SetTargetAndStart(float value)
-        {
-            _target = value;
-
-            // Would love to
-            // _moveCoro ??= StartCoroutine(MoveRoutine());
-            // But should I?
-            if (_moveCoro == null)
+            if (_moveCoro == null && TargetIsDifferent())
             {
                 _moveCoro = StartCoroutine(MoveRoutine());
             }
@@ -82,47 +67,44 @@ namespace Signals.Common
             // Delay the start a frame to prevent setting and unsetting.
             yield return null;
 
-            // Eh this optimisation isn't really needed.
-            //bool pos = OriginalPosition != TransformedPosition;
-            //bool rot = OriginalRotation != TransformedRotation;
-            //bool scale = OriginalScale != TransformedScale;
+            var startP = _lastPosition;
+            var startR = _lastRotation;
+            var startS = _lastScale;
+            var endP = _targetPosition;
+            var endR = _targetRotation;
+            var endS = _targetScale;
 
-            float target = _target;
-            float t;
-            float dif;
-
-            while (_current != target)
+            // If the duration is too low, just skip to the end.
+            if (Duration > 0.001f)
             {
-                _current = Duration == 0 ? target : Mathf.MoveTowards(_current, target, Time.deltaTime / Duration);
+                float percent = 0.0f;
+                float t;
 
-                // For absolute values, use the difference between the current value and the target.
-                // If the difference is positive, the normal process can still be used.
-                if (UseAbsoluteValue && Mathf.Sign(dif = target - _current) < 0)
+                while (percent < 1)
                 {
-                    t = 1 - Tweening.Interpolate(1 + dif, Mode, CustomCurve);
-                }
-                else
-                {
-                    t = Tweening.Interpolate(_current, Mode, CustomCurve);
-                }
+                    percent += Time.deltaTime / Duration;
+                    t = Tweening.Interpolate(percent, Mode, CustomCurve);
 
-                transform.localPosition = Vector3.LerpUnclamped(OriginalPosition, TransformedPosition, t);
-                transform.localRotation = Quaternion.Euler(Vector3.LerpUnclamped(OriginalRotation, TransformedRotation, t));
-                transform.localScale = Vector3.LerpUnclamped(OriginalScale, TransformedScale, t);
+                    transform.localPosition = Vector3.LerpUnclamped(startP, endP, t);
+                    transform.localRotation = Quaternion.Euler(Vector3.LerpUnclamped(startR, endR, t));
+                    transform.localScale = Vector3.LerpUnclamped(startS, endS, t);
 
-                yield return null;
+                    yield return null;
+                }
             }
 
-            _moveCoro = _target != target ? StartCoroutine(MoveRoutine()) : null;
+            // Snap to final position.
+            transform.localPosition = _lastPosition = endP;
+            transform.localRotation = Quaternion.Euler(_lastRotation = endR);
+            transform.localScale = _lastScale = endS;
+
+            // Start movement again if the target changed while this routine ran.
+            _moveCoro = TargetIsDifferent() ? StartCoroutine(MoveRoutine()) : null;
         }
 
-        private void SetEnd(bool transformed)
+        private bool TargetIsDifferent()
         {
-            transform.localPosition = transformed ? TransformedPosition : OriginalPosition;
-            transform.localRotation = Quaternion.Euler(transformed ? TransformedRotation : OriginalRotation);
-            transform.localScale = transformed ? TransformedScale : OriginalScale;
-            _current = transformed ? 1.0f : 0.0f;
-            _target = transformed ? 1.0f : 0.0f;
+            return _lastPosition != _targetPosition || _lastRotation != _targetRotation || _lastScale != _targetScale;
         }
     }
 }

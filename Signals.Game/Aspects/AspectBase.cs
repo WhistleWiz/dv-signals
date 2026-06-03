@@ -89,7 +89,7 @@ namespace Signals.Game.Aspects
 
             foreach (var t in Definition.Movers)
             {
-                t.ToTransformed();
+                t.Apply();
             }
 
             PlaySound();
@@ -128,7 +128,7 @@ namespace Signals.Game.Aspects
 
             foreach (var t in Definition.Movers)
             {
-                t.ToOriginal();
+                t.Unapply();
             }
 
             Active = false;

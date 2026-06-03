@@ -15,6 +15,7 @@ namespace Signals.Game.Generation
         protected const string OutputEnd = "O]";
         protected const string InputEnd = "I]";
         protected const string LoadingEnd = "L]";
+        protected const string StorageEnd = "S]";
         protected const float JunctionPlacementDistance = 2.0f;
         protected const float LongJunctionPlacementDistance = 15.0f;
         protected const float BranchPlacementDistance = 17.5f;
@@ -516,7 +517,7 @@ namespace Signals.Game.Generation
                 }
             }
 
-            if (pack.DistantSignal == null && pack.OldDistantSignal == null) return;
+            if (!pack.HasAnyDistantSignal) return;
 
             foreach (var junction in registry)
             {
@@ -570,7 +571,7 @@ namespace Signals.Game.Generation
         /// <param name="repeaterSignals">The list in which the repeaters will be added.</param>
         public virtual void CreateRepeaterSignals(SignalPack pack, Dictionary<Junction, JunctionSignalGroup> registry, List<DistantSignalController> repeaterSignals)
         {
-            if (pack.RepeaterSignal == null && pack.OldRepeaterSignal == null) return;
+            if (!pack.HasAnyRepeaterSignal) return;
 
             foreach (var junction in registry)
             {
@@ -613,6 +614,8 @@ namespace Signals.Game.Generation
 
         public void CreateTurntableSignals(SignalPack pack, List<TurntableSignalController> turntableSignals)
         {
+            if (!pack.HasAnyTurntableSignal) return;
+
             var tracks = Object.FindObjectsOfType<TurntableRailTrack>();
 
             foreach (var turntableTrack in tracks)

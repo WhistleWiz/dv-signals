@@ -294,5 +294,9 @@ namespace Signals.Common
         {
             return OldAndEnabled(old) ? OldTurntableSignal : TurntableSignal;
         }
+
+        public bool HasAnyDistantSignal => DistantSignal != null || OldDistantSignal != null;
+        public bool HasAnyRepeaterSignal => RepeaterSignal != null || OldRepeaterSignal != null;
+        public bool HasAnyTurntableSignal => TurntableSignal != null || OldTurntableSignal != null;
     }
 }

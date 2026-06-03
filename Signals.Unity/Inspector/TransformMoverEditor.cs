@@ -11,15 +11,7 @@ namespace Signals.Unity.Inspector
         {
             base.OnInspectorGUI();
 
-            if (GUILayout.Button("Preview Transformed"))
-            {
-                var comp = (TransformMover)target;
-                comp.transform.localPosition = comp.TransformedPosition;
-                comp.transform.localRotation = Quaternion.Euler(comp.TransformedRotation);
-                comp.transform.localScale = comp.TransformedScale;
-            }
-
-            if (GUILayout.Button("Preview Original"))
+            if (GUILayout.Button("Set to Original"))
             {
                 var comp = (TransformMover)target;
                 comp.transform.localPosition = comp.OriginalPosition;

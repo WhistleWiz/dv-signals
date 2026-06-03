@@ -84,6 +84,17 @@ namespace Signals.Game
             var entries = NoCustomPack.ToList();
             entries.AddRange(SignalManager.InstalledPacks.Keys);
             _keys = entries.ToArray();
+
+            if (!string.IsNullOrEmpty(CustomPack))
+            {
+                _index = System.Array.IndexOf(_keys, CustomPack);
+
+                if (_index < 0)
+                {
+                    SignalsMod.Warning($"Missing signal pack '{CustomPack}', defaulting to none.");
+                    _index = 0;
+                }
+            }
         }
     }
 }

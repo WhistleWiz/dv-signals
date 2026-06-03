@@ -164,8 +164,8 @@ namespace Signals.Game.Controllers
             Definition = def;
             PlacementInfo = placementInfo;
 
-            Signals = def.Signals.Select(x => new Signal(this, x)).ToArray();
-            ShuntingSignals = def.ShuntingSignals.Select(x => new Signal(this, x)).ToArray();
+            Signals = def.Signals.Select(x => new Signal(this, x, false)).ToArray();
+            ShuntingSignals = def.ShuntingSignals.Select(x => new Signal(this, x, true)).ToArray();
 
             TrackChecker.OnMapBuilt += FixPositionDueToCrossing;
             SignalManager.Instance.RegisterController(this);

@@ -19,12 +19,12 @@ namespace Signals.Game.Misc
         {
             source.Button.gameObject.SetActive(false);
 
-            var rb = source.gameObject.AddComponent<Rigidbody>();
-            rb.isKinematic = true;
-
             var button = source.Button.gameObject.AddComponent<Button>();
             button.colliderGameObjects = new[] { button.gameObject };
+            button.pushLocalOffset = source.PushedLocalOffset;
             button.gameObject.layer = 13;
+            button.createRigidbody = false;
+            button.useJoints = false;
 
             var highlight = button.gameObject.AddComponent<HighlightTag>();
             highlight.renderers = source.HighlightRenderers;
