@@ -24,7 +24,9 @@ namespace Signals.Game
 
         public string CustomPack = string.Empty;
         [Draw("Enable Special Matching Path", Tooltip = "Enables the optional matching path aspects in signals")]
-        public bool SpecialPath = false;
+        public bool SpecialPath = true;
+        [Draw("Exit Signals on Storage Tracks", Tooltip = "Places exit signals on storage tracks rather than shunting signals")]
+        public bool ExitSignalsOnStorageTracks = false;
         [Draw("Outside Station Placement", Tooltip = "Enables signals outside stations")]
         public OutsideStationPlacement OutsideStationPlacement = OutsideStationPlacement.Full;
         //[Draw("Flip Speed Sign Side", Tooltip = "Speed signs are placed on the left side of the track rather than the right")]

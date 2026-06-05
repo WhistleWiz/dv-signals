@@ -66,14 +66,21 @@ namespace Signals.Game.Generation
             return track.name.EndsWith(InputEnd);
         }
 
-        public static bool IsInOrOutTrack(RailTrack track)
+        public static bool IsExitTrack(RailTrack track)
         {
+            if (SignalsMod.Settings.ExitSignalsOnStorageTracks && IsStorageTrack(track)) return true;
+
             return IsOutputTrack(track) || IsInputTrack(track);
         }
 
         public static bool IsLoadingTrack(RailTrack track)
         {
             return track.name.EndsWith(LoadingEnd);
+        }
+
+        public static bool IsStorageTrack(RailTrack track)
+        {
+            return track.name.EndsWith(StorageEnd);
         }
 
         public static bool IsLogicYardTrack(RailTrack track)

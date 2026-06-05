@@ -38,7 +38,7 @@ namespace Signals.Game.Aspects
         public TrackBlock? Block => Signal.Block;
         public bool Active { get; private set; }
         public bool ShouldDisplay => true;
-        public int DisplayOrder => Signal.DisplayOrder;
+        public int DisplayOrder => Definition.HUDDisplayOrder;
         public string? DisplayText => Signal.DisplayText;
         public Sprite? Sprite => Definition.HUDSprite;
         public Color TextColour => Signal.TextColour;
@@ -178,6 +178,11 @@ namespace Signals.Game.Aspects
             {
                 sequence.Activate();
             }
+        }
+
+        protected static bool ApplyInvert(bool result, bool invert)
+        {
+            return invert ? !result : result;
         }
     }
 }

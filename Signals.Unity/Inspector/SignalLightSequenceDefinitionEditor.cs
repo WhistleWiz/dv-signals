@@ -25,9 +25,9 @@ namespace Signals.Unity.Inspector
 
         public override void OnInspectorGUI()
         {
-            _lights.isExpanded = EditorGUILayout.Foldout(_lights.isExpanded, "Lights and Intial States");
+            _lights.isExpanded = EditorGUILayout.Foldout(_lights.isExpanded, "Lights and Intial States", true);
 
-            if (_lights.isExpanded )
+            if (_lights.isExpanded)
             {
                 EditorGUI.indentLevel++;
 

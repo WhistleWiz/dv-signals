@@ -9,6 +9,9 @@ namespace Signals.Common.Aspects
         [Tooltip("This is the sprite displayed on the HUD\n" +
             "The recommended size is 256x256px")]
         public Sprite? HUDSprite;
+        [Tooltip("Lower values are placed above higher values\n" +
+            "Only used for indicators")]
+        public int HUDDisplayOrder = 1;
 
         [Space]
         public bool DisallowPassing = false;

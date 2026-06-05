@@ -12,7 +12,11 @@ namespace Signals.Unity.Inspector
     internal class SignalDefinitionEditor : Editor
     {
         private ReorderableList _aspectList = null!;
-        private ReorderableList _displayList = null!;
+        private SerializedProperty _indicators = null!;
+        private SerializedProperty _sprites = null!;
+
+        private GUIContent _spriteContent = new GUIContent("Inactive Sprite", "The sprite while the indicator is not active\n" +
+            "Leave empty to hide while inactive");
 
         private void OnEnable()
         {
@@ -20,9 +24,8 @@ namespace Signals.Unity.Inspector
                 true, true, true, "Aspects");
             EditorHelper.AddBasicDrawerToList(_aspectList);
 
-            _displayList = EditorHelper.CreateReorderableList(serializedObject, serializedObject.FindProperty(nameof(SignalDefinition.Displays)),
-                true, true, true, "Displays");
-            EditorHelper.AddBasicDrawerToList(_displayList);
+            _indicators = serializedObject.FindProperty(nameof(SignalDefinition.Indicators));
+            _sprites = serializedObject.FindProperty(nameof(SignalDefinition.InactiveSprites));
         }
 
         public override void OnInspectorGUI()
@@ -50,15 +53,18 @@ namespace Signals.Unity.Inspector
                         }
                         break;
                     case nameof(SignalDefinition.Displays):
-                        EditorHelper.DrawHeader("Optional");
-
-                        _displayList.DoLayoutList();
-
+                        EditorGUILayout.PropertyField(prop);
                         if (GUILayout.Button("Get Displays From Children"))
                         {
                             def.Displays = def.GetComponentsInChildren<DisplayBaseDefinition>();
                             AssetHelper.SaveAsset(target);
                         }
+                        break;
+                        case nameof(SignalDefinition.Indicators):
+                        DrawIndicators();
+                        break;
+                        case nameof(SignalDefinition.InactiveSprites):
+                        // Skip this property as it is drawn with the previous one.
                         break;
                     default:
                         EditorGUILayout.PropertyField(prop);
@@ -67,6 +73,31 @@ namespace Signals.Unity.Inspector
             } while (prop.Next(false));
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private void DrawIndicators()
+        {
+            _indicators.isExpanded = EditorGUILayout.Foldout(_indicators.isExpanded, "Indicators", true);
+
+            if (!_indicators.isExpanded) return;
+
+            EditorGUI.indentLevel++;
+
+            int length = EditorGUILayout.DelayedIntField("Size", _indicators.arraySize);
+
+            _indicators.arraySize = length;
+            _sprites.arraySize = length;
+
+            for (int i = 0; i < length; i++)
+            {
+                if (i > 0) EditorGUILayout.Space(4);
+
+                EditorGUILayout.PropertyField(_indicators.GetArrayElementAtIndex(i));
+                EditorGUILayout.PropertyField(_sprites.GetArrayElementAtIndex(i), _spriteContent);
+            }
+
+            EditorGUILayout.Space();
+            EditorGUI.indentLevel--;
         }
     }
 }

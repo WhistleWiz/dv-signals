@@ -16,7 +16,7 @@ namespace Signals.Game.Aspects
         {
             if (_turntable == null) return false;
 
-            return Definition.Invert ? !_turntable.IsConnected : _turntable.IsConnected;
+            return ApplyInvert(_turntable.IsConnected, Definition.Invert);
         }
     }
 }

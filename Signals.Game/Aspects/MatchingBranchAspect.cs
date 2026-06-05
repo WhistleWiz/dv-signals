@@ -18,9 +18,7 @@ namespace Signals.Game.Aspects
 
             if (Controller == group.JunctionSignal || Controller == group.ReverseJunctionSignal) return false;
 
-            var trackMatch = group.Junction.GetCurrentBranch().track == tController.StartingTrack;
-
-            return Definition.Invert ? !trackMatch : trackMatch;
+            return ApplyInvert(group.Junction.GetCurrentBranch().track == tController.StartingTrack, Definition.Invert);
         }
     }
 }

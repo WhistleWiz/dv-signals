@@ -64,6 +64,22 @@ namespace Signals.Game.Generation
             var stationEnd = false;
             var stationCheck = false;
 
+            if (junction.IsFromDoubleTrackModStation())
+            {
+                foreach (var branch in junction.outBranches)
+                {
+                    var track = branch.track.outBranch.track;
+
+                    branchTrackKey.Add(track, ShuntingOrSpacing(track));
+                }
+
+                var jplc = ShuntingOrSpacing(inTrack);
+                var ctrl = CreateSignalAtJunction(junction, jplc.Definition, JunctionPlacementDistance);
+                jplc.Apply(ctrl);
+
+                return new JunctionSignalGroup(junction, ctrl, CreateBranchSignals(junction, branchTrackKey, branchDistance));
+            }
+
             if (junction.IsFromDoubleTrackMod())
             {
                 foreach (var branch in junction.outBranches)
@@ -87,7 +103,7 @@ namespace Signals.Game.Generation
                     branchTrackKey.Add(track, GetPlacement(PrefabType.ExitPax, old));
                     anyYard = true;
                 }
-                else if (IsInOrOutTrack(track) && !GoesToDeadEndIn() && LeavesStationIn())
+                else if (IsExitTrack(track) && !GoesToDeadEndIn() && LeavesStationIn())
                 {
                     branchTrackKey.Add(track, GetPlacement(PrefabType.Exit, old));
                     anyYard = true;
@@ -198,7 +214,7 @@ namespace Signals.Game.Generation
             {
                 junctionSignal = GetPlacement(PrefabType.ExitPax, old);
             }
-            else if (IsInOrOutTrack(inTrack) && !GoesToDeadEndOut() && LeavesStationOut())
+            else if (IsExitTrack(inTrack) && !GoesToDeadEndOut() && LeavesStationOut())
             {
                 junctionSignal = GetPlacement(PrefabType.Exit, old);
             }

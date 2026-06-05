@@ -15,6 +15,24 @@ namespace Signals.Game
 {
     public class Signal : IHudDisplayable
     {
+        private class IndicatorHudWrapper : IHudDisplayable
+        {
+            private const string Space = " ";
+
+            public int DisplayOrder { get; private set; }
+            public Sprite? Sprite { get; set; }
+
+            public bool ShouldDisplay => Sprite != null;
+            public string? DisplayText => Space;
+            public Color TextColour => Color.white;
+
+            public IndicatorHudWrapper(IAspect indicator, Sprite? off)
+            {
+                Sprite = off;
+                DisplayOrder = indicator.DisplayOrder;
+            }
+        }
+
         #region Static
 
         private static int s_idGen = 0;
@@ -52,6 +70,7 @@ namespace Signals.Game
         private SignalOperationMode _operation = SignalOperationMode.Automatic;
         private int _manualOverride = 0;
         private bool _shuntingAllowed = false;
+        private IndicatorHudWrapper[] _indicatorWrapper;
 
         protected string InternalName = string.Empty;
 
@@ -150,6 +169,13 @@ namespace Signals.Game
             }
 
             IsShunting = isShunting;
+
+            _indicatorWrapper = new IndicatorHudWrapper[AllIndicators.Length];
+
+            for (int i = 0; i < _indicatorWrapper.Length; i++)
+            {
+                _indicatorWrapper[i] = new IndicatorHudWrapper(AllIndicators[i], def.InactiveSprites[i]);
+            }
         }
 
         protected bool IsAspectManuallyOverriden(int index)
@@ -324,12 +350,19 @@ namespace Signals.Game
                 item.Unapply();
             }
 
-            foreach (var item in AllIndicators)
+            for (int i = 0; i < AllIndicators.Length; i++)
             {
+                var indicator = AllIndicators[i];
+
                 // Turn on the ones that meet conditions.
-                if (item.MeetsConditions())
+                if (indicator.MeetsConditions())
                 {
-                    item.Apply();
+                    indicator.Apply();
+                    _indicatorWrapper[i].Sprite = indicator.Sprite;
+                }
+                else
+                {
+                    _indicatorWrapper[i].Sprite = Definition.InactiveSprites[i];
                 }
             }
         }
@@ -465,7 +498,7 @@ namespace Signals.Game
                 yield return item;
             }
 
-            foreach (var item in AllIndicators)
+            foreach (var item in _indicatorWrapper)
             {
                 yield return item;
             }

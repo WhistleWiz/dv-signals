@@ -8,7 +8,7 @@ namespace Signals.Game.Aspects
 
         public override bool MeetsConditions()
         {
-            return Definition.Invert ? !Signal.ShuntingAllowed : Signal.ShuntingAllowed;
+            return ApplyInvert(Signal.ShuntingAllowed, Definition.Invert);
         }
     }
 }

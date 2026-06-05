@@ -20,6 +20,7 @@ namespace Signals.Game
 
         private static Transform? s_holder;
         private static bool s_loaded = false;
+        private static bool s_jobs = false;
 
         internal static SignalPack DefaultPack = null!;
         internal static Dictionary<string, SignalPack> InstalledPacks = new Dictionary<string, SignalPack>();
@@ -72,6 +73,7 @@ namespace Signals.Game
             _distantSignals.Clear();
 
             StopCoroutine(_updateCoro);
+            JobHelper.ManagerInstanced = false;
             Camera.onPostRender -= DebugRender;
             TrackReserver.ClearAll();
         }
@@ -179,11 +181,24 @@ namespace Signals.Game
                 return;
             }
 
-            if (s_loaded) return;
+            if (!s_loaded)
+            {
+                DisplayLoadingThingy();
+                Instance.CreateSignals();
+                s_loaded = true;
+            }
 
-            DisplayLoadingThingy();
-            Instance.CreateSignals();
-            s_loaded = true;
+            if (percent < 90)
+            {
+                s_jobs = false;
+                return;
+            }
+
+            if (!s_jobs)
+            {
+                JobHelper.ManagerInstanced = true;
+                s_jobs = true;
+            }
         }
 
         private static void DisplayLoadingThingy()

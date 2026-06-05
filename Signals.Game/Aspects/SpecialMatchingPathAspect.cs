@@ -27,7 +27,7 @@ namespace Signals.Game.Aspects
                 // If the direction of the track is pointing out, then we can't be against it.
                 if (track.Direction.IsOut()) return false;
 
-                return invert ? junction.GetCurrentBranch().track != track.Track : junction.GetCurrentBranch().track == track.Track;
+                return ApplyInvert(junction.GetCurrentBranch().track == track.Track, invert);
             }
         }
     }

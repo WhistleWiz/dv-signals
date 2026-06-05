@@ -51,7 +51,7 @@ namespace Signals.Game.Aspects
 
                 bool GetResult(int branch)
                 {
-                    return invert ? branch != junction.selectedBranch : branch == junction.selectedBranch;
+                    return ApplyInvert(branch == junction.selectedBranch, invert);
                 }
             }
         }

@@ -12,9 +12,7 @@ namespace Signals.Game.Aspects
 
             if (junction == null || !Controller.RequiredJunctionBranch.HasValue) return false;
 
-            return Definition.Invert ?
-                Controller.RequiredJunctionBranch.Value != junction.selectedBranch :
-                Controller.RequiredJunctionBranch.Value == junction.selectedBranch;
+            return ApplyInvert(Controller.RequiredJunctionBranch.Value == junction.selectedBranch, Definition.Invert);
         }
     }
 }

@@ -24,6 +24,7 @@ namespace Signals.Common
         public DisplayBaseDefinition[] Displays = new DisplayBaseDefinition[0];
         [Tooltip("Extra aspects that do not interfere with the main ones")]
         public AspectBaseDefinition[] Indicators = new AspectBaseDefinition[0];
+        public Sprite?[] InactiveSprites = new Sprite?[0];
         [Tooltip("An optional distant signal\n" +
             "This is automatically enabled or disabled based on the signal distance")]
         public SignalDefinition? DistantSignal;
