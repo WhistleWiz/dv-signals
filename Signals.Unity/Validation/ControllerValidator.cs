@@ -1,4 +1,5 @@
 ﻿using Signals.Common;
+using System.Linq;
 
 namespace Signals.Unity.Validation
 {
@@ -33,7 +34,14 @@ namespace Signals.Unity.Validation
                 }
             }
 
-            return Pass();
+            var result = Pass();
+
+            if (definition.TracksideObjects.Any(x => x == null))
+            {
+                result.AddFailure("Trackside Objects has null entries");
+            }
+
+            return result;
         }
     }
 }

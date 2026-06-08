@@ -34,11 +34,6 @@ namespace Signals.Unity.Validation
 
         private Result ValidateDisplay(DisplayBaseDefinition display, string name)
         {
-            if (display.Conditions.Length == 0)
-            {
-                return Skip();
-            }
-
             var result = Pass();
 
             for (int i = 0; i < display.Conditions.Length; i++)

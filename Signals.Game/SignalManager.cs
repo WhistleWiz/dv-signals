@@ -221,6 +221,7 @@ namespace Signals.Game
             SpeedCalculator.ClearCache();
             BasicSignalController.ResetIdGeneration();
             Signal.ResetIdGeneration();
+            UpdateGauge();
 
             Placer ??= new RealisticSignalPlacer();
 
@@ -278,6 +279,31 @@ namespace Signals.Game
             _updateCoro = StartCoroutine(UpdateRoutine());
 
             Camera.onPostRender += DebugRender;
+        }
+
+        private void UpdateGauge()
+        {
+            var modEntry = UnityModManager.modEntries.Find(x => x.Info.Id == "Gauge");
+
+            if (modEntry == null || !modEntry.Active) goto SetDefault;
+
+            try
+            {
+                var assembly = modEntry.Assembly;
+                var settings = assembly.GetType("Gauge.Gauge").GetField("Settings").GetValue(null);
+                var railGauge = settings.GetType().GetProperty("RailGauge").GetValue(settings);
+                var gauge = railGauge.GetType().GetProperty("Gauge").GetValue(railGauge);
+                TracksideObject.CurrentGauge = (float)gauge / 2;
+                return;
+            }
+            catch (System.Exception e)
+            {
+                SignalsMod.Error($"Gauge mod found but could not get the current gauge: {e}");
+                goto SetDefault;
+            }
+
+        SetDefault:
+            TracksideObject.SetGaugeToDefault();
         }
 
         #endregion

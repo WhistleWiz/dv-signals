@@ -28,7 +28,7 @@ namespace Signals.Common
         public SignalControllerDefinition? LeftJunctionSignal;
         [Tooltip("Used on all junctions with a track diverging to the right in mainlines, facing the junction branches")]
         public SignalControllerDefinition? RightJunctionSignal;
-        [Tooltip("Used when entering yards")]
+        [Tooltip("Used when entering stations")]
         public SignalControllerDefinition? EntrySignal;
         [Tooltip("Used when leaving yards")]
         public SignalControllerDefinition? ExitSignal;
@@ -86,7 +86,7 @@ namespace Signals.Common
         public SignalControllerDefinition? OldLeftJunctionSignal;
         [Tooltip("Used on all junctions with a track diverging to the right in mainlines, facing the junction branches")]
         public SignalControllerDefinition? OldRightJunctionSignal;
-        [Tooltip("Used when entering yards")]
+        [Tooltip("Used when entering stations")]
         public SignalControllerDefinition? OldEntrySignal;
         [Tooltip("Used when leaving yards")]
         public SignalControllerDefinition? OldExitSignal;
@@ -297,6 +297,7 @@ namespace Signals.Common
 
         public bool HasAnyDistantSignal => DistantSignal != null || OldDistantSignal != null;
         public bool HasAnyRepeaterSignal => RepeaterSignal != null || OldRepeaterSignal != null;
+        public bool HasAnySpacingSignal => SpacingSignal != null || OldSpacingSignal != null;
         public bool HasAnyTurntableSignal => TurntableSignal != null || OldTurntableSignal != null;
     }
 }

@@ -65,12 +65,12 @@ namespace Signals.Unity.Validation
 
                 if (aspect.BlinkingLights.Contains(light))
                 {
-                    result.AddWarning($"{name}/{aspect.Id} - On light {light.name} overlaps with Blinking Lights");
+                    result.AddWarning($"{name}/{aspect.Id} - on light {light.name} overlaps with Blinking Lights");
                 }
 
                 if (aspect.LightSequences.Any(x => x != null && x.Lights.Contains(light)))
                 {
-                    result.AddWarning($"{name}/{aspect.Id} - On light {light.name} overlaps with Light Sequences");
+                    result.AddWarning($"{name}/{aspect.Id} - on light {light.name} overlaps with Light Sequences");
                 }
             }
 
@@ -80,7 +80,7 @@ namespace Signals.Unity.Validation
 
                 if (aspect.LightSequences.Any(x => x != null && x.Lights.Contains(light)))
                 {
-                    result.AddWarning($"{name}/{aspect.Id} - Blinking light {light.name} overlaps with Light Sequences");
+                    result.AddWarning($"{name}/{aspect.Id} - blinking light {light.name} overlaps with Light Sequences");
                 }
             }
 
@@ -90,7 +90,7 @@ namespace Signals.Unity.Validation
 
                 if (mover.Mover == null)
                 {
-                    result.AddFailure($"{name}/{aspect.Id}/{mover} - Mover is not assigned");
+                    result.AddFailure($"{name}/{aspect.Id}/{mover} - mover is not assigned");
                 }
             }
 

@@ -169,6 +169,8 @@ namespace Signals.Game.Controllers
 
             TrackChecker.OnMapBuilt += FixPositionDueToCrossing;
             SignalManager.Instance.RegisterController(this);
+
+            UpdateTracksideObjects();
         }
 
         private void FixPositionDueToCrossing(Dictionary<RailTrack, TrackChecker.TrackIntersectionPoints> junctionMap)
@@ -216,6 +218,32 @@ namespace Signals.Game.Controllers
             OffsetOnTrack(Mathf.RoundToInt(offset.magnitude * 2));
         }
 
+        private void UpdateTracksideObjects()
+        {
+            if (!PlacementInfo.HasValue) return;
+
+            var placement = PlacementInfo.Value;
+
+            var isOut = placement.Direction.IsOut();
+            var kpSet = placement.Track.GetKinkedPointSet();
+
+            foreach (var item in Definition.TracksideObjects)
+            {
+                var span = Helpers.ClampD(placement.Span + (isOut ? -item.OffsetFromController : item.OffsetFromController), 0, kpSet.span);
+                var point = kpSet.points[kpSet.GetPointIndexForSpan(span)];
+                var offset = placement.OppositeSide ? -item.OffsetFromTrack : item.OffsetFromTrack;
+
+                if (item.AtRail)
+                {
+                    offset = offset > 0 ? TracksideObject.CurrentGauge : -TracksideObject.CurrentGauge;
+                }
+
+                item.transform.rotation = Quaternion.LookRotation(isOut ? point.forward : -point.forward);
+                item.transform.position = (Vector3)point.position + item.transform.right * offset;
+                item.transform.localScale = item.MirrorWhenOnOppositeSide ? new Vector3(-1, 1, 1) : Vector3.one;
+            }
+        }
+
         protected virtual bool ShouldMoveForwards(RailTrack track)
         {
             return true;
@@ -248,6 +276,7 @@ namespace Signals.Game.Controllers
             Definition.transform.position = (Vector3)point.position + Definition.transform.right *
                 (placement.OppositeSide ? -Definition.Offset : Definition.Offset);
 
+            UpdateTracksideObjects();
             return true;
         }
 

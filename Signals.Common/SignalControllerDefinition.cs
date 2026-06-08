@@ -6,12 +6,14 @@ namespace Signals.Common
     public class SignalControllerDefinition : MonoBehaviour
     {
         private const float HalfGauge = 1.435f / 2.0f;
+        private const float HalfTrackLength = 5.0f;
         private static readonly Vector3 TrainSize = new Vector3(3.5f, 5.0f, 1.0f);
         private static readonly Vector3 TrainUp = new Vector3(0, TrainSize.y / 2, 0);
-        private static readonly Vector3 TrackSize = new Vector3(0.05f, 0.20f, 10.00f);
-        private static readonly Vector3 TrackSide = new Vector3(TrackSize.x / 2, 0, 0);
+        private static readonly Vector3 TrackSize = new Vector3(0.07f, 0.152f, HalfTrackLength * 2);
+        private static readonly Vector3 TrackSide = new Vector3(0.0351f, 0, 0);
         private static readonly Vector3 TrackUp = new Vector3(0, TrackSize.y / -2, 0);
         private static readonly Vector3 CatenaryUp = new Vector3(0, 6 - TrackUp.y, 0);
+        private static readonly Color Color2 = new Color(0.9f, 0.9f, 0.9f, 0.2f);
 
         [Tooltip("The individual signals for this controller")]
         public SignalDefinition[] Signals = new SignalDefinition[0];
@@ -25,6 +27,7 @@ namespace Signals.Common
         [Header("Optional")]
         [Tooltip("The shunting signals for this controller")]
         public SignalDefinition[] ShuntingSignals = new SignalDefinition[0];
+        public TracksideObject[] TracksideObjects = new TracksideObject[0];
 
         private void OnDrawGizmos()
         {
@@ -33,7 +36,7 @@ namespace Signals.Common
             Vector3 offset = Vector3.left * Offset;
             Vector3 trackOffset = Vector3.right * HalfGauge;
 
-            Gizmos.color = new Color(0.9f, 0.9f, 0.9f, 0.2f);
+            Gizmos.color = Color2;
             Gizmos.DrawCube(TrainUp + offset, TrainSize);
             Gizmos.DrawWireCube(TrackUp + TrackSide + trackOffset + offset, TrackSize);
             Gizmos.DrawWireCube(TrackUp - TrackSide - trackOffset + offset, TrackSize);
@@ -41,8 +44,8 @@ namespace Signals.Common
 
             Gizmos.color = Color.white;
             Gizmos.DrawWireCube(TrainUp + offset, TrainSize);
-            Gizmos.DrawLine(Vector3.forward * 5 + trackOffset + offset, Vector3.back * 5 + trackOffset + offset);
-            Gizmos.DrawLine(Vector3.forward * 5 - trackOffset + offset, Vector3.back * 5 - trackOffset + offset);
+            Gizmos.DrawLine(Vector3.forward * HalfTrackLength + trackOffset + offset, Vector3.back * HalfTrackLength + trackOffset + offset);
+            Gizmos.DrawLine(Vector3.forward * HalfTrackLength - trackOffset + offset, Vector3.back * HalfTrackLength - trackOffset + offset);
         }
     }
 }

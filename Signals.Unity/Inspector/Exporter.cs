@@ -250,6 +250,18 @@ namespace Signals.Unity.Inspector
 
             for (int i = 0; i < _pack.OtherSignals.Length; i++)
             {
+                // Instead of a skip, throw an error.
+                if (_pack.OtherSignals[i] == null)
+                {
+                    var result = new Result("Controller");
+                    result.AddFailure("Controller is null");
+                    var results = new SignalResults($"Other {i}");
+                    results.Results.Add(result);
+                    _results.Add(results);
+                    _hasErrors = true;
+                    continue;
+                }
+
                 ValidateController(_pack.OtherSignals[i], $"Other {i}");
             }
 
@@ -303,6 +315,7 @@ namespace Signals.Unity.Inspector
         private IEnumerable<IValidatorBase> GetValidators()
         {
             yield return new ControllerValidator();
+            yield return new SignalValidator();
             yield return new AspectValidator();
             yield return new DisplayValidator();
         }

@@ -87,7 +87,7 @@ namespace Signals.Game.Generation
                     branchTrackKey.Add(branch.track.outBranch.track, GetPlacement(branch.IsThroughTrack() ? PrefabType.Mainline : PrefabType.Diverging, old));
                 }
 
-                return new JunctionSignalGroup(junction, null, CreateBranchSignals(junction, branchTrackKey, branchDistance));
+                return new JunctionSignalGroup(junction, null, CreateBranchSignalsOppositeDouble(junction, branchTrackKey, branchDistance));
             }
 
             // Check branches.
@@ -242,7 +242,7 @@ namespace Signals.Game.Generation
                 // If the track is marked as mainline but is actually short and within station tracks,
                 // then fall back to either shunting or spacing signals.
                 // Same with yard tracks.
-                if (IsMainlineCountedAsYard(inTrack) || inTrack.IsPartOfStation())
+                if(IsMainlineCountedAsYard(inTrack) || inTrack.IsPartOfStation())
                 {
                     junctionSignal = ShuntingOrSpacing(inTrack);
                 }
@@ -430,6 +430,37 @@ namespace Signals.Game.Generation
 
                 var placement = new SignalPlacementInfo(track, tDirT, index, tSpan);
                 var signal = InstantiateFromDef(helper.Definition, point.position, tDirT.IsOut() ? point.forward : -point.forward, false, track);
+                var controller = new TrackSignalController(signal, branch.track, TrackDirection.In, placement);
+
+                helper.Apply(controller);
+                signals.Add(controller);
+            }
+
+            return signals;
+        }
+
+        private static List<TrackSignalController> CreateBranchSignalsOppositeDouble(Junction junction,
+            Dictionary<RailTrack, PlacementHelper> branchTrackKey, float distance)
+        {
+            var signals = new List<TrackSignalController>();
+
+            if (junction.outBranches.Count != 2) return CreateBranchSignals(junction, branchTrackKey, distance);
+
+            for (int i = 0; i < junction.outBranches.Count; i++)
+            {
+                Junction.Branch? branch = junction.outBranches[i];
+                var track = branch.track.outBranch.track;
+
+                if (!branchTrackKey.TryGetValue(track, out var helper)) continue;
+
+                var kpSet = track.GetKinkedPointSet();
+                var tDirT = TrackUtils.TrackDirectionFromTrack(track, branch.track);
+                var tSpan = kpSet.GetSpan(distance, tDirT);
+                var index = kpSet.GetPointIndexForSpan(tSpan);
+                var point = kpSet.points[index];
+
+                var placement = new SignalPlacementInfo(track, tDirT, index, tSpan);
+                var signal = InstantiateFromDef(helper.Definition, point.position, tDirT.IsOut() ? point.forward : -point.forward, i == 1, track);
                 var controller = new TrackSignalController(signal, branch.track, TrackDirection.In, placement);
 
                 helper.Apply(controller);

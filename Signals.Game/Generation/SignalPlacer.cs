@@ -336,7 +336,7 @@ namespace Signals.Game.Generation
             point = kpSet.points[index];
             placement.PointIndex = index;
             placement.Span = tSpan;
-            var signal = InstantiateFromDef(definition, point.position, isOut ? point.forward : -point.forward, false, placement.Track);
+            var signal = InstantiateFromDef(definition, point.position, isOut ? point.forward : -point.forward, placement.OppositeSide, placement.Track);
 
             return new DistantSignalController(signal, home, placement, distance);
         }
@@ -356,11 +356,6 @@ namespace Signals.Game.Generation
                 {
                     SignalType.Mainline => true,
                     SignalType.Entry => true,
-                    SignalType.Shunting => false,
-                    SignalType.Distant => false,
-                    SignalType.Exit => false,
-                    SignalType.ExitPax => false,
-                    SignalType.Other => false,
                     _ => false,
                 }
             };
@@ -386,6 +381,7 @@ namespace Signals.Game.Generation
             if (Check(PrefabType.Entry)) return PrefabType.Entry;
             if (Check(PrefabType.ExitPax)) return PrefabType.ExitPax;
             if (Check(PrefabType.Exit)) return PrefabType.Exit;
+            if (Check(PrefabType.StationMainline)) return PrefabType.StationMainline;
             if (Check(PrefabType.JunctionLeft)) return PrefabType.JunctionLeft;
             if (Check(PrefabType.JunctionRight)) return PrefabType.JunctionRight;
             if (Check(PrefabType.Diverging)) return PrefabType.Diverging;
