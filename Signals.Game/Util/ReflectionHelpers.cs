@@ -9,7 +9,8 @@ namespace Signals.Game.Util
     {
         private const BindingFlags PrivateFlags = BindingFlags.Instance | BindingFlags.NonPublic;
 
-        // TrackID.
+        #region TrackID
+
         private static FieldInfo? s_trackIdOrderNumber;
         private static FieldInfo TrackIdOrderNumber
         {
@@ -60,8 +61,10 @@ namespace Signals.Game.Util
 
         public static string GetTrackType(TrackID trackID) => (string)TrackIdType.GetValue(trackID);
 
+        #endregion
 
-        // SignHover.
+        #region SignHover
+
         private static FieldInfo? s_signHoverIsHovered;
         private static FieldInfo SignHoveredIsHovered
         {
@@ -95,5 +98,30 @@ namespace Signals.Game.Util
         public static MeshRenderer[] GetRenderers(SignHover sign) => (MeshRenderer[])SignHoveredRenderers.GetValue(sign);
 
         public static void SetRenderers(SignHover sign, MeshRenderer[] renderers) => SignHoveredRenderers.SetValue(sign, renderers);
+
+        #endregion
+
+        #region IndicatorEmission
+
+        private static MethodInfo? s_setColour;
+        private static MethodInfo SetColour
+        {
+            get
+            {
+                if (s_setColour == null)
+                {
+                    s_setColour = typeof(IndicatorEmission).GetMethod("SetColor", PrivateFlags);
+                }
+
+                return s_setColour;
+            }
+        }
+
+        public static void ForceSetColour(IndicatorEmission indicator)
+        {
+            SetColour.Invoke(indicator, new object[] { indicator.GetNormalizedValue() });
+        }
+
+        #endregion
     }
 }

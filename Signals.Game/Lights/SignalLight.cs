@@ -1,4 +1,5 @@
 ﻿using Signals.Common;
+using Signals.Game.Util;
 using UnityEngine;
 
 namespace Signals.Game.Lights
@@ -22,6 +23,8 @@ namespace Signals.Game.Lights
             }
         }
 
+        private Coroutine? _colourChange;
+
         protected LampControl.LampState InternalState = LampControl.LampState.None;
 
         public LampControl Lamp = null!;
@@ -30,6 +33,8 @@ namespace Signals.Game.Lights
         public Signal Signal { get; private set; } = null!;
 
         public bool IsActive => Lamp.lampInd.EmissionValue > SmallFloat;
+
+        internal IndicatorEmission Indicator => Lamp.lampInd;
 
         public virtual void Initialize(SignalLightDefinition def, Signal signal)
         {
@@ -96,6 +101,39 @@ namespace Signals.Game.Lights
         protected void UpdateFromState()
         {
             Lamp.SetLampState(InternalState);
+        }
+
+        public void ChangeColour(SignalLightColourChangerDefinition? changer)
+        {
+            if (_colourChange != null)
+            {
+                StopCoroutine(_colourChange);
+            }
+
+            _colourChange = StartCoroutine(ColourRoutine(changer == null ? Definition.Colour : changer.Colour));
+        }
+
+        private System.Collections.IEnumerator ColourRoutine(Color c)
+        {
+            var start = Indicator.emissionColor;
+
+            if (Definition.Lag > 0.001f)
+            {
+                for (float f = 0; f < 1; f += Time.deltaTime / Definition.Lag)
+                {
+                    SetColour(Color.Lerp(start, c, f));
+                    yield return null;
+                }
+            }
+
+            SetColour(c);
+        }
+
+        private void SetColour(Color c)
+        {
+            Indicator.emissionColor = c;
+            Indicator.glareColor = c;
+            ReflectionHelpers.ForceSetColour(Indicator);
         }
     }
 }

@@ -23,9 +23,11 @@ namespace Signals.Common.Aspects
         public SignalLightDefinition[] OnLights = new SignalLightDefinition[0];
         public SignalLightDefinition[] BlinkingLights = new SignalLightDefinition[0];
         public SignalLightSequenceDefinition[] LightSequences = new SignalLightSequenceDefinition[0];
+        public SignalLightColourChangerDefinition[] ColourChangers = new SignalLightColourChangerDefinition[0];
 
         [Space]
         public TransformMoverTarget[] Movers = new TransformMoverTarget[0];
+        public ObjectChanger? Changer = null;
 
         [Space]
         [Tooltip("A random entry is selected to play when this aspect is activated\n" +

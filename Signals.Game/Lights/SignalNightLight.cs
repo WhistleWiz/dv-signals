@@ -6,9 +6,9 @@ namespace Signals.Game.Lights
 {
     public class SignalNightLight : SignalLight
     {
-        // From AutomaticHeadlightController.
+        // Matching the Street Light sprite light events.
         private const float DAYTIME_START = 7f / 24f;
-        private const float DAYTIME_END = 20f / 24f;
+        private const float DAYTIME_END = 18f / 24f;
 
         public override void Initialize(SignalLightDefinition def, Signal signal)
         {

@@ -53,6 +53,11 @@ namespace Signals.Unity.Validation
                 result.AddFailure($"{name}/{aspect.Id} - Light Sequences has null entries");
             }
 
+            if (aspect.ColourChangers.Any(x => x == null))
+            {
+                result.AddFailure($"{name}/{aspect.Id} - Colour Changers has null entries");
+            }
+
             if (aspect.Movers.Any(x => x == null))
             {
                 result.AddFailure($"{name}/{aspect.Id} - Movers has null entries");
@@ -81,6 +86,16 @@ namespace Signals.Unity.Validation
                 if (aspect.LightSequences.Any(x => x != null && x.Lights.Contains(light)))
                 {
                     result.AddWarning($"{name}/{aspect.Id} - blinking light {light.name} overlaps with Light Sequences");
+                }
+            }
+
+            foreach (var cChanger in aspect.ColourChangers)
+            {
+                if (cChanger == null) continue;
+
+                if (cChanger.Light == null)
+                {
+                    result.AddFailure($"{name}/{aspect.Id}/{cChanger} - light is not assigned");
                 }
             }
 

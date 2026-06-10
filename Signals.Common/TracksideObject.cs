@@ -10,7 +10,7 @@ namespace Signals.Common
         private static readonly Vector3 TrackSize = new Vector3(0.07f, 0.152f, HalfTrackLength * 2);
         private static readonly Vector3 TrackSide = new Vector3(0.0351f, 0, 0);
         private static readonly Vector3 TrackUp = new Vector3(0, TrackSize.y / -2, 0);
-        private static readonly Vector3 TrackSize2 = new Vector3(0.122f, 0.01f, HalfTrackLength * 2);
+        private static readonly Vector3 TrackSize2 = new Vector3(0.132f, 0.01f, HalfTrackLength * 2);
         private static readonly Vector3 TrackUp2 = new Vector3(0, -TrackSize.y + (TrackSize2.y / 2), 0);
         private static readonly Color Color2 = new Color(0.9f, 0.9f, 0.9f, 0.2f);
 

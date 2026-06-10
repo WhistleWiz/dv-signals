@@ -27,9 +27,10 @@ namespace Signals.Game.Aspects
         where T : AspectBaseDefinition
     {
         private Coroutine? _sync;
-        private SignalLight[] _on = null!;
-        private SignalLight[] _blink = null!;
-        private SignalLightSequence[] _sequences = null!;
+        private SignalLight[] _on;
+        private SignalLight[] _blink;
+        private SignalLightSequence[] _sequences;
+        private SignalLightColourChanger[] _colourChangers;
 
         public T Definition { get; private set; }
         public Signal Signal { get; private set; }
@@ -54,6 +55,7 @@ namespace Signals.Game.Aspects
             _on = definition.OnLights.Select(x => x.GetController(signal)).ToArray();
             _blink = definition.BlinkingLights.Select(x => x.GetController(signal)).ToArray();
             _sequences = definition.LightSequences.Select(x => x.GetController(signal)).ToArray();
+            _colourChangers = definition.ColourChangers.Select(x => new SignalLightColourChanger(x, signal)).ToArray();
 
             Active = false;
         }
@@ -87,11 +89,17 @@ namespace Signals.Game.Aspects
                 light.TurnOn(false);
             }
 
+            foreach (var changer in _colourChangers)
+            {
+                changer.Apply();
+            }
+
             foreach (var t in Definition.Movers)
             {
                 t.Apply();
             }
 
+            Definition.Changer?.Apply();
             PlaySound();
 
             Active = true;
@@ -126,11 +134,17 @@ namespace Signals.Game.Aspects
                 sequence.Deactivate();
             }
 
+            foreach (var changer in _colourChangers)
+            {
+                changer.Unapply();
+            }
+
             foreach (var t in Definition.Movers)
             {
                 t.Unapply();
             }
 
+            Definition.Changer?.Unapply();
             Active = false;
         }
 
