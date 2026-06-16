@@ -11,21 +11,30 @@ namespace Signals.Game.Controllers
     {
         public BasicSignalController Home { get; private set; }
         public float Distance { get; private set; }
-        public override string Name => string.IsNullOrEmpty(NameOverride) ? $"{Home.Name}-D" : NameOverride;
+        public bool IsRepeater { get; private set; }
 
         public DistantSignalController(SignalControllerDefinition def, BasicSignalController home,
-            SignalPlacementInfo info, float distance) : base(def, info)
+            SignalPlacementInfo info, float distance, bool repeater) : base(def, info)
         {
             Home = home;
             Home.AnyAspectChanged += UpdateFromHome;
 
             Distance = distance;
+            IsRepeater = repeater;
             Type = SignalType.Distant;
 
             foreach (var signal in Signals)
             {
                 signal.SetBlock(TrackBlock.CreateForDistant(home, distance));
             }
+        }
+
+        protected override string GenerateName()
+        {
+            return string.Format(IsRepeater ?
+                    SignalManager.CurrentPack.RepeaterFormat :
+                    SignalManager.CurrentPack.DistantFormat,
+                Home.InternalName, Id);
         }
 
         public override bool ShouldUpdate() => false;
@@ -41,7 +50,7 @@ namespace Signals.Game.Controllers
         {
             if (!original.PlacementInfo.HasValue) return null;
 
-            var replacement = new DistantSignalController(def, original.Home, original.PlacementInfo.Value, original.Distance)
+            var replacement = new DistantSignalController(def, original.Home, original.PlacementInfo.Value, original.Distance, original.IsRepeater)
             {
                 Group = original.Group,
                 ActingAsDistant = original.ActingAsDistant,

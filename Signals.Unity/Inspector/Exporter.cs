@@ -97,7 +97,7 @@ namespace Signals.Unity.Inspector
 
         private void OnGUI()
         {
-            if (_pack == null)
+            if (_pack == null || _results.Count == 0)
             {
                 EditorGUILayout.LabelField("Environment was refreshed, please export again.");
                 return;
@@ -216,8 +216,8 @@ namespace Signals.Unity.Inspector
             ValidateController(_pack.RightJunctionSignal, "Right Junction Signal");
             ValidateController(_pack.EntrySignal, "Entry Signal");
             ValidateController(_pack.ExitSignal, "Exit Signal");
-            ValidateController(_pack.PassengerSignal, "Passenger Signal");
-            ValidateController(_pack.StationMainlineSignal, "Station Signal");
+            ValidateController(_pack.ExitPassengerSignal, "Exit Passenger Signal");
+            ValidateController(_pack.ExitMainlineSignal, "Exit Mainline Signal");
             ValidateController(_pack.SpacingSignal, "Spacing Signal");
             ValidateController(_pack.TurntableSignal, "Turntable Signal");
 
@@ -236,8 +236,8 @@ namespace Signals.Unity.Inspector
             ValidateController(_pack.OldRightJunctionSignal, "Old Right Junction Signal");
             ValidateController(_pack.OldEntrySignal, "Old Entry Signal");
             ValidateController(_pack.OldExitSignal, "Old Exit Signal");
-            ValidateController(_pack.OldPassengerSignal, "Old Passenger Signal");
-            ValidateController(_pack.OldStationMainlineSignal, "Old Station Signal");
+            ValidateController(_pack.OldExitPassengerSignal, "Old Exit Passenger Signal");
+            ValidateController(_pack.OldExitMainlineSignal, "Old Exit Mainline Signal");
             ValidateController(_pack.OldSpacingSignal, "Old Spacing Signal");
             ValidateController(_pack.OldTurntableSignal, "Old Turntable Signal");
 

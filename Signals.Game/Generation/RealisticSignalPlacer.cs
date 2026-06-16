@@ -159,7 +159,7 @@ namespace Signals.Game.Generation
                     // If this track can be considered a mainline through the yard, then give it proper signals.
                     if (IsYardTrackMainline(branch) && !GoesToDeadEndIn() && LeavesStationIn())
                     {
-                        branchTrackKey.Add(track, GetPlacement(PrefabType.StationMainline, old));
+                        branchTrackKey.Add(track, GetPlacement(PrefabType.ExitMainline, old));
                     }
                     else
                     {
@@ -203,7 +203,7 @@ namespace Signals.Game.Generation
                 if (branchTrackKey.Count == 0) return null;
 
                 // Create signals at the branches from the keys.
-                return new JunctionSignalGroup(junction, null, CreateBranchSignals(junction, branchTrackKey, branchDistance));
+                return WithoutJunction();
             }
 
             PlacementHelper junctionSignal;
@@ -221,10 +221,7 @@ namespace Signals.Game.Generation
             else if (IsLogicYardTrack(inTrack) || inTrack.IsNonSign() || IsShortDeadEnd(inTrack))
             {
                 // Track is too small for a signal.
-                if (inTrack.GetLength() < VerySmallTrackThreshold)
-                {
-                    return new JunctionSignalGroup(junction, null, CreateBranchSignals(junction, branchTrackKey, branchDistance));
-                }
+                if (inTrack.GetLength() < VerySmallTrackThreshold) return WithoutJunction();
 
                 // Special handling for loading tracks as they may act as mainlines (IME, CME...).
                 if (IsLoadingTrack(inTrack) || inTrack.IsNonSign())
@@ -255,10 +252,7 @@ namespace Signals.Game.Generation
             }
             else
             {
-                if (!SignalsMod.Settings.PlaceSignalsOutsideStations)
-                {
-                    return new JunctionSignalGroup(junction, null, CreateBranchSignals(junction, branchTrackKey, branchDistance));
-                }
+                if (!SignalsMod.Settings.PlaceSignalsOutsideStations) return WithoutJunction();
 
                 junctionSignal = junction.IsLeft() ? GetPlacement(PrefabType.JunctionLeft, old) : GetPlacement(PrefabType.JunctionRight, old);
                 isMain = true;
@@ -312,6 +306,11 @@ namespace Signals.Game.Generation
 
                 return stationEnd;
             }
+
+            JunctionSignalGroup WithoutJunction()
+            {
+                return new JunctionSignalGroup(junction, null, CreateBranchSignals(junction, branchTrackKey, branchDistance));
+            }
         }
 
         private static SignalType GetSignalType(PrefabType prefab) => prefab switch
@@ -324,7 +323,7 @@ namespace Signals.Game.Generation
             PrefabType.Exit => SignalType.Exit,
             PrefabType.ExitPax => SignalType.ExitPax,
             PrefabType.Shunting => SignalType.Shunting,
-            PrefabType.StationMainline => SignalType.Mainline,
+            PrefabType.ExitMainline => SignalType.ExitMainline,
             PrefabType.Spacing => SignalType.Spacing,
             _ => SignalType.NotSet,
         };
@@ -497,6 +496,8 @@ namespace Signals.Game.Generation
                             }
                         }
                     }
+
+                    controller.FlagAllBlocksForUpdating();
                 }
             }
 

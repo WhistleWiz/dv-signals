@@ -61,6 +61,7 @@ namespace Signals.Game
         }
 
         protected const int OffValue = -1;
+        protected static readonly int AnimatorHash = Animator.StringToHash("Aspect");
 
         #endregion
 
@@ -70,9 +71,8 @@ namespace Signals.Game
         private SignalOperationMode _operation = SignalOperationMode.Automatic;
         private int _manualOverride = 0;
         private bool _shuntingAllowed = false;
+        private string? _internalName;
         private IndicatorHudWrapper[] _indicatorWrapper;
-
-        protected string InternalName = string.Empty;
 
         internal SignalHover? Hover;
 
@@ -112,6 +112,7 @@ namespace Signals.Game
         public bool IsOn => CurrentAspectIndex >= 0;
         public bool ShuntingAllowed => _shuntingAllowed;
         public int ManualOverrideAspect => _manualOverride;
+        public string InternalName => _internalName ??= GetInternalName();
         public string Name => string.IsNullOrEmpty(NameOverride) ? InternalName : NameOverride;
 
         // IHudDisplayable implementation.
@@ -178,6 +179,33 @@ namespace Signals.Game
             }
         }
 
+        private string GetInternalName()
+        {
+            if (Parent != null)
+            {
+                return string.Format(SignalManager.CurrentPack.SubDistantFormat, Parent.Name);
+            }
+
+            var name = Controller.InternalName;
+            var array = IsShunting ? Controller.ShuntingSignals : Controller.Signals;
+
+            if (array.Length > 1)
+            {
+                var index = Array.IndexOf(array, this);
+
+                if (SignalManager.CurrentPack.UseLettersForMultipleSignalsInControllers)
+                {
+                    name = $"{name}-{Helpers.IntToLetters(index)}";
+                }
+                else
+                {
+                    name = $"{name}-{index}";
+                }
+            }
+
+            return name;
+        }
+
         protected bool IsAspectManuallyOverriden(int index)
         {
             if (Operation == SignalOperationMode.Automatic)
@@ -202,7 +230,11 @@ namespace Signals.Game
         {
             DistantSignal?.Destroy();
             SignalManager.Instance.UnregisterSignal(this);
-            GameObject.Destroy(Definition.gameObject);
+
+            if (Definition != null)
+            {
+                GameObject.Destroy(Definition.gameObject);
+            }
         }
 
         public void DestroyDistant()
@@ -237,6 +269,7 @@ namespace Signals.Game
             }
 
             CurrentAspectIndex = OffValue;
+            Definition.Animator?.SetInteger(AnimatorHash, OffValue);
 
             AspectChanged?.Invoke(null);
             return true;
@@ -282,6 +315,7 @@ namespace Signals.Game
             SignalsMod.LogVerbose($"Setting signal '{Name}' to aspect '{aspect.Id}'");
             aspect.Apply();
             CurrentAspectIndex = newAspect;
+            Definition.Animator?.SetInteger(AnimatorHash, newAspect);
             AspectChanged?.Invoke(aspect);
             Controller.AnyAspectChanged?.Invoke(this, aspect);
             return true;

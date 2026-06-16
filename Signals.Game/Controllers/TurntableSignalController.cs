@@ -14,7 +14,6 @@ namespace Signals.Game.Controllers
         public TurntableRailTrack Track { get; private set; }
         public TrackDirection Direction { get; private set; }
         public bool IsConnected { get; private set; }
-        public override string Name => string.IsNullOrEmpty(NameOverride) ? $"{Track.uniqueID}-{PlacementLetter}" : NameOverride;
 
         public TurntableSignalController(SignalControllerDefinition def, TurntableRailTrack track, TrackDirection direction, SignalPlacementInfo? info) :
             base(def, info)
@@ -26,6 +25,11 @@ namespace Signals.Game.Controllers
             Destroyed += (x) => Track.TracksUpdated -= TracksUpdated;
 
             TracksUpdated(Track.frontClosest?.track, Track.rearClosest?.track);
+        }
+
+        protected override string GenerateName()
+        {
+            return $"{Track.uniqueID}-{(Direction.IsOut() ? 1 : 2)}";
         }
 
         public override bool ShouldUpdate() => false;

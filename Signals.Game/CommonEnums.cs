@@ -16,7 +16,7 @@
         Entry,
         Exit,
         ExitPax,
-        StationMainline,
+        ExitMainline,
         Shunting,
         Spacing,
     }
@@ -28,6 +28,7 @@
         Entry,
         Exit,
         ExitPax,
+        ExitMainline,
         Spacing,
         Shunting,
         Distant,

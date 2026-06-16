@@ -22,6 +22,7 @@ namespace Signals.Game
 
             Add((x, y) => new StaticDisplay(x, y));
             Add((x, y) => new SignalIdDisplay(x, y));
+            Add((x, y) => new SignalNameDisplay(x, y));
 
             Add((x, y) => new JunctionBranchDisplay(x, y));
             Add((x, y) => new JunctionIdDisplay(x, y));

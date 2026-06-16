@@ -20,11 +20,9 @@ namespace Signals.Game.Aspects
 
             if (!Controller.PlacementInfo.HasValue) return false;
 
-            var junction = Controller.GroupJunction;
+            if (Controller.Group == null) return false;
 
-            if (junction == null) return false;
-
-            var station = junction.GetStation();
+            var station = Controller.Group.Station;
 
             if (string.IsNullOrEmpty(station)) return false;
 

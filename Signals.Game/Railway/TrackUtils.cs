@@ -10,6 +10,13 @@ namespace Signals.Game.Railway
     {
         private const float PositionDistance = 0.01f;
 
+        private static Dictionary<Junction, string> s_junctionStationMap = new Dictionary<Junction, string>();
+
+        internal static void ClearCache()
+        {
+            s_junctionStationMap.Clear();
+        }
+
         /// <summary>
         /// Returns <see langword="true"/> if 2 tracks are directly connected, otherwise <see langword="false"/>.
         /// </summary>
@@ -276,21 +283,32 @@ namespace Signals.Game.Railway
 
         public static string JunctionStation(Junction junction)
         {
+            if (s_junctionStationMap.TryGetValue(junction, out var station))
+            {
+                return station;
+            }
+
             var id = junction.junctionData.junctionIdLong;
 
             if (!id.StartsWith(JData.ID_MARKER_STATION))
             {
-                return string.Empty;
+                return AddToCache(string.Empty);
             }
 
             var split = id.Split('-');
 
             if (split.Length != 3)
             {
-                return string.Empty;
+                return AddToCache(string.Empty);
             }
 
-            return split[2];
+            return AddToCache(split[2]);
+
+            string AddToCache(string value)
+            {
+                s_junctionStationMap[junction] = value;
+                return value;
+            }
         }
 
         public static TrackDirection TrackDirectionFromJunction(RailTrack track, Junction junction)

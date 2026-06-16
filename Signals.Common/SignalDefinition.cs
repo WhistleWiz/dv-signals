@@ -32,5 +32,7 @@ namespace Signals.Common
         public bool SelfActsAsDistant = false;
         [Tooltip("A physical object that can reserve the signal")]
         public SignalReservingObjectDefinition? PhysicalReserver;
+        [Tooltip("The signal will send its current aspect to this animator if specified")]
+        public Animator? Animator;
     }
 }

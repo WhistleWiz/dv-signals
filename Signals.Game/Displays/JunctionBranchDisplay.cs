@@ -1,5 +1,6 @@
 ﻿using Signals.Common.Displays;
 using Signals.Game.Controllers;
+using Signals.Game.Util;
 
 namespace Signals.Game.Displays
 {
@@ -60,24 +61,10 @@ namespace Signals.Game.Displays
                     if (junction.selectedBranch == 1) return "R";
                     goto default;
                 case JunctionBranchDisplayDefinition.BranchDisplayMode.Letters:
-                    return IntToLetters(junction.selectedBranch + 1);
+                    return Helpers.IntToLetters(junction.selectedBranch + 1);
                 default:
                     return (junction.selectedBranch + 1).ToString();
             }
-        }
-
-        // https://codereview.stackexchange.com/a/44094
-        public static string IntToLetters(int value)
-        {
-            string result = string.Empty;
-
-            while (--value >= 0)
-            {
-                result = (char)('A' + value % 26) + result;
-                value /= 26;
-            }
-
-            return result;
         }
     }
 }

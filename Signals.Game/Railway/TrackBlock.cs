@@ -23,6 +23,7 @@ namespace Signals.Game.Railway
         }
 
         private bool _tracksCanChange;
+        private bool _needsUpdate;
         private string? _station;
         private string? _yard;
         private string? _trackNumber;
@@ -30,15 +31,30 @@ namespace Signals.Game.Railway
         private string? _trackType;
         private HashSet<RailTrack>? _tracks;
         private HashSet<Junction>? _junctions;
+        private BasicSignalController? _nextController;
 
         public readonly int Id;
         public TrackInfo[] Tracks { get; private set; }
         public RailTrack[] ExtraTracks { get; private set; }
-        public BasicSignalController? NextController { get; private set; }
+        public BasicSignalController? NextController
+        {
+            get
+            {
+                if (_nextController != null && !_nextController.SafetyCheck())
+                {
+                    FlagForUpdating();
+                    _nextController = null;
+                }
+
+                return _nextController;
+            }
+
+            private set => _nextController = value;
+        }
         public float Length { get; private set; }
         public bool IsDeadEnd { get; private set; }
         public bool IsSelfLoop { get; private set; }
-        public bool TracksCanChange => _tracksCanChange;
+        public bool ShouldBeUpdated => _tracksCanChange || _needsUpdate;
         /// <summary>
         /// Station covered by this block. Empty if not available.
         /// </summary>
@@ -194,6 +210,11 @@ namespace Signals.Game.Railway
         public bool IsOccupied(CrossingCheckMode crossingMode)
         {
             return Tracks.Any(x => x.Track.IsOccupied(crossingMode)) || ExtraTracks.Any(x => x.IsOccupied(crossingMode));
+        }
+
+        public void FlagForUpdating()
+        {
+            _needsUpdate = true;
         }
 
         /// <summary>

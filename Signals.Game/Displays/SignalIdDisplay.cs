@@ -8,20 +8,17 @@ namespace Signals.Game.Displays
 
         public override void UpdateDisplay()
         {
-            string text;
-            var junction = Controller.GroupJunction;
+            var group = Controller.Group;
 
-            if (Definition.WithStation && junction != null)
+            if (Definition.WithStation && group != null)
             {
-                var station = junction.GetStation();
-                text = $"{(string.IsNullOrEmpty(station) ? "W" : station)}-{Signal.Id}";
+                var station = group.Station;
+                DisplayText = $"{(string.IsNullOrEmpty(station) ? "W" : station)}-{Signal.Id}";
             }
             else
             {
-                text = Signal.Id.ToString();
+                DisplayText = Signal.Id.ToString();
             }
-
-            DisplayText = text;
         }
     }
 }

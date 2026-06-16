@@ -21,6 +21,20 @@ namespace Signals.Game
 
         public static bool IsFullyManual(this SignalOperationMode mode) => mode == SignalOperationMode.FullManual;
 
+        public static bool IsEntry(this SignalType type) => type switch
+        {
+            SignalType.Entry => true,
+            _ => false,
+        };
+
+        public static bool IsAnyExit(this SignalType type) => type switch
+        {
+            SignalType.Exit => true,
+            SignalType.ExitPax => true,
+            SignalType.ExitMainline => true,
+            _ => false,
+        };
+
         #endregion
 
         #region Definitions

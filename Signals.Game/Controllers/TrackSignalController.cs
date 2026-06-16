@@ -17,26 +17,6 @@ namespace Signals.Game.Controllers
         {
             StartingTrack = starting;
             Direction = startingDirection;
-
-            if (starting.isJunctionTrack)
-            {
-                var junction = starting.inJunction;
-                int count = 0;
-
-                foreach (var item in junction.outBranches)
-                {
-                    count++;
-
-                    if (item.track == starting) break;
-                }
-
-                InternalName = $"{junction.junctionData.junctionIdLong}-B{count}";
-            }
-            else
-            {
-                var junction = startingDirection.IsOut() ? starting.inJunction : starting.outJunction;
-                InternalName = junction != null ? $"{junction.junctionData.junctionIdLong}-F" : $"{StartingTrack.name}:{PlacementLetter}";
-            }
         }
 
         protected override bool ShouldMoveForwards(RailTrack track)
@@ -50,7 +30,7 @@ namespace Signals.Game.Controllers
             {
                 var block = signal.Block;
 
-                if (block != null && !block.TracksCanChange) continue;
+                if (block != null && !block.ShouldBeUpdated) continue;
 
                 signal.SetBlock(Type == SignalType.Spacing ?
                     TrackBlock.CreateForSpacing(StartingTrack, Direction, this) :
@@ -61,7 +41,7 @@ namespace Signals.Game.Controllers
             {
                 var block = signal.Block;
 
-                if (block != null && !block.TracksCanChange) continue;
+                if (block != null && !block.ShouldBeUpdated) continue;
 
                 signal.SetBlock(TrackBlock.CreateForShunting(StartingTrack, Direction, this));
             }

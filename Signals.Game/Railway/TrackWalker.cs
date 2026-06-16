@@ -406,7 +406,6 @@ namespace Signals.Game.Railway
                             if (MeetsConditions(found))
                             {
                                 controllers.Add(found!);
-                                direction = TrackDirection.Out;
                                 break;
                             }
                         }
@@ -417,7 +416,6 @@ namespace Signals.Game.Railway
                             if (MeetsConditions(found))
                             {
                                 controllers.Add(found!);
-                                direction = TrackDirection.Out;
                                 break;
                             }
 
@@ -448,10 +446,12 @@ namespace Signals.Game.Railway
                         !direction.IsOut() && group.TryGetControllerForTrack(track, out var match) && MeetsConditions(match))
                     {
                         controllers.Add(match!);
-                        direction = TrackDirection.Out;
                         break;
                     }
                 }
+
+                // All queued tracks are junction branches, so the direction is always Out.
+                direction = TrackDirection.Out;
             }
 
             return controllers;
@@ -476,7 +476,7 @@ namespace Signals.Game.Railway
                 Junction? junction = direction.IsOut() ? track.outJunction : track.inJunction;
                 Branch? branch;
 
-                // Found junction, return it. Track is comes from doesn't matter.
+                // Found junction, return it. Track it comes from doesn't matter.
                 if (junction != null)
                 {
                     return junction;
@@ -502,6 +502,113 @@ namespace Signals.Game.Railway
             }
 
             return null;
+        }
+
+        public static Junction? GetNextJunctionDivergingOnly(RailTrack track, TrackDirection direction)
+        {
+            int depth = 0;
+            var visited = new HashSet<RailTrack>();
+            var tracks = new List<RailTrack>();
+
+            // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
+            while (depth++ < MaxDepth && track != null && !visited.Contains(track))
+            {
+                visited.Add(track);
+
+                Junction? junction = direction.IsOut() ? track.outJunction : track.inJunction;
+                Branch? branch;
+
+                // Found junction, return it if we're facing the branches.
+                if (junction != null && !track.isJunctionTrack)
+                {
+                    return junction;
+                }
+
+                branch = direction.IsOut() ? track.GetOutBranch() : track.GetInBranch();
+
+                // No branch means we reach a dead end.
+                if (branch == null || branch.track == null)
+                {
+                    return null;
+                }
+
+                // Check if the current track is the next track of the next branch.
+                if (ContainsTrack(track, branch, direction))
+                {
+                    // Direction must be flipped.
+                    direction = direction.Flipped();
+                }
+
+                track = branch.track;
+                tracks.Add(track);
+            }
+
+            return null;
+        }
+
+        public static HashSet<RailTrack> GetReachableTracks(RailTrack track, TrackDirection direction, IEnumerable<RailTrack> targets)
+        {
+            int depth = 0;
+            int targetCount = targets.Count();
+            var targetsMet = new HashSet<RailTrack>();
+
+            if (targetCount == 0) return targetsMet;
+
+            var visited = new HashSet<RailTrack>();
+            var tracks = new Queue<RailTrack>();
+
+            tracks.Enqueue(track);
+
+            while (tracks.Count > 0)
+            {
+                track = tracks.Dequeue();
+
+                // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
+                while (depth++ < MaxDepth && track != null && !visited.Contains(track))
+                {
+                    visited.Add(track);
+
+                    Junction? junction = direction.IsOut() ? track.outJunction : track.inJunction;
+                    Branch? branch = direction.IsOut() ? track.GetOutBranch() : track.GetInBranch();
+
+                    // Found junction, check signal.
+                    if (junction != null && !track.isJunctionTrack)
+                    {
+                        foreach (var outBranch in junction.outBranches)
+                        {
+                            if (outBranch.track == branch.track) continue;
+
+                            tracks.Enqueue(outBranch.track);
+                        }
+                    }
+
+                    // No branch means we have no track to go, stop looping.
+                    if (branch == null || branch.track == null) break;
+
+                    // Check if the current track is the next track of the next branch.
+                    if (ContainsTrack(track, branch, direction))
+                    {
+                        // Direction must be flipped.
+                        direction = direction.Flipped();
+                    }
+
+                    track = branch.track;
+
+                    if (targets.Contains(track))
+                    {
+                        targetsMet.Add(track);
+                        break;
+                    }
+                }
+
+                // All queued tracks are junction branches, so the direction is always Out.
+                direction = TrackDirection.Out;
+
+                // Stop looping if we already reached all tracks.
+                if (targetsMet.Count == targetCount) break;
+            }
+
+            return targetsMet;
         }
     }
 }

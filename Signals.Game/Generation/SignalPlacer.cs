@@ -136,9 +136,9 @@ namespace Signals.Game.Generation
             PrefabType.JunctionRight => pack.GetRightJunctionSignal(old),
             PrefabType.Entry => pack.GetEntrySignal(old),
             PrefabType.Exit => pack.GetExitSignal(old),
-            PrefabType.ExitPax => pack.GetPassengerSignal(old),
+            PrefabType.ExitPax => pack.GetExitPassengerSignal(old),
             PrefabType.Shunting => pack.GetShuntingSignal(old),
-            PrefabType.StationMainline => pack.GetStationMainlineSignal(old),
+            PrefabType.ExitMainline => pack.GetExitMainlineSignal(old),
             _ => pack.GetMainlineSignal(old),
         };
 
@@ -322,7 +322,8 @@ namespace Signals.Game.Generation
             return signals;
         }
 
-        protected static DistantSignalController CreateDistantForSignal(BasicSignalController home, SignalControllerDefinition definition, float distance)
+        protected static DistantSignalController CreateDistantForSignal(BasicSignalController home, SignalControllerDefinition definition,
+            float distance, bool repeater)
         {
             // This is checked before calling the method.
             var placement = home.PlacementInfo!.Value;
@@ -338,7 +339,7 @@ namespace Signals.Game.Generation
             placement.Span = tSpan;
             var signal = InstantiateFromDef(definition, point.position, isOut ? point.forward : -point.forward, placement.OppositeSide, placement.Track);
 
-            return new DistantSignalController(signal, home, placement, distance);
+            return new DistantSignalController(signal, home, placement, distance, repeater);
         }
 
         #endregion
@@ -381,7 +382,7 @@ namespace Signals.Game.Generation
             if (Check(PrefabType.Entry)) return PrefabType.Entry;
             if (Check(PrefabType.ExitPax)) return PrefabType.ExitPax;
             if (Check(PrefabType.Exit)) return PrefabType.Exit;
-            if (Check(PrefabType.StationMainline)) return PrefabType.StationMainline;
+            if (Check(PrefabType.ExitMainline)) return PrefabType.ExitMainline;
             if (Check(PrefabType.JunctionLeft)) return PrefabType.JunctionLeft;
             if (Check(PrefabType.JunctionRight)) return PrefabType.JunctionRight;
             if (Check(PrefabType.Diverging)) return PrefabType.Diverging;
@@ -553,7 +554,7 @@ namespace Signals.Game.Generation
                     if (tSpan < 0 || tSpan > kpSet.span) continue;
 
                     // Actually place one.
-                    distantSignals.Add(CreateDistantForSignal(controller, prefab, pack.DistantSignalDistance));
+                    distantSignals.Add(CreateDistantForSignal(controller, prefab, pack.DistantSignalDistance, false));
                 }
             }
 
@@ -610,7 +611,7 @@ namespace Signals.Game.Generation
                     if (Vector3.Dot(pointA.forward, pointB.forward) > 0.75f) continue;
 
                     // Actually place one.
-                    repeaterSignals.Add(CreateDistantForSignal(controller, prefab, pack.RepeaterSignalDistance));
+                    repeaterSignals.Add(CreateDistantForSignal(controller, prefab, pack.RepeaterSignalDistance, true));
                 }
             }
         }
@@ -657,19 +658,19 @@ namespace Signals.Game.Generation
             // Check for possible merge targets.
             foreach (var group in registry)
             {
-                foreach (var signal in group.Value.AllControllers)
+                foreach (var controller in group.Value.AllControllers)
                 {
-                    signal.UpdateBlocks();
+                    controller.UpdateBlocks();
 
-                    foreach (var block in signal.GetPotentialBlocks())
+                    foreach (var block in controller.GetPotentialBlocks())
                     {
                         var next = block.NextController;
 
                         if (next is TrackSignalController track)
                         {
-                            var reverse = IsSignalReverse(signal) && IsSignalReverse(track);
-                            var source = reverse ? track : signal;
-                            var target = reverse ? signal : track;
+                            var reverse = IsSignalReverse(controller) && IsSignalReverse(track);
+                            var source = reverse ? track : controller;
+                            var target = reverse ? controller : track;
 
                             // Close enough to merge, signal types allow merging, and the signal that will be
                             // removed does not have a block that is too long.
@@ -692,6 +693,8 @@ namespace Signals.Game.Generation
                             }
                         }
                     }
+
+                    controller.FlagAllBlocksForUpdating();
                 }
             }
 
@@ -773,7 +776,7 @@ namespace Signals.Game.Generation
                     }
                     else
                     {
-                        Debug.LogError($"Remain signal {remain.Name} has no group, this shouldn't happen!");
+                        Debug.LogError($"Remain signal {remain.Id} has no group, this shouldn't happen!");
                     }
 
                     remain.Destroy();

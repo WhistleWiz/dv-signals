@@ -52,8 +52,9 @@ namespace Signals.Game.Controllers
 
         private string _orientationSimple = string.Empty;
         private string _orientation = string.Empty;
+        private string _internalName = string.Empty;
+        private bool _needName = true;
 
-        protected string InternalName = string.Empty;
         protected int UpdateRequested = 0;
 
         public readonly int Id;
@@ -70,8 +71,6 @@ namespace Signals.Game.Controllers
         #endregion
 
         #region Properties
-
-        protected char PlacementLetter => PlacementInfo.HasValue ? PlacementInfo.Value.Direction.IsOut() ? 'O' : 'I' : '-';
 
         /// <summary>
         /// The definition and <see cref="GameObject"/> of the signal.
@@ -110,8 +109,6 @@ namespace Signals.Game.Controllers
                 }
             }
         }
-
-        public virtual string Name => string.IsNullOrEmpty(NameOverride) ? InternalName : NameOverride;
         /// <summary>
         /// <see langword="true"/> if this signal exists in the world.
         /// </summary>
@@ -144,6 +141,28 @@ namespace Signals.Game.Controllers
                 }
 
                 return _orientation;
+            }
+        }
+        public string Name
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(NameOverride)) return NameOverride;
+
+                return InternalName;
+            }
+        }
+        public string InternalName
+        {
+            get
+            {
+                if (_needName)
+                {
+                    _internalName = GenerateName();
+                    _needName = false;
+                }
+
+                return _internalName;
             }
         }
 
@@ -247,6 +266,89 @@ namespace Signals.Game.Controllers
         protected virtual bool ShouldMoveForwards(RailTrack track)
         {
             return true;
+        }
+
+        protected virtual string GenerateName()
+        {
+            var pack = SignalManager.CurrentPack;
+            string text = string.Empty;
+
+            if (StationControllerCache.TryGetStationInfo(this, out var station))
+            {
+                station.Sort();
+
+                if (Type.IsEntry())
+                {
+                    // Just the index of the entry signal.
+                    var index = station.EntrySignals.IndexOf(this) + 1;
+                    text = ApplyFormat(pack.EntryFormat, Id, station.Station, index);
+                    goto End;
+                }
+                else if (Type.IsAnyExit())
+                {
+                    var group = station.GetExitGroupFor(this, out var groupIndex);
+
+                    if (group != null)
+                    {
+                        // Total entry signals + group number, so it starts after the entry signals.
+                        var index1 = station.EntrySignals.Count + groupIndex + 1;
+                        // Index of the exit signal in the group.
+                        var index2 = group.ExitSignals.IndexOf(this) + 1;
+                        text = ApplyFormat(pack.ExitFormat, Id, station.Station, index1, index2);
+                        goto End;
+                    }
+
+                    // Fallback to the index after the groups.
+                    var index = station.EntrySignals.Count + station.ExitGroups.Count + station.ExitNoGroupSignals.IndexOf(this) + 1;
+                    text = ApplyFormat(pack.EntryFormat, Id, station.Station, index);
+                    goto End;
+                }
+                else
+                {
+                    var index = station.MiscSignals.IndexOf(this) + 1;
+                    text = ApplyFormat(pack.GenericStationFormat, Id, station.Station, index);
+                    goto End;
+                }
+            }
+
+            if (PlacementInfo.HasValue)
+            {
+                var index = StationControllerCache.GetIndex(this) + 1;
+
+                if (index > 0)
+                {
+                    // Get the track numbers.
+                    var numbers = new string(PlacementInfo.Value.Track.name.Where(char.IsDigit).ToArray());
+                    text = ApplyFormat(Type == SignalType.Mainline ? pack.MainlineFormat : pack.TrackFormat, Id, numbers, index);
+                    goto End;
+                }
+            }
+
+            return string.Format(pack.FallbackFormat, Id);
+
+        End:
+            return string.IsNullOrEmpty(text) ? string.Format(pack.FallbackFormat, Id) : text;
+
+            static string ApplyFormat(string format, int id, string? optionalExtra, params int[] indexes)
+            {
+                int extra = string.IsNullOrEmpty(optionalExtra) ? 1 : 2;
+                var transformed = new object[indexes.Length * 2 + extra];
+
+                transformed[0] = id;
+
+                if (!string.IsNullOrEmpty(optionalExtra))
+                {
+                    transformed[1] = optionalExtra!;
+                }
+
+                for (int i = 0; i < indexes.Length; i++)
+                {
+                    transformed[i * 2 + extra] = indexes[i];
+                    transformed[i * 2 + extra + 1] = Helpers.IntToLetters(indexes[i]);
+                }
+
+                return string.Format(format, transformed);
+            }
         }
 
         /// <summary>
@@ -355,6 +457,16 @@ namespace Signals.Game.Controllers
         /// Update the current <see cref="Block"/> before the signal is updated.
         /// </summary>
         public virtual void UpdateBlocks() { }
+
+        public virtual void FlagAllBlocksForUpdating()
+        {
+            foreach (var signal in AllSignals)
+            {
+                if (signal.Block == null) continue;
+
+                signal.Block.FlagForUpdating();
+            }
+        }
 
         /// <summary>
         /// Updates the current aspect based on the conditions of <see cref="AllAspects"/>.

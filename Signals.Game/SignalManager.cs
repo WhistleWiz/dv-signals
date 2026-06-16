@@ -19,6 +19,7 @@ namespace Signals.Game
         private const int LaserPointerTargetLayer = 15;
 
         private static Transform? s_holder;
+        private static SignalPack s_pack = null!;
         private static bool s_loaded = false;
         private static bool s_jobs = false;
 
@@ -42,6 +43,7 @@ namespace Signals.Game
         }
 
         public static bool Running => s_loaded;
+        public static SignalPack CurrentPack => s_pack;
 
         private Dictionary<Junction, JunctionSignalGroup> _junctionSignals =
             new Dictionary<Junction, JunctionSignalGroup>();
@@ -56,9 +58,11 @@ namespace Signals.Game
 
         private Coroutine? _updateCoro;
 
-        public static SignalPlacer? Placer = new RealisticSignalPlacer();
+        public static SignalPlacer? Placer;
 
         public List<BasicSignalController> AllControllers => _controllerRegistry;
+
+        public StationControllerCache Cache = new StationControllerCache();
 
         public new static string AllowAutoCreate()
         {
@@ -80,7 +84,7 @@ namespace Signals.Game
 
         #region Mod Loading
 
-        internal static SignalPack GetCurrentPack()
+        private static SignalPack GetCurrentPack()
         {
             if (TryGetPack(SignalsMod.Settings.CustomPack, out var pack))
             {
@@ -218,7 +222,9 @@ namespace Signals.Game
             SignalsMod.Log("Started creating signals...");
             //OldAreaCalculator.DebugCreateDummies();
 
+            TrackUtils.ClearCache();
             SpeedCalculator.ClearCache();
+            StationControllerCache.ClearCache();
             BasicSignalController.ResetIdGeneration();
             Signal.ResetIdGeneration();
             UpdateGauge();
@@ -227,8 +233,8 @@ namespace Signals.Game
 
             // Initial placement.
             var sw = System.Diagnostics.Stopwatch.StartNew();
+            var pack = s_pack = GetCurrentPack();
             int count = 0;
-            var pack = GetCurrentPack();
 
             Placer.CreateSignals(pack, _junctionSignals);
 
@@ -272,6 +278,12 @@ namespace Signals.Game
             sw.Stop();
             SignalsMod.Log($"Finished creating {_turntableSignals.Count} turntable signal(s), " +
                 $"current total is {_controllerRegistry.Count} ({sw.Elapsed.TotalSeconds:F4}s)");
+
+            // Naming.
+            sw.Restart();
+            StationControllerCache.Generate(_controllerRegistry);
+            sw.Stop();
+            SignalsMod.Log($"Station cache generated in {sw.Elapsed.TotalSeconds:F4}s");
 
             // Track intersections.
             TrackChecker.StartBuildingMap();

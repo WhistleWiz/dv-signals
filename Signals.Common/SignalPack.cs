@@ -34,10 +34,10 @@ namespace Signals.Common
         public SignalControllerDefinition? ExitSignal;
         [Tooltip("Used when leaving passenger tracks\n" +
             "Falls back to exit signals")]
-        public SignalControllerDefinition? PassengerSignal;
+        public SignalControllerDefinition? ExitPassengerSignal;
         [Tooltip("Used on mainline station tracks\n" +
             "Falls back to exit signals")]
-        public SignalControllerDefinition? StationMainlineSignal;
+        public SignalControllerDefinition? ExitMainlineSignal;
         [Tooltip("Used on very long station tracks\n" +
             "Does not fall back if missing")]
         public SignalControllerDefinition? SpacingSignal;
@@ -92,10 +92,10 @@ namespace Signals.Common
         public SignalControllerDefinition? OldExitSignal;
         [Tooltip("Used when leaving passenger tracks\n" +
             "Falls back to exit signals")]
-        public SignalControllerDefinition? OldPassengerSignal;
+        public SignalControllerDefinition? OldExitPassengerSignal;
         [Tooltip("Used on mainline station tracks\n" +
             "Falls back to exit signals")]
-        public SignalControllerDefinition? OldStationMainlineSignal;
+        public SignalControllerDefinition? OldExitMainlineSignal;
         [Tooltip("Used on very long station tracks\n" +
             "Does not fall back if missing")]
         public SignalControllerDefinition? OldSpacingSignal;
@@ -124,16 +124,17 @@ namespace Signals.Common
             "These must use custom placement code")]
         public SignalControllerDefinition[] OtherSignals = Array.Empty<SignalControllerDefinition>();
 
-        public bool Validate()
-        {
-            if (Signal == null)
-            {
-                Debug.LogError("Controller is not set!", this);
-                return false;
-            }
-
-            return true;
-        }
+        [Header("Naming Conventions")]
+        public bool UseLettersForMultipleSignalsInControllers = false;
+        public string EntryFormat = "{3}";
+        public string ExitFormat = "{3} {4}";
+        public string GenericStationFormat = "{1} {3}";
+        public string TrackFormat = "{1} {3}";
+        public string MainlineFormat = "{0}";
+        public string DistantFormat = "Ps {0}";
+        public string RepeaterFormat = "Pp {0}";
+        public string SubDistantFormat = "{0}";
+        public string FallbackFormat = "S{0}";
 
         public IEnumerable<SignalControllerDefinition> AllControllers
         {
@@ -149,8 +150,8 @@ namespace Signals.Common
                 if (RightJunctionSignal != null) yield return RightJunctionSignal;
                 if (EntrySignal != null) yield return EntrySignal;
                 if (ExitSignal != null) yield return ExitSignal;
-                if (PassengerSignal != null) yield return PassengerSignal;
-                if (StationMainlineSignal != null) yield return StationMainlineSignal;
+                if (ExitPassengerSignal != null) yield return ExitPassengerSignal;
+                if (ExitMainlineSignal != null) yield return ExitMainlineSignal;
                 if (SpacingSignal != null) yield return SpacingSignal;
                 if (TurntableSignal != null) yield return TurntableSignal;
 
@@ -172,8 +173,8 @@ namespace Signals.Common
                 if (OldRightJunctionSignal != null) yield return OldRightJunctionSignal;
                 if (OldEntrySignal != null) yield return OldEntrySignal;
                 if (OldExitSignal != null) yield return OldExitSignal;
-                if (OldPassengerSignal != null) yield return OldPassengerSignal;
-                if (OldStationMainlineSignal != null) yield return OldStationMainlineSignal;
+                if (OldExitPassengerSignal != null) yield return OldExitPassengerSignal;
+                if (OldExitMainlineSignal != null) yield return OldExitMainlineSignal;
                 if (OldSpacingSignal != null) yield return OldSpacingSignal;
                 if (OldTurntableSignal != null) yield return OldTurntableSignal;
                 // Old distant.
@@ -250,20 +251,20 @@ namespace Signals.Common
             return GetMainlineSignal(old);
         }
 
-        public SignalControllerDefinition GetPassengerSignal(bool old)
+        public SignalControllerDefinition GetExitPassengerSignal(bool old)
         {
-            if (OldAndEnabled(old) && OldPassengerSignal != null) return OldPassengerSignal;
+            if (OldAndEnabled(old) && OldExitPassengerSignal != null) return OldExitPassengerSignal;
 
-            if (PassengerSignal != null) return PassengerSignal;
+            if (ExitPassengerSignal != null) return ExitPassengerSignal;
 
             return GetExitSignal(old);
         }
 
-        public SignalControllerDefinition GetStationMainlineSignal(bool old)
+        public SignalControllerDefinition GetExitMainlineSignal(bool old)
         {
-            if (OldAndEnabled(old) && OldStationMainlineSignal != null) return OldStationMainlineSignal;
+            if (OldAndEnabled(old) && OldExitMainlineSignal != null) return OldExitMainlineSignal;
 
-            if (StationMainlineSignal != null) return StationMainlineSignal;
+            if (ExitMainlineSignal != null) return ExitMainlineSignal;
 
             return GetExitSignal(old);
         }

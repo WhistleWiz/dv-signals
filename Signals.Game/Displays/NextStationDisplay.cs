@@ -1,5 +1,4 @@
 ﻿using Signals.Common.Displays;
-using Signals.Game.Railway;
 
 namespace Signals.Game.Displays
 {
@@ -11,7 +10,7 @@ namespace Signals.Game.Displays
         {
             get
             {
-                _startingStation ??= Signal.Controller.Group != null ? TrackUtils.JunctionStation(Signal.Controller.Group.Junction) : string.Empty;
+                _startingStation ??= Signal.Controller.Group != null ? Signal.Controller.Group.Station : string.Empty;
 
                 return _startingStation;
             }
@@ -25,7 +24,7 @@ namespace Signals.Game.Displays
             {
                 if (x.Group == null) return false;
 
-                var station = TrackUtils.JunctionStation(x.Group.Junction);
+                var station = x.Group.Station;
 
                 return station != StartingStation && !string.IsNullOrEmpty(station);
             });
@@ -36,7 +35,7 @@ namespace Signals.Game.Displays
                 return;
             }
 
-            var name = TrackUtils.JunctionStation(nextSignal.Group.Junction);
+            var name = nextSignal.Group.Station;
 
             DisplayText = Definition.DisplayMode switch
             {

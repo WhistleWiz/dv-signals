@@ -32,8 +32,6 @@ namespace Signals.Game.Controllers
 
             Junction.Switched += JunctionSwitched;
             Destroyed += (x) => Junction.Switched -= JunctionSwitched;
-
-            InternalName = $"{GroupJunction?.junctionData.junctionIdLong}-T";
         }
 
         private void JunctionSwitched(Junction.SwitchMode mode, int branch)
@@ -74,7 +72,7 @@ namespace Signals.Game.Controllers
             {
                 var block = signal.Block;
 
-                if (block != null && !block.TracksCanChange && !_junctionFlag) return;
+                if (block != null && !block.ShouldBeUpdated && !_junctionFlag) return;
 
                 block = type switch
                 {
@@ -95,7 +93,7 @@ namespace Signals.Game.Controllers
                     var block = signals[i].Block;
 
                     // No need to remake the block in this case.
-                    if (block != null && !block.TracksCanChange && !_junctionFlag) continue;
+                    if (block != null && !block.ShouldBeUpdated && !_junctionFlag) continue;
 
                     Junction.selectedBranch = (byte)(i % Junction.outBranches.Count);
                     var track = OverrideStart ?? Junction.GetCurrentBranch().track;
