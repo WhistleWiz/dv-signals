@@ -147,6 +147,19 @@ namespace Signals.Game.Generation
         {
             var go = Object.Instantiate(definition, (Vector3)position, Helpers.FlattenLook(direction), track.transform);
             go.transform.position += go.transform.right * (opposite ? -definition.Offset : definition.Offset);
+
+            if (opposite && definition.FlipPrefabWhenInOppositeSide)
+            {
+                var scale = go.transform.localScale;
+                go.transform.localScale = new Vector3(-scale.x, scale.y, scale.z);
+
+                foreach (var item in definition.UnflipTransforms)
+                {
+                    scale = item.localScale;
+                    item.localScale = new Vector3(-scale.x, scale.y, scale.z);
+                }
+            }
+
             return go;
         }
 
@@ -457,6 +470,9 @@ namespace Signals.Game.Generation
             {
                 foreach (var controller in junction.Value.AllControllers)
                 {
+                    // Shunting signals cannot act as distant.
+                    if (controller.Type == SignalType.Shunting || controller.Type == SignalType.Spacing) continue;
+
                     foreach (var (signal, controllers) in controller.GetPotentialNextControllers())
                     {
                         var prefab = GetPrefabForControllerType(pack, controller);
@@ -469,22 +485,19 @@ namespace Signals.Game.Generation
                         // Check all potential next controllers.
                         foreach (var next in controllers)
                         {
-                            if (!next.PlacementInfo.HasValue) continue;
+                            var length = next.Value;
 
-                            var length = next.PlacementInfo.Value.Track.GetLength();
-
-                            // This controller is too far from the next, so it'll have it's own signal,
-                            // or the track is too short for a distant signal.
-                            if (length > totalDistance || length < pack.DistantSignalMinimumDistance) continue;
+                            // This controller is too far from the next, so it'll have it's own signal.
+                            if (length > totalDistance) continue;
 
                             // Controller within tolerance, flag it to keep the distant signal,
                             // and flag the next to not need its own signal.
                             controller.ActingAsDistant = true;
                             hasDistant = true;
-                            skip.Add(next);
+                            skip.Add(next.Key);
 
                             // Very close, mark as such.
-                            if (length < pack.DistantSignalDistance)
+                            if (length < pack.DistantSignalDistance * 0.95f)
                             {
                                 controller.ShortDistance = true;
                             }
@@ -662,33 +675,34 @@ namespace Signals.Game.Generation
                 {
                     controller.UpdateBlocks();
 
-                    foreach (var block in controller.GetPotentialBlocks())
+                    foreach (var potential in controller.GetPotentialNextControllers())
                     {
-                        var next = block.NextController;
-
-                        if (next is TrackSignalController track)
+                        foreach (var next in potential.Controllers)
                         {
-                            var reverse = IsSignalReverse(controller) && IsSignalReverse(track);
-                            var source = reverse ? track : controller;
-                            var target = reverse ? controller : track;
-
-                            // Close enough to merge, signal types allow merging, and the signal that will be
-                            // removed does not have a block that is too long.
-                            if (block.Length <= ClosenessThreshold && CanBeMerged(source, target))
+                            if (next.Key is TrackSignalController track)
                             {
-                                if (!reverse)
-                                {
-                                    next.UpdateBlocks();
-                                    var nextBlock = next.GetLongestBlock();
+                                var reverse = IsSignalReverse(controller) && IsSignalReverse(track);
+                                var source = reverse ? track : controller;
+                                var target = reverse ? controller : track;
 
-                                    if (nextBlock != null && nextBlock.Length < LongTrackThreshold)
+                                // Close enough to merge, signal types allow merging, and the signal that will be
+                                // removed does not have a block that is too long.
+                                if (next.Value <= ClosenessThreshold && CanBeMerged(source, target))
+                                {
+                                    if (!reverse)
+                                    {
+                                        next.Key.UpdateBlocks();
+                                        var nextBlock = next.Key.GetLongestBlock();
+
+                                        if (nextBlock != null && nextBlock.Length < LongTrackThreshold)
+                                        {
+                                            AddToMap(target, source);
+                                        }
+                                    }
+                                    else
                                     {
                                         AddToMap(target, source);
                                     }
-                                }
-                                else
-                                {
-                                    AddToMap(target, source);
                                 }
                             }
                         }
@@ -705,33 +719,35 @@ namespace Signals.Game.Generation
                 {
                     bool atLeastOneNext = false;
 
-                    foreach (var block in signal.GetPotentialBlocks())
+                    foreach (var potential in signal.GetPotentialNextControllers())
                     {
-                        var next = block.NextController;
-                        atLeastOneNext |= next != null;
-
-                        if (next is TrackSignalController track)
+                        foreach (var next in potential.Controllers)
                         {
-                            var reverse = IsSignalReverse(signal) && IsSignalReverse(track);
-                            var source = reverse ? track : signal;
-                            var target = reverse ? signal : track;
+                            atLeastOneNext = true;
 
-                            // Fail if the target cannot be merged or the signal will be the result of a merge.
-                            if (!CanBeMerged(source, target) || toMerge.ContainsKey(target))
+                            if (next.Key is TrackSignalController track)
                             {
-                                // If reverse, don't check for the length, else fail for long tracks too.
-                                if (reverse)
-                                {
-                                    RemoveFromMap(target);
-                                }
-                                else
-                                {
-                                    var longBlock = next.GetLongestBlock();
+                                var reverse = IsSignalReverse(signal) && IsSignalReverse(track);
+                                var source = reverse ? track : signal;
+                                var target = reverse ? signal : track;
 
+                                // Fail if the target cannot be merged or the signal will be the result of a merge.
+                                if (!CanBeMerged(source, target) || toMerge.ContainsKey(target))
+                                {
                                     // If reverse, don't check for the length, else fail for long tracks too.
-                                    if (longBlock != null && longBlock.Length > LongTrackThreshold)
+                                    if (reverse)
                                     {
                                         RemoveFromMap(target);
+                                    }
+                                    else
+                                    {
+                                        var longBlock = next.Key.GetLongestBlock();
+
+                                        // If reverse, don't check for the length, else fail for long tracks too.
+                                        if (longBlock != null && longBlock.Length > LongTrackThreshold)
+                                        {
+                                            RemoveFromMap(target);
+                                        }
                                     }
                                 }
                             }

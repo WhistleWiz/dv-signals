@@ -573,24 +573,15 @@ namespace Signals.Game.Controllers
             return signal.GetNextControllerCondition(condition);
         }
 
-        public virtual IEnumerable<TrackBlock> GetPotentialBlocks()
+        public virtual IEnumerable<(Signal Signal, Dictionary<BasicSignalController, float> Controllers)> GetPotentialNextControllers()
         {
             foreach (var item in Signals)
             {
-                if (item.Block != null)
-                {
-                    yield return item.Block;
-                }
-            }
-        }
+                var block = item.Block;
 
-        public virtual IEnumerable<(Signal Signal, IEnumerable<BasicSignalController> Controllers)> GetPotentialNextControllers()
-        {
-            foreach (var item in Signals)
-            {
-                if (item.Block != null && item.Block.NextController != null)
+                if (block != null && block.NextController != null)
                 {
-                    yield return (item, new[] { item.Block.NextController });
+                    yield return (item, new Dictionary<BasicSignalController, float> { { block.NextController, block.Length } });
                 }
             }
         }

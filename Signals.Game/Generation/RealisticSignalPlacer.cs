@@ -459,7 +459,8 @@ namespace Signals.Game.Generation
                 var point = kpSet.points[index];
 
                 var placement = new SignalPlacementInfo(track, tDirT, index, tSpan);
-                var signal = InstantiateFromDef(helper.Definition, point.position, tDirT.IsOut() ? point.forward : -point.forward, i == 1, track);
+                var signal = InstantiateFromDef(helper.Definition, point.position, tDirT.IsOut() ? point.forward : -point.forward,
+                    helper.Definition.Offset > 0 ? i == 0 : i != 0, track);
                 var controller = new TrackSignalController(signal, branch.track, TrackDirection.In, placement);
 
                 helper.Apply(controller);
@@ -483,16 +484,17 @@ namespace Signals.Game.Generation
 
                     controller.UpdateBlocks();
 
-                    foreach (var block in controller.GetPotentialBlocks())
+                    foreach (var potential in controller.GetPotentialNextControllers())
                     {
-                        var next = block.NextController;
-
-                        if (next is TrackSignalController track)
+                        foreach (var next in potential.Controllers)
                         {
-                            // Close enough to merge and signal types allow merging.
-                            if (block.Length <= ClosenessThreshold && CanBeMerged(controller, track))
+                            if (next.Key is TrackSignalController track)
                             {
-                                AddToMap(track, controller);
+                                // Close enough to merge and signal types allow merging.
+                                if (next.Value <= ClosenessThreshold && CanBeMerged(controller, track))
+                                {
+                                    AddToMap(track, controller);
+                                }
                             }
                         }
                     }

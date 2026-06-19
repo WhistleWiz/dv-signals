@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 using Branch = Junction.Branch;
 
@@ -368,30 +369,32 @@ namespace Signals.Game.Railway
             }
         }
 
-        public static HashSet<BasicSignalController> GetAllPossibleMainControllers(RailTrack track, TrackDirection direction,
+        public static Dictionary<BasicSignalController, float> GetAllPossibleMainControllers(RailTrack track, TrackDirection direction,
             BasicSignalController? ignore)
         {
             return GetAllPossibleControllers(track, direction, ignore, HasMainSignal);
         }
 
-        private static HashSet<BasicSignalController> GetAllPossibleControllers(RailTrack track, TrackDirection direction,
+        private static Dictionary<BasicSignalController, float> GetAllPossibleControllers(RailTrack track, TrackDirection direction,
             BasicSignalController? ignore, Predicate<BasicSignalController> condition)
         {
             int depth = 0;
             var visited = new HashSet<RailTrack>();
-            var tracks = new Queue<RailTrack>();
-            var controllers = new HashSet<BasicSignalController>();
+            var tracks = new Queue<(RailTrack Track, float Distance)>();
+            var controllers = new Dictionary<BasicSignalController, float>();
+            var distance = 0.0f;
 
-            tracks.Enqueue(track);
+            tracks.Enqueue((track, distance));
 
             while (tracks.Count > 0)
             {
-                track = tracks.Dequeue();
+                (track, distance) = tracks.Dequeue();
 
                 // Keep looping until a certain depth is reached, the track exists and the track has not been visited yet.
                 while (depth++ < MaxDepth && track != null && !visited.Contains(track))
                 {
                     visited.Add(track);
+                    distance += (float)track.GetLength();
 
                     Junction? junction = direction.IsOut() ? track.outJunction : track.inJunction;
                     Branch? branch = direction.IsOut() ? track.GetOutBranch() : track.GetInBranch();
@@ -405,7 +408,14 @@ namespace Signals.Game.Railway
 
                             if (MeetsConditions(found))
                             {
-                                controllers.Add(found!);
+                                if (controllers.TryGetValue(found!, out var tempDistance))
+                                {
+                                    controllers[found!] = Mathf.Min(distance, tempDistance);
+                                }
+                                else
+                                {
+                                    controllers[found!] = distance;
+                                }
                                 break;
                             }
                         }
@@ -415,7 +425,14 @@ namespace Signals.Game.Railway
 
                             if (MeetsConditions(found))
                             {
-                                controllers.Add(found!);
+                                if (controllers.TryGetValue(found!, out var tempDistance))
+                                {
+                                    controllers[found!] = Mathf.Min(distance, tempDistance);
+                                }
+                                else
+                                {
+                                    controllers[found!] = distance;
+                                }
                                 break;
                             }
 
@@ -423,7 +440,7 @@ namespace Signals.Game.Railway
                             {
                                 if (outBranch.track == branch.track) continue;
 
-                                tracks.Enqueue(outBranch.track);
+                                tracks.Enqueue((outBranch.track, distance));
                             }
                         }
                     }
@@ -445,7 +462,14 @@ namespace Signals.Game.Railway
                     if (track.isJunctionTrack && SignalManager.Instance.TryGetJunctionGroup(track.inJunction, out group) &&
                         !direction.IsOut() && group.TryGetControllerForTrack(track, out var match) && MeetsConditions(match))
                     {
-                        controllers.Add(match!);
+                        if (controllers.TryGetValue(match, out var tempDistance))
+                        {
+                            controllers[match] = Mathf.Min(distance, tempDistance);
+                        }
+                        else
+                        {
+                            controllers[match] = distance;
+                        }
                         break;
                     }
                 }

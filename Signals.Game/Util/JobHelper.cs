@@ -17,7 +17,7 @@ namespace Signals.Game.Util
 
             var manager = JobsManager.Instance;
 
-            if (includeShunting)
+            if (!includeShunting)
             {
                 return cars
                     .Select(x => manager.GetJobOfCar(x, true))

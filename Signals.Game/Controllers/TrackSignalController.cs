@@ -47,9 +47,9 @@ namespace Signals.Game.Controllers
             }
         }
 
-        public override IEnumerable<(Signal Signal, IEnumerable<BasicSignalController> Controllers)> GetPotentialNextControllers()
+        public override IEnumerable<(Signal Signal, Dictionary<BasicSignalController, float> Controllers)> GetPotentialNextControllers()
         {
-            foreach(var signal in Signals)
+            foreach (var signal in Signals)
             {
                 yield return (signal, TrackWalker.GetAllPossibleMainControllers(StartingTrack, Direction, this));
             }

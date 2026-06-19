@@ -85,7 +85,10 @@ namespace Signals.Game
 
                 foreach (var group in ExitGroups)
                 {
-                    var t = group.ExitSignals.First().Definition.transform;
+                    // Small trick to avoid using a controller that is slightly turned.
+                    var t = group.ExitSignals.Count < 3 ?
+                        group.ExitSignals[0].Definition.transform :
+                        group.ExitSignals[(group.ExitSignals.Count - 1) / 2].Definition.transform;
                     group.ExitSignals = group.ExitSignals.OrderBy(x => t.InverseTransformPoint(x.Definition.transform.position).x).ToList();
                 }
             }

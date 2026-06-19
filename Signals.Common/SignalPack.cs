@@ -125,6 +125,7 @@ namespace Signals.Common
         public SignalControllerDefinition[] OtherSignals = Array.Empty<SignalControllerDefinition>();
 
         [Header("Naming Conventions")]
+        [Tooltip("If there's multiple singlas in a controller, use letters or numbers to differentiate")]
         public bool UseLettersForMultipleSignalsInControllers = false;
         public string EntryFormat = "{3}";
         public string ExitFormat = "{3} {4}";

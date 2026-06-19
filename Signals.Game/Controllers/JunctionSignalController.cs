@@ -111,29 +111,22 @@ namespace Signals.Game.Controllers
             }
         }
 
-        public override IEnumerable<TrackBlock> GetPotentialBlocks()
-        {
-            var selected = Junction.selectedBranch;
-
-            for (byte i = 0; i < Junction.outBranches.Count; i++)
-            {
-                Junction.selectedBranch = i;
-                var track = OverrideStart ?? Junction.GetCurrentBranch().track;
-                yield return TrackBlock.CreateUntilMainSignal(track, Direction, this);
-            }
-
-            Junction.selectedBranch = selected;
-        }
-
-        public override IEnumerable<(Signal Signal, IEnumerable<BasicSignalController> Controllers)> GetPotentialNextControllers()
+        public override IEnumerable<(Signal Signal, Dictionary<BasicSignalController, float> Controllers)> GetPotentialNextControllers()
         {
             if (Signals.Length == 1)
             {
-                var controllers = new HashSet<BasicSignalController>();
+                var controllers = new Dictionary<BasicSignalController, float>();
 
                 foreach (var branch in Junction.outBranches)
                 {
-                    controllers.UnionWith(TrackWalker.GetAllPossibleMainControllers(branch.track, Direction, this));
+                    var more = TrackWalker.GetAllPossibleMainControllers(branch.track, Direction, this);
+
+                    foreach (var item in more)
+                    {
+                        if (controllers.ContainsKey(item.Key)) continue;
+
+                        controllers.Add(item.Key, item.Value);
+                    }
                 }
 
                 yield return (Signals[0], controllers);

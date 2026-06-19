@@ -23,11 +23,15 @@ namespace Signals.Common
         public ControllerMode Mode = ControllerMode.Active;
         [Tooltip("Negative numbers for right side, positive for left side")]
         public float Offset = -2.05f;
+        [Tooltip("Flips the prefab if the signal is placed on the opposite side of the track")]
+        public bool FlipPrefabWhenInOppositeSide = false;
 
         [Header("Optional")]
         [Tooltip("The shunting signals for this controller")]
         public SignalDefinition[] ShuntingSignals = new SignalDefinition[0];
         public TracksideObject[] TracksideObjects = new TracksideObject[0];
+        [Tooltip("If the controller's prefab is flipped, these transforms will be flipped back (useful for text)")]
+        public Transform[] UnflipTransforms = new Transform[0];
 
         private void OnDrawGizmos()
         {
