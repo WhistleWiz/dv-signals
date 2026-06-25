@@ -10,6 +10,13 @@ namespace Signals.Common
         public Vector3 Rotation = Vector3.zero;
         public Vector3 Scale = Vector3.one;
 
+        public void Reset()
+        {
+            Position = transform.localPosition;
+            Rotation = transform.localRotation.eulerAngles;
+            Scale = transform.localScale;
+        }
+
         public void Apply()
         {
             Mover.SetTarget(this);

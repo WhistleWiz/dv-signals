@@ -18,7 +18,9 @@ namespace Signals.Common.Displays
             [Tooltip("L, R")]
             DirectionLetter,
             [Tooltip("A, B, C, D, E...")]
-            Letters
+            Letters,
+            [Tooltip("Uses the Display Sprites array, from left to right in order")]
+            Sprites
         }
 
         [Tooltip("How to display the selected branch\n" +
@@ -26,5 +28,6 @@ namespace Signals.Common.Displays
             "junctions with 2 branches, and will fall back to 'Branch Number' if the number " +
             "of branches is larger")]
         public BranchDisplayMode BranchDisplay = BranchDisplayMode.Symbols;
+        public Sprite?[] DisplaySprites = new Sprite?[0];
     }
 }

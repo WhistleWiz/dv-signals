@@ -11,7 +11,7 @@ namespace Signals.Unity.Inspector
         {
             base.OnInspectorGUI();
 
-            if (GUILayout.Button("Set to Original"))
+            if (GUILayout.Button("Set to Original Values"))
             {
                 var comp = (TransformMover)target;
                 comp.transform.localPosition = comp.OriginalPosition;
@@ -19,7 +19,7 @@ namespace Signals.Unity.Inspector
                 comp.transform.localScale = comp.OriginalScale;
             }
 
-            if (GUILayout.Button("Reset"))
+            if (GUILayout.Button("Set to Current Values"))
             {
                 var comp = (TransformMover)target;
                 comp.Reset();

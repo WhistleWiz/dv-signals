@@ -8,18 +8,36 @@ namespace Signals.Game.Lights
     {
         public const float SmallFloat = 0.0009999871f;
 
-        private static Transform? s_glare;
-        private static Transform Glare
+        private static Renderer? s_glare;
+        private static Renderer Glare
         {
             get
             {
                 if (s_glare == null)
                 {
                     DV.Globals.G.Types.TryGetLivery("LocoDE2", out var de2);
-                    s_glare = de2.prefab.transform.Find("[headlights_de2]/FrontSide/HeadlightLeftLow/Glare");
+                    //s_glare = de2.prefab.transform.Find("[headlights_de2]/FrontSide/HeadlightLeftLow/Glare");
+                    s_glare = de2.interiorPrefab.transform.Find("DashCluster/HeadlightsFront/L_Headlights/glare").GetComponent<Renderer>();
                 }
 
                 return s_glare;
+            }
+        }
+
+        private static Material? s_mat;
+        private static Material GlareMat
+        {
+            get
+            {
+                if (s_mat == null)
+                {
+                    s_mat = new Material(Glare.sharedMaterial);
+                    s_mat.SetFloat("_FadeoutPower", 2.2f);
+                    s_mat.SetFloat("_LightAtten", 0.7f);
+                    s_mat.SetFloat("_MaxAtten", 0.8f);
+                }
+
+                return s_mat;
             }
         }
 
@@ -66,12 +84,13 @@ namespace Signals.Game.Lights
         private Renderer CreateGlare(Transform root)
         {
             var glare = Instantiate(Glare, root);
-            glare.localPosition = Vector3.zero;
-            glare.localRotation = Quaternion.identity;
-            glare.localScale = Vector3.one;
-            glare.gameObject.SetActive(true);
+            glare.transform.localPosition = Vector3.zero;
+            glare.transform.localRotation = Quaternion.identity;
+            glare.transform.localScale = Vector3.one;
+            glare.transform.gameObject.SetActive(true);
+            glare.sharedMaterial = GlareMat;
 
-            return glare.GetComponent<Renderer>();
+            return glare;
         }
 
         /// <summary>

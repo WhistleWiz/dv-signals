@@ -56,7 +56,10 @@ namespace Signals.Unity.Inspector
                         EditorGUILayout.PropertyField(prop);
                         if (GUILayout.Button("Get Displays From Children"))
                         {
-                            def.Displays = def.GetComponentsInChildren<DisplayBaseDefinition>();
+                            var displays = def.GetComponentsInChildren<DisplayBaseDefinition>().ToList();
+                            var actuals = displays.OfType<MoveSwapDisplayDefinition>().Select(x => x.ActualDisplay).ToHashSet();
+                            displays.RemoveAll(actuals.Contains);
+                            def.Displays = displays.ToArray();
                             AssetHelper.SaveAsset(target);
                         }
                         break;

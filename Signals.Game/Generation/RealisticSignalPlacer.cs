@@ -258,6 +258,12 @@ namespace Signals.Game.Generation
                 isMain = true;
             }
 
+            // Upgrade shunting signal.
+            if (junctionSignal.PrefabType == PrefabType.Shunting)
+            {
+                junctionSignal = GetPlacement(PrefabType.ShuntingJunction, old);
+            }
+
             var junctionController = CreateSignalAtJunction(junction, junctionSignal.Definition,
                 isMain ? LongJunctionPlacementDistance : JunctionPlacementDistance);
             junctionSignal.Apply(junctionController);
@@ -323,6 +329,7 @@ namespace Signals.Game.Generation
             PrefabType.Exit => SignalType.Exit,
             PrefabType.ExitPax => SignalType.ExitPax,
             PrefabType.Shunting => SignalType.Shunting,
+            PrefabType.ShuntingJunction => SignalType.Shunting,
             PrefabType.ExitMainline => SignalType.ExitMainline,
             PrefabType.Spacing => SignalType.Spacing,
             _ => SignalType.NotSet,

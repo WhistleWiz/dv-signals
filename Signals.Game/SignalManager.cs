@@ -234,7 +234,6 @@ namespace Signals.Game
             // Initial placement.
             var sw = System.Diagnostics.Stopwatch.StartNew();
             var pack = s_pack = GetCurrentPack();
-            int count = 0;
 
             Placer.CreateSignals(pack, _junctionSignals);
 
@@ -243,6 +242,8 @@ namespace Signals.Game
                 $"current total is {_controllerRegistry.Count} ({sw.Elapsed.TotalSeconds:F4}s)");
 
             // Merging loops.
+            int count = 0;
+
             for (int i = 0; i < MergeLoops; i++)
             {
                 sw.Restart();
@@ -251,7 +252,7 @@ namespace Signals.Game
                 SignalsMod.Log($"Merged {count} signal(s) (loop {i + 1}/{MergeLoops}), " +
                     $"current total is {_controllerRegistry.Count} ({sw.Elapsed.TotalSeconds:F4}s)");
 
-                if (count == 0)
+                if (count == 0 && i < MergeLoops - 1)
                 {
                     SignalsMod.Log($"Interrupted merging loop (no more merges could be made)");
                     break;
@@ -327,6 +328,8 @@ namespace Signals.Game
 
             yield return WaitFor.Seconds(UpdateTime);
 
+            //var sw = new System.Diagnostics.Stopwatch();
+
             while (true)
             {
                 // Check how many signals to update per frame so they all update roughly once a second.
@@ -335,6 +338,8 @@ namespace Signals.Game
                 // Loop through all registered signals.
                 for (int start = 0; start < _controllerRegistry.Count; start += count)
                 {
+                    //sw.Restart();
+
                     // Loop through a batch of signals. Updates are distributed so they don't all update
                     // at once, but batched so timing is consistent.
                     for (int current = start; current < start + count && current < _controllerRegistry.Count; current++)
@@ -362,6 +367,9 @@ namespace Signals.Game
                         controller.Update(false, update);
                     }
 
+                    //sw.Stop();
+                    //SignalsMod.Log($"Update time: {sw.Elapsed.TotalSeconds:F6}");
+
                     yield return WaitFor.FixedUpdate;
                 }
             }
@@ -381,7 +389,6 @@ namespace Signals.Game
         /// <returns><see langword="true"/> if the signal was successfully removed, and <see langword="false"/> otherwise.</returns>
         public bool UnregisterController(BasicSignalController controller)
         {
-
             return _controllerRegistry.Remove(controller);
         }
 

@@ -23,15 +23,15 @@ namespace Signals.Game.Railway
         }
 
         private bool _tracksCanChange;
-        private bool _needsUpdate;
+        private bool _dirty;
         private string? _station;
         private string? _yard;
         private string? _trackNumber;
         private string? _trackTrimmedNumber;
         private string? _trackType;
         private HashSet<RailTrack>? _tracks;
-        private HashSet<Junction>? _junctions;
         private BasicSignalController? _nextController;
+        private Dictionary<Junction, byte> _junctionStates;
 
         public readonly int Id;
         public TrackInfo[] Tracks { get; private set; }
@@ -42,7 +42,7 @@ namespace Signals.Game.Railway
             {
                 if (_nextController != null && !_nextController.SafetyCheck())
                 {
-                    FlagForUpdating();
+                    FlagAsDirty();
                     _nextController = null;
                 }
 
@@ -54,7 +54,7 @@ namespace Signals.Game.Railway
         public float Length { get; private set; }
         public bool IsDeadEnd { get; private set; }
         public bool IsSelfLoop { get; private set; }
-        public bool ShouldBeUpdated => _tracksCanChange || _needsUpdate;
+        public bool ShouldBeUpdated => _dirty || JunctionsChanged();
         /// <summary>
         /// Station covered by this block. Empty if not available.
         /// </summary>
@@ -133,39 +133,6 @@ namespace Signals.Game.Railway
             }
         }
 
-        public HashSet<Junction> AllJunctions
-        {
-            get
-            {
-                if (_junctions == null)
-                {
-                    _junctions = new HashSet<Junction>();
-
-                    foreach (var track in AllTracks)
-                    {
-                        if (track.inJunction != null)
-                        {
-                            _junctions.Add(track.inJunction);
-                        }
-
-                        if (track.outJunction != null)
-                        {
-                            _junctions.Add(track.outJunction);
-                        }
-                    }
-
-                    var junction = NextController?.GroupJunction;
-
-                    if (junction != null)
-                    {
-                        _junctions.Remove(junction);
-                    }
-                }
-
-                return _junctions;
-            }
-        }
-
         private TrackBlock(IEnumerable<TrackInfo> tracks, BasicSignalController? nextSignal)
         {
             Id = GetGenId();
@@ -176,7 +143,9 @@ namespace Signals.Game.Railway
             ExtraTracks = tracks.Where(x => x.IsJunctionTrack).SelectMany(x => x.Track.inJunction.GetAllTracks()).ToArray();
             Length = (float)TrackUtils.GetTotalLength(Tracks);
 
+            _junctionStates = new Dictionary<Junction, byte>();
             CheckIfTracksCanChange();
+            BuildJunctionCache();
         }
 
         private TrackBlock(BasicSignalController? nextSignal, float distance)
@@ -187,7 +156,9 @@ namespace Signals.Game.Railway
             NextController = nextSignal;
             Length = distance;
 
+            _junctionStates = new Dictionary<Junction, byte>();
             CheckIfTracksCanChange();
+            BuildJunctionCache();
         }
 
         private void CheckIfTracksCanChange()
@@ -207,14 +178,43 @@ namespace Signals.Game.Railway
             _tracksCanChange = false;
         }
 
+        private void BuildJunctionCache()
+        {
+            for (int i = 0; i < Tracks.Length; i++)
+            {
+                var track = Tracks[i];
+
+                if (track.IsJunctionTrack && track.Direction.IsOut())
+                {
+                    var junction = track.Track.inJunction;
+
+                    if (_junctionStates.ContainsKey(junction)) continue;
+
+                    _junctionStates[junction] = junction.selectedBranch;
+                }
+            }
+        }
+
+        private bool JunctionsChanged()
+        {
+            if (!_tracksCanChange) return false;
+
+            foreach (var item in _junctionStates)
+            {
+                if (item.Key.selectedBranch != item.Value) return true;
+            }
+
+            return false;
+        }
+
         public bool IsOccupied(CrossingCheckMode crossingMode)
         {
             return Tracks.Any(x => x.Track.IsOccupied(crossingMode)) || ExtraTracks.Any(x => x.IsOccupied(crossingMode));
         }
 
-        public void FlagForUpdating()
+        public void FlagAsDirty()
         {
-            _needsUpdate = true;
+            _dirty = true;
         }
 
         /// <summary>

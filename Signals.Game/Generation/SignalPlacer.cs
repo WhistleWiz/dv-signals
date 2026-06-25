@@ -138,6 +138,7 @@ namespace Signals.Game.Generation
             PrefabType.Exit => pack.GetExitSignal(old),
             PrefabType.ExitPax => pack.GetExitPassengerSignal(old),
             PrefabType.Shunting => pack.GetShuntingSignal(old),
+            PrefabType.ShuntingJunction => pack.GetJunctionShuntingSignal(old),
             PrefabType.ExitMainline => pack.GetExitMainlineSignal(old),
             _ => pack.GetMainlineSignal(old),
         };

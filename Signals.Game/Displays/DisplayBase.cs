@@ -22,13 +22,15 @@ namespace Signals.Game.Displays
         private bool _off = false;
         private ICondition[] _conditions;
 
+        public Sprite? SpriteOverride;
+
         public Signal Signal { get; private set; }
         public T Definition { get; private set; }
 
         public string DisplayText { get => Definition.DisplayText; set => Definition.DisplayText = value; }
         public bool ShouldDisplay => !_disabled && !_off;
         public int DisplayOrder => Definition.HUDDisplayOrder;
-        public Sprite? Sprite => Definition.HUDSprite;
+        public Sprite? Sprite => SpriteOverride ?? Definition.HUDSprite;
         public Color TextColour => Definition.HUDTextColour;
         public BasicSignalController Controller => Signal.Controller;
 

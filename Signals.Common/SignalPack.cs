@@ -38,6 +38,9 @@ namespace Signals.Common
         [Tooltip("Used on mainline station tracks\n" +
             "Falls back to exit signals")]
         public SignalControllerDefinition? ExitMainlineSignal;
+        [Tooltip("Used on junctions inside yards\n" +
+            "Falls back to shunting signals")]
+        public SignalControllerDefinition? JunctionShuntingSignal;
         [Tooltip("Used on very long station tracks\n" +
             "Does not fall back if missing")]
         public SignalControllerDefinition? SpacingSignal;
@@ -96,6 +99,9 @@ namespace Signals.Common
         [Tooltip("Used on mainline station tracks\n" +
             "Falls back to exit signals")]
         public SignalControllerDefinition? OldExitMainlineSignal;
+        [Tooltip("Used on junctions inside yards\n" +
+            "Falls back to shunting signals")]
+        public SignalControllerDefinition? OldJunctionShuntingSignal;
         [Tooltip("Used on very long station tracks\n" +
             "Does not fall back if missing")]
         public SignalControllerDefinition? OldSpacingSignal;
@@ -153,6 +159,7 @@ namespace Signals.Common
                 if (ExitSignal != null) yield return ExitSignal;
                 if (ExitPassengerSignal != null) yield return ExitPassengerSignal;
                 if (ExitMainlineSignal != null) yield return ExitMainlineSignal;
+                if (JunctionShuntingSignal != null) yield return JunctionShuntingSignal;
                 if (SpacingSignal != null) yield return SpacingSignal;
                 if (TurntableSignal != null) yield return TurntableSignal;
 
@@ -176,6 +183,7 @@ namespace Signals.Common
                 if (OldExitSignal != null) yield return OldExitSignal;
                 if (OldExitPassengerSignal != null) yield return OldExitPassengerSignal;
                 if (OldExitMainlineSignal != null) yield return OldExitMainlineSignal;
+                if (OldJunctionShuntingSignal != null) yield return OldJunctionShuntingSignal;
                 if (OldSpacingSignal != null) yield return OldSpacingSignal;
                 if (OldTurntableSignal != null) yield return OldTurntableSignal;
                 // Old distant.
@@ -275,6 +283,15 @@ namespace Signals.Common
             if (OldAndEnabled(old) && OldShuntingSignal != null) return OldShuntingSignal;
 
             return ShuntingSignal;
+        }
+
+        public SignalControllerDefinition GetJunctionShuntingSignal(bool old)
+        {
+            if (OldAndEnabled(old) && OldJunctionShuntingSignal != null) return OldJunctionShuntingSignal;
+
+            if (JunctionShuntingSignal != null) return JunctionShuntingSignal;
+
+            return GetShuntingSignal(old);
         }
 
         public SignalControllerDefinition? GetDistantSignal(bool old)

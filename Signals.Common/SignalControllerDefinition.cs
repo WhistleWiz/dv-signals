@@ -50,6 +50,10 @@ namespace Signals.Common
             Gizmos.DrawWireCube(TrainUp + offset, TrainSize);
             Gizmos.DrawLine(Vector3.forward * HalfTrackLength + trackOffset + offset, Vector3.back * HalfTrackLength + trackOffset + offset);
             Gizmos.DrawLine(Vector3.forward * HalfTrackLength - trackOffset + offset, Vector3.back * HalfTrackLength - trackOffset + offset);
+
+            // Forward direction indicator.
+            Gizmos.DrawLine(Vector3.forward * 0.5f + trackOffset * 0.5f + offset, Vector3.back * 0.5f + offset);
+            Gizmos.DrawLine(Vector3.forward * 0.5f - trackOffset * 0.5f + offset, Vector3.back * 0.5f + offset);
         }
     }
 }

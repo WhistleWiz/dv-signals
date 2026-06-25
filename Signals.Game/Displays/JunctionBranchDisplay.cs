@@ -10,9 +10,10 @@ namespace Signals.Game.Displays
 
         public JunctionBranchDisplay(DisplayBaseDefinition definition, Signal signal) : base(definition, signal)
         {
+            // Use the junction matched for the junction controller to still provide relevant information.
             if (signal.Controller is JunctionSignalController junctionController)
             {
-                _junction = junctionController.GroupJunction;
+                _junction = junctionController.Junction;
             }
             else
             {
@@ -25,6 +26,11 @@ namespace Signals.Game.Displays
             if (_junction == null) return;
 
             DisplayText = GetBranchDisplay(_junction, Definition.BranchDisplay);
+
+            if (Definition.BranchDisplay == JunctionBranchDisplayDefinition.BranchDisplayMode.Sprites)
+            {
+                SpriteOverride = Definition.DisplaySprites[_junction.selectedBranch];
+            }
         }
 
         private static string GetBranchDisplay(Junction junction, JunctionBranchDisplayDefinition.BranchDisplayMode mode)
@@ -62,6 +68,8 @@ namespace Signals.Game.Displays
                     goto default;
                 case JunctionBranchDisplayDefinition.BranchDisplayMode.Letters:
                     return Helpers.IntToLetters(junction.selectedBranch + 1);
+                case JunctionBranchDisplayDefinition.BranchDisplayMode.Sprites:
+                    return " ";
                 default:
                     return (junction.selectedBranch + 1).ToString();
             }

@@ -218,6 +218,7 @@ namespace Signals.Unity.Inspector
             ValidateController(_pack.ExitSignal, "Exit Signal");
             ValidateController(_pack.ExitPassengerSignal, "Exit Passenger Signal");
             ValidateController(_pack.ExitMainlineSignal, "Exit Mainline Signal");
+            ValidateController(_pack.JunctionShuntingSignal, "Junction Shunting Signal");
             ValidateController(_pack.SpacingSignal, "Spacing Signal");
             ValidateController(_pack.TurntableSignal, "Turntable Signal");
 
@@ -238,6 +239,7 @@ namespace Signals.Unity.Inspector
             ValidateController(_pack.OldExitSignal, "Old Exit Signal");
             ValidateController(_pack.OldExitPassengerSignal, "Old Exit Passenger Signal");
             ValidateController(_pack.OldExitMainlineSignal, "Old Exit Mainline Signal");
+            ValidateController(_pack.OldJunctionShuntingSignal, "Old Junction Shunting Signal");
             ValidateController(_pack.OldSpacingSignal, "Old Spacing Signal");
             ValidateController(_pack.OldTurntableSignal, "Old Turntable Signal");
 

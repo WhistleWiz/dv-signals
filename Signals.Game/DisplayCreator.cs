@@ -31,6 +31,7 @@ namespace Signals.Game
             Add((x, y) => new NextStationDisplay(x, y));
             Add((x, y) => new SpeedLimitDisplay(x, y));
             Add((x, y) => new TrackInfoDisplay(x, y));
+            Add((x, y) => new MoveSwapDisplay(x, y));
 
             s_defaultTypes = CreatorFunctions.Keys.ToArray();
 

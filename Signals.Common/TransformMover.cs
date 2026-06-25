@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 
 namespace Signals.Common
@@ -26,6 +27,8 @@ namespace Signals.Common
         private Vector3 _lastScale;
 
         public bool Moving => _moveCoro != null;
+
+        public Action<bool>? OnReachTarget;
 
         public void Reset()
         {
@@ -98,6 +101,8 @@ namespace Signals.Common
             transform.localRotation = Quaternion.Euler(_lastRotation = endR);
             transform.localScale = _lastScale = endS;
 
+            OnReachTarget?.Invoke(IsOriginalTransform());
+
             // Start movement again if the target changed while this routine ran.
             _moveCoro = TargetIsDifferent() ? StartCoroutine(MoveRoutine()) : null;
         }
@@ -105,6 +110,11 @@ namespace Signals.Common
         private bool TargetIsDifferent()
         {
             return _lastPosition != _targetPosition || _lastRotation != _targetRotation || _lastScale != _targetScale;
+        }
+
+        private bool IsOriginalTransform()
+        {
+            return _lastPosition == OriginalPosition && _lastRotation == OriginalRotation && _lastScale == OriginalScale;
         }
     }
 }

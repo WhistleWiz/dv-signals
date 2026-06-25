@@ -40,7 +40,7 @@ namespace Signals.Game.Aspects
         public bool Active { get; private set; }
         public bool ShouldDisplay => true;
         public int DisplayOrder => Definition.HUDDisplayOrder;
-        public string? DisplayText => Signal.DisplayText;
+        public string DisplayText => Signal.DisplayText;
         public Sprite? Sprite => Definition.HUDSprite;
         public Color TextColour => Signal.TextColour;
         public BasicSignalController Controller => Signal.Controller;

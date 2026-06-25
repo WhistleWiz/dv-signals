@@ -6,7 +6,7 @@ namespace Signals.Game
     {
         public bool ShouldDisplay { get; }
         public int DisplayOrder { get; }
-        public string? DisplayText { get; }
+        public string DisplayText { get; }
         public Sprite? Sprite { get; }
         public Color TextColour { get; }
     }

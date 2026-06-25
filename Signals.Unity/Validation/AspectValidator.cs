@@ -36,31 +36,32 @@ namespace Signals.Unity.Validation
         private Result CheckAspect(AspectBaseDefinition aspect, string name)
         {
             var result = Pass();
+            name = $"{name}/{aspect.Id}";
 
             // Check nulls.
             if (aspect.OnLights.Any(x => x == null))
             {
-                result.AddFailure($"{name}/{aspect.Id} - On Lights has null entries");
+                result.AddFailure($"{name} - On Lights has null entries");
             }
 
             if (aspect.BlinkingLights.Any(x => x == null))
             {
-                result.AddFailure($"{name}/{aspect.Id} - Blinking Lights has null entries");
+                result.AddFailure($"{name} - Blinking Lights has null entries");
             }
 
             if (aspect.LightSequences.Any(x => x == null))
             {
-                result.AddFailure($"{name}/{aspect.Id} - Light Sequences has null entries");
+                result.AddFailure($"{name} - Light Sequences has null entries");
             }
 
             if (aspect.ColourChangers.Any(x => x == null))
             {
-                result.AddFailure($"{name}/{aspect.Id} - Colour Changers has null entries");
+                result.AddFailure($"{name} - Colour Changers has null entries");
             }
 
             if (aspect.Movers.Any(x => x == null))
             {
-                result.AddFailure($"{name}/{aspect.Id} - Movers has null entries");
+                result.AddFailure($"{name} - Movers has null entries");
             }
 
             // Check overlaps between on/blinking/sequences.
@@ -70,12 +71,12 @@ namespace Signals.Unity.Validation
 
                 if (aspect.BlinkingLights.Contains(light))
                 {
-                    result.AddWarning($"{name}/{aspect.Id} - on light {light.name} overlaps with Blinking Lights");
+                    result.AddWarning($"{name} - on light {light.name} overlaps with Blinking Lights");
                 }
 
                 if (aspect.LightSequences.Any(x => x != null && x.Lights.Contains(light)))
                 {
-                    result.AddWarning($"{name}/{aspect.Id} - on light {light.name} overlaps with Light Sequences");
+                    result.AddWarning($"{name} - on light {light.name} overlaps with Light Sequences");
                 }
             }
 
@@ -85,7 +86,7 @@ namespace Signals.Unity.Validation
 
                 if (aspect.LightSequences.Any(x => x != null && x.Lights.Contains(light)))
                 {
-                    result.AddWarning($"{name}/{aspect.Id} - blinking light {light.name} overlaps with Light Sequences");
+                    result.AddWarning($"{name} - blinking light {light.name} overlaps with Light Sequences");
                 }
             }
 
@@ -95,7 +96,7 @@ namespace Signals.Unity.Validation
 
                 if (cChanger.Light == null)
                 {
-                    result.AddFailure($"{name}/{aspect.Id}/{cChanger} - light is not assigned");
+                    result.AddFailure($"{name}/{cChanger} - light is not assigned");
                 }
             }
 
@@ -105,28 +106,33 @@ namespace Signals.Unity.Validation
 
                 if (mover.Mover == null)
                 {
-                    result.AddFailure($"{name}/{aspect.Id}/{mover} - mover is not assigned");
+                    result.AddFailure($"{name}/{mover} - mover is not assigned");
                 }
             }
 
-            // Check child aspects for combinations.
             if (aspect is CombinationAspectDefinition combination)
             {
-                for (int i = 0; i < combination.Conditions.Length; i++)
-                {
-                    var condition = combination.Conditions[i];
-
-                    if (condition == null)
-                    {
-                        result.AddFailure($"{name}/{aspect.Id} - condition {i} is null");
-                        continue;
-                    }
-
-                    result.Merge(CheckAspect(condition, $"{name}/{aspect.Id}"));
-                }
+                ValidateCombination(name, combination, result);
             }
 
             return result;
+        }
+
+        private void ValidateCombination(string name, CombinationAspectDefinition combination, Result result)
+        {
+            // Check child aspects for combinations.
+            for (int i = 0; i < combination.Conditions.Length; i++)
+            {
+                var condition = combination.Conditions[i];
+
+                if (condition == null)
+                {
+                    result.AddFailure($"{name} - condition {i} is null");
+                    continue;
+                }
+
+                result.Merge(CheckAspect(condition, name));
+            }
         }
     }
 }

@@ -17,13 +17,11 @@ namespace Signals.Game
     {
         private class IndicatorHudWrapper : IHudDisplayable
         {
-            private const string Space = " ";
-
             public int DisplayOrder { get; private set; }
             public Sprite? Sprite { get; set; }
 
             public bool ShouldDisplay => Sprite != null;
-            public string? DisplayText => Space;
+            public string DisplayText => Space;
             public Color TextColour => Color.white;
 
             public IndicatorHudWrapper(IAspect indicator, Sprite? off)
@@ -34,6 +32,8 @@ namespace Signals.Game
         }
 
         #region Static
+
+        private const string Space = " ";
 
         private static int s_idGen = 0;
         private static object s_lock = new object();
@@ -118,7 +118,7 @@ namespace Signals.Game
         // IHudDisplayable implementation.
         public bool ShouldDisplay => true;
         public int DisplayOrder => Definition.HUDDisplayOrder;
-        public string? DisplayText => " ";
+        public string DisplayText => Space;
         public Sprite? Sprite => Definition.OffStateHUDSprite;
         public Color TextColour => Color.white;
 

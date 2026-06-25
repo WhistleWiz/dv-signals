@@ -464,7 +464,7 @@ namespace Signals.Game.Controllers
             {
                 if (signal.Block == null) continue;
 
-                signal.Block.FlagForUpdating();
+                signal.Block.FlagAsDirty();
             }
         }
 
