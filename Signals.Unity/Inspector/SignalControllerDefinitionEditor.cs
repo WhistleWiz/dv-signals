@@ -58,6 +58,10 @@ namespace Signals.Unity.Inspector
             } while (prop.Next(false));
 
             serializedObject.ApplyModifiedProperties();
+
+            EditorHelper.DrawHeader("Editor Visualisation");
+            SignalControllerDefinition.TurntableVis = EditorGUILayout.Toggle("Draw Turntable Lines", SignalControllerDefinition.TurntableVis);
+            SignalControllerDefinition.BufferVis = EditorGUILayout.Toggle("Draw Buffer Stop Lines", SignalControllerDefinition.BufferVis);
         }
     }
 }

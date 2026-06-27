@@ -66,7 +66,7 @@ namespace Signals.Unity.Validation
             }
             else
             {
-                result.Merge(ValidateDisplay(moveSwap, name));
+                result.Merge(ValidateDisplay(moveSwap.ActualDisplay, name));
             }
 
             if (moveSwap.Mover == null)

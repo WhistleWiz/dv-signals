@@ -664,6 +664,31 @@ namespace Signals.Game.Generation
             }
         }
 
+        public void CreateBufferStopSignals(SignalPack pack, List<StaticSignalController> bufferStopSignals)
+        {
+            if (!pack.HasAnyBufferStopSignal)
+            {
+                Patches.BufferStopControllerPatches.Stops.Clear();
+                return;
+            }
+                        
+            int i = 0;
+
+            foreach (var stop in Patches.BufferStopControllerPatches.Stops)
+            {
+                var prefab = pack.GetBufferStopSignal(pack.EnableOldVersions && OldAreaCalculator.IsWithinOldArea(stop.transform.position));
+
+                if (prefab == null) continue;
+
+                var instance = Object.Instantiate(prefab, stop.transform);
+                instance.transform.ResetLocal();
+                var controller = new StaticSignalController(instance, $"BFS{++i}");
+                bufferStopSignals.Add(controller);
+            }
+
+            Patches.BufferStopControllerPatches.Stops.Clear();
+        }
+
         public virtual int MergeSignals(SignalPack pack, Dictionary<Junction, JunctionSignalGroup> registry)
         {
             var toDelete = new Dictionary<TrackSignalController, HashSet<TrackSignalController>>();

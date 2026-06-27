@@ -221,6 +221,7 @@ namespace Signals.Unity.Inspector
             ValidateController(_pack.JunctionShuntingSignal, "Junction Shunting Signal");
             ValidateController(_pack.SpacingSignal, "Spacing Signal");
             ValidateController(_pack.TurntableSignal, "Turntable Signal");
+            ValidateController(_pack.BufferStopSignal, "Buffer Stop Signal");
 
             ValidateController(_pack.DistantSignal, "Distant Signal");
             ValidateController(_pack.RepeaterSignal, "Repeater Signal");
@@ -242,6 +243,7 @@ namespace Signals.Unity.Inspector
             ValidateController(_pack.OldJunctionShuntingSignal, "Old Junction Shunting Signal");
             ValidateController(_pack.OldSpacingSignal, "Old Spacing Signal");
             ValidateController(_pack.OldTurntableSignal, "Old Turntable Signal");
+            ValidateController(_pack.OldBufferStopSignal, "Old Buffer Stop Signal");
 
             ValidateController(_pack.OldDistantSignal, "Old Distant Signal");
             ValidateController(_pack.OldRepeaterSignal, "Old Repeater Signal");

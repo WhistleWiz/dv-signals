@@ -196,6 +196,13 @@ namespace Signals.Game
             return Helpers.ClampD(direction.IsOut() ? span : set.span - span, 0, set.span);
         }
 
+        public static void ResetLocal(this Transform t)
+        {
+            t.localPosition = Vector3.zero;
+            t.localRotation = Quaternion.identity;
+            t.localScale = Vector3.one;
+        }
+
         #endregion
     }
 }

@@ -20,6 +20,7 @@ namespace Signals.Game
 
         private static Transform? s_holder;
         private static SignalPack s_pack = null!;
+        private static SignalPlacer? s_placer;
         private static bool s_loaded = false;
         private static bool s_jobs = false;
 
@@ -44,6 +45,15 @@ namespace Signals.Game
 
         public static bool Running => s_loaded;
         public static SignalPack CurrentPack => s_pack;
+        public static SignalPlacer Placer
+        {
+            get
+            {
+                s_placer ??= new RealisticSignalPlacer();
+                return s_placer;
+            }
+            set => s_placer = value;
+        }
 
         private Dictionary<Junction, JunctionSignalGroup> _junctionSignals =
             new Dictionary<Junction, JunctionSignalGroup>();
@@ -51,6 +61,8 @@ namespace Signals.Game
             new List<DistantSignalController>();
         private List<TurntableSignalController> _turntableSignals =
             new List<TurntableSignalController>();
+        private List<StaticSignalController> _bufferStopSignals =
+            new List<StaticSignalController>();
         private List<BasicSignalController> _controllerRegistry =
             new List<BasicSignalController>();
         private Dictionary<int, Signal> _signalRegistry =
@@ -58,11 +70,7 @@ namespace Signals.Game
 
         private Coroutine? _updateCoro;
 
-        public static SignalPlacer? Placer;
-
         public List<BasicSignalController> AllControllers => _controllerRegistry;
-
-        public StationControllerCache Cache = new StationControllerCache();
 
         public new static string AllowAutoCreate()
         {
@@ -75,6 +83,10 @@ namespace Signals.Game
 
             _junctionSignals.Clear();
             _distantSignals.Clear();
+            _turntableSignals.Clear();
+            _bufferStopSignals.Clear();
+            _controllerRegistry.Clear();
+            _signalRegistry.Clear();
 
             StopCoroutine(_updateCoro);
             JobHelper.ManagerInstanced = false;
@@ -200,8 +212,8 @@ namespace Signals.Game
 
             if (!s_jobs)
             {
-                JobHelper.ManagerInstanced = true;
                 s_jobs = true;
+                JobHelper.ManagerInstanced = true;
             }
         }
 
@@ -278,6 +290,12 @@ namespace Signals.Game
             Placer.CreateTurntableSignals(pack, _turntableSignals);
             sw.Stop();
             SignalsMod.Log($"Finished creating {_turntableSignals.Count} turntable signal(s), " +
+                $"current total is {_controllerRegistry.Count} ({sw.Elapsed.TotalSeconds:F4}s)");
+
+            sw.Restart();
+            Placer.CreateBufferStopSignals(CurrentPack, _bufferStopSignals);
+            sw.Stop();
+            SignalsMod.Log($"Finished creating {_bufferStopSignals.Count} bufferstop signal(s), " +
                 $"current total is {_controllerRegistry.Count} ({sw.Elapsed.TotalSeconds:F4}s)");
 
             // Naming.
@@ -557,5 +575,8 @@ namespace Signals.Game
         }
 
         #endregion
+
+        // Temp Debug.
+        private StationControllerCache Cache = new StationControllerCache();
     }
 }

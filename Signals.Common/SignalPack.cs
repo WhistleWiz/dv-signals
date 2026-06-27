@@ -47,6 +47,9 @@ namespace Signals.Common
         [Tooltip("Used on turntables\n" +
             "Does not fall back if missing")]
         public SignalControllerDefinition? TurntableSignal;
+        [Tooltip("Used on buffer stops\n" +
+            "Does not fall back if missing")]
+        public SignalControllerDefinition? BufferStopSignal;
 
         [Header("Optional Distant Signals")]
         [Tooltip("Used to warn about the state of mainline signals")]
@@ -108,6 +111,9 @@ namespace Signals.Common
         [Tooltip("Used on turntables\n" +
             "Does not fall back if missing")]
         public SignalControllerDefinition? OldTurntableSignal;
+        [Tooltip("Used on buffer stops\n" +
+            "Does not fall back if missing")]
+        public SignalControllerDefinition? OldBufferStopSignal;
 
         [Space]
         [Tooltip("Used to warn about the state of mainline signals")]
@@ -314,9 +320,15 @@ namespace Signals.Common
             return OldAndEnabled(old) ? OldTurntableSignal : TurntableSignal;
         }
 
+        public SignalControllerDefinition? GetBufferStopSignal(bool old)
+        {
+            return OldAndEnabled(old) ? OldBufferStopSignal : BufferStopSignal;
+        }
+
         public bool HasAnyDistantSignal => DistantSignal != null || OldDistantSignal != null;
         public bool HasAnyRepeaterSignal => RepeaterSignal != null || OldRepeaterSignal != null;
         public bool HasAnySpacingSignal => SpacingSignal != null || OldSpacingSignal != null;
         public bool HasAnyTurntableSignal => TurntableSignal != null || OldTurntableSignal != null;
+        public bool HasAnyBufferStopSignal => BufferStopSignal != null || OldBufferStopSignal != null;
     }
 }

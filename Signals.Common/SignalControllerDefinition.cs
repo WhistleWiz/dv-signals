@@ -14,6 +14,22 @@ namespace Signals.Common
         private static readonly Vector3 TrackUp = new Vector3(0, TrackSize.y / -2, 0);
         private static readonly Vector3 CatenaryUp = new Vector3(0, 6 - TrackUp.y, 0);
         private static readonly Color Color2 = new Color(0.9f, 0.9f, 0.9f, 0.2f);
+        // Turntable stuff.
+        private const int Sides = 48;
+        private const float TurntableRadius = 12.324f;
+        private static readonly Vector3 TurntableOffset = new Vector3(0, 0, TurntableRadius);
+        private static readonly Vector3 TurntableWallSize1 = new Vector3(0.37f, 0.07f, 23.6f);
+        private static readonly Vector3 TurntableWallSize2 = new Vector3(0.05f, 0.65f, 23.6f);
+        private static readonly Vector3 TurntableWallSize3 = new Vector3(0.39f, 0.24f, 23.6f);
+        private static readonly Vector3 TurntableWallOffset1 = new Vector3(2.314f, 0.750f, 0);
+        private static readonly Vector3 TurntableWallOffset2 = new Vector3(2.375f, 0.390f, 0);
+        private static readonly Vector3 TurntableWallOffset3 = new Vector3(2.305f, -0.055f, 0);
+        // Bufferstop stuff.
+        private static readonly Vector3 BufferOffset = new Vector3(0, 1.015f, 2.145f);
+        private static readonly Vector3 BufferSize = new Vector3(2.465f, 0.325f, 0.22f);
+
+        public static bool TurntableVis = false;
+        public static bool BufferVis = false;
 
         [Tooltip("The individual signals for this controller")]
         public SignalDefinition[] Signals = new SignalDefinition[0];
@@ -54,6 +70,42 @@ namespace Signals.Common
             // Forward direction indicator.
             Gizmos.DrawLine(Vector3.forward * 0.5f + trackOffset * 0.5f + offset, Vector3.back * 0.5f + offset);
             Gizmos.DrawLine(Vector3.forward * 0.5f - trackOffset * 0.5f + offset, Vector3.back * 0.5f + offset);
+
+            if (TurntableVis) DrawTurntable(offset);
+            if (BufferVis) DrawBufferStop(offset);
+        }
+
+        private void DrawTurntable(Vector3 offset)
+        {
+            Gizmos.color = Color2;
+            Vector3 prev = -TurntableOffset;
+            Vector3 next;
+            offset += TurntableOffset;
+
+            for (int i = 0; i < Sides; i++)
+            {
+                next = Quaternion.Euler(0, 360.0f / Sides, 0) * prev;
+                Gizmos.DrawLine(offset + prev, offset + next);
+                prev = next;
+            }
+
+            Gizmos.DrawWireCube(offset + TurntableWallOffset1, TurntableWallSize1);
+            Gizmos.DrawWireCube(offset + TurntableWallOffset2, TurntableWallSize2);
+            Gizmos.DrawWireCube(offset + TurntableWallOffset3, TurntableWallSize3);
+            Gizmos.DrawWireCube(offset + Mirror(TurntableWallOffset1), TurntableWallSize1);
+            Gizmos.DrawWireCube(offset + Mirror(TurntableWallOffset2), TurntableWallSize2);
+            Gizmos.DrawWireCube(offset + Mirror(TurntableWallOffset3), TurntableWallSize3);
+        }
+
+        private void DrawBufferStop(Vector3 offset)
+        {
+            Gizmos.color = Color2;
+            Gizmos.DrawWireCube(offset + BufferOffset, BufferSize);
+        }
+
+        private static Vector3 Mirror(Vector3 v)
+        {
+            return new Vector3(-v.x, v.y, v.z);
         }
     }
 }
