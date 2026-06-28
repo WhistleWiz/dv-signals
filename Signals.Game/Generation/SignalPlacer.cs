@@ -682,6 +682,7 @@ namespace Signals.Game.Generation
 
                 var instance = Object.Instantiate(prefab, stop.transform);
                 instance.transform.ResetLocal();
+                instance.transform.localPosition = new Vector3(instance.Offset, 0, 0);
                 var controller = new StaticSignalController(instance, $"BFS{++i}");
                 bufferStopSignals.Add(controller);
             }

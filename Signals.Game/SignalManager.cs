@@ -295,7 +295,7 @@ namespace Signals.Game
             sw.Restart();
             Placer.CreateBufferStopSignals(CurrentPack, _bufferStopSignals);
             sw.Stop();
-            SignalsMod.Log($"Finished creating {_bufferStopSignals.Count} bufferstop signal(s), " +
+            SignalsMod.Log($"Finished creating {_bufferStopSignals.Count} buffer stop signal(s), " +
                 $"current total is {_controllerRegistry.Count} ({sw.Elapsed.TotalSeconds:F4}s)");
 
             // Naming.
