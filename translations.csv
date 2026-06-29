@@ -1,0 +1,9 @@
+Key,Description,English,Czech,Danish,German,Spanish,Finnish,French,Hindi,Hungarian,Italian,Japanese,Korean,Norwegian,Dutch,Polish,Portuguese,Portuguese (Brazil),Romanian,Russian,Slovak,Swedish,Turkish,Ukrainian,Chinese (Simplified),Chinese (Traditional)
+,,en,cs,da,de,es,fi,fr,hi,hu,it,ja,ko,nb,nl,pl,pt,pt-br,ro,ru,sk,sv,tr,uk,zh-CN,zh-TW
+dv_signals/radio/mode_name,Title in Comms Radio,Signal Reserver,,,,,,,,,,,,,,,,,,,,,,,,
+dv_signals/radio/begin,,Click to begin,,,,,,,,,,,,,,,,,,,,,,,,
+dv_signals/radio/reservation_failed,Reservation failure,Could not reserve signal,,,,,,,,,,,,,,,,,,,,,,,,
+dv_signals/radio/reservation_success,Reservation success,Reserved signal for {[0]} seconds,,,,,,,,,,,,,,,,,,,,,,,,
+dv_signals/radio/reserve,,Reserve,,,,,,,,,,,,,,,,,,,,,,,,
+dv_signals/radio/display_no_signal,Displayed when no signal is selected,Signal: None\nDuration: {[0]} seconds,,,,,,,,,,,,,,,,,,,,,,,,
+dv_signals/radio/display_signal,Displayed when a signal is selected,Signal: {[0]}\nDuration: {[1]} seconds,,,,,,,,,,,,,,,,,,,,,,,,

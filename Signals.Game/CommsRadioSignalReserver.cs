@@ -165,19 +165,19 @@ namespace Signals.Game
         public void SetStartingDisplay()
         {
             StopDisplayCoro();
-            Display.SetDisplay("Signal Reserver", "Click to begin");
+            Display.SetDisplay(Localization.Radio.ModeName, Localization.Radio.Begin);
         }
 
         private void SetFailedDisplay()
         {
             StopDisplayCoro();
-            Display.SetContentAndAction("Could not reserve signal");
+            Display.SetContentAndAction(Localization.Radio.ReservationFailed);
         }
 
         private void SetSuccessDisplay()
         {
             StopDisplayCoro();
-            Display.SetContentAndAction($"Reserved signal for {Duration:F0} seconds");
+            Display.SetContentAndAction(Localization.Radio.ReservationSuccess(Duration));
         }
 
         private void SetDisplayToSignal()
@@ -186,11 +186,11 @@ namespace Signals.Game
 
             if (_signal == null)
             {
-                Display.SetContentAndAction($"Signal: None\nDuration: {Duration} seconds", "");
+                Display.SetContentAndAction(Localization.Radio.DisplayNoSignal(Duration), string.Empty);
             }
             else
             {
-                Display.SetContentAndAction($"Signal: {_signal.Id}\nDuration: {Duration} seconds", "Reserve");
+                Display.SetContentAndAction(Localization.Radio.DisplaySignal(_signal.Id.ToString(), Duration), Localization.Radio.Reserve);
             }
         }
 

@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using DVLangHelper.Runtime;
+using HarmonyLib;
 using System.Reflection;
 using UnityModManagerNet;
 
@@ -10,12 +11,13 @@ namespace Signals.Game
 
         public static UnityModManager.ModEntry Instance { get; private set; } = null!;
         public static Settings Settings { get; private set; } = null!;
+        public static TranslationInjector Translations { get; private set; } = null!;
 
-        // Unity Mod Manager Wiki: https://wiki.nexusmods.com/index.php/Category:Unity_Mod_Manager
         private static bool Load(UnityModManager.ModEntry modEntry)
         {
             Instance = modEntry;
             Settings = UnityModManager.ModSettings.Load<Settings>(modEntry);
+            Translations = new TranslationInjector(Guid);
             SignalManager.LoadSignals(modEntry);
 
             if (SignalManager.DefaultPack == null)
@@ -23,6 +25,9 @@ namespace Signals.Game
                 Error("Failed to load default pack, mod won't load!");
                 return false;
             }
+
+            Translations.AddTranslationsFromCsv(System.IO.Path.Combine(modEntry.Path, "translations.csv"));
+            Translations.AddTranslationsFromWebCsv("https://github.com/WhistleWiz/dv-signals/blob/master/translations.csv");
 
             Instance.OnGUI += Settings.DrawGUI;
             Instance.OnSaveGUI += Settings.Save;

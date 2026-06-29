@@ -38,5 +38,7 @@
 		<Reference Include="BezierCurves" />
     <Reference Include="CommandTerminal" />
 		<Reference Include="net.smkd.vector3d" />
+    <Reference Include="DVLangHelper.Data" />
+    <Reference Include="DVLangHelper.Runtime" />
 	</ItemGroup>
 </Project>
