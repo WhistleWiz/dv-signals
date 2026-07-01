@@ -18,11 +18,13 @@ namespace Signals.Unity.Inspector
             public string Name;
             public bool Expanded = true;
             public List<Result> Results;
+            public SignalControllerDefinition? Prefab;
 
-            public SignalResults(string name)
+            public SignalResults(string name, SignalControllerDefinition? prefab = null)
             {
                 Name = name;
                 Results = new List<Result>();
+                Prefab = prefab;
             }
         }
 
@@ -294,7 +296,19 @@ namespace Signals.Unity.Inspector
 
         private void ValidateController(SignalControllerDefinition? controller, string name)
         {
-            var results = new SignalResults(name);
+            // No need to validate the same controller multiple times.
+            if (controller != null)
+            {
+                var matching = _results.Find(x => x.Prefab == controller);
+
+                if (matching != null)
+                {
+                    matching.Name = $"{matching.Name} / {name}";
+                    return;
+                }
+            }
+
+            var results = new SignalResults(name, controller);
             _results.Add(results);
 
             if (controller == null)

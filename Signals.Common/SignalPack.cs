@@ -50,6 +50,8 @@ namespace Signals.Common
         [Tooltip("Used on buffer stops\n" +
             "Does not fall back if missing")]
         public SignalControllerDefinition? BufferStopSignal;
+        [Tooltip("If true, the buffer stop signal will not be attached to the buffer stop object")]
+        public bool BufferStopSignalIsStatic = false;
 
         [Header("Optional Distant Signals")]
         [Tooltip("Used to warn about the state of mainline signals")]
@@ -114,6 +116,8 @@ namespace Signals.Common
         [Tooltip("Used on buffer stops\n" +
             "Does not fall back if missing")]
         public SignalControllerDefinition? OldBufferStopSignal;
+        [Tooltip("If true, the buffer stop signal will not be attached to the buffer stop object")]
+        public bool OldBufferStopSignalIsStatic = false;
 
         [Space]
         [Tooltip("Used to warn about the state of mainline signals")]

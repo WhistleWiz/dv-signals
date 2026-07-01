@@ -664,7 +664,7 @@ namespace Signals.Game.Generation
             }
         }
 
-        public void CreateBufferStopSignals(SignalPack pack, List<StaticSignalController> bufferStopSignals)
+        public void CreateBufferStopSignals(SignalPack pack, List<BufferStopSignalController> bufferStopSignals)
         {
             if (!pack.HasAnyBufferStopSignal)
             {
@@ -680,11 +680,20 @@ namespace Signals.Game.Generation
 
                 if (prefab == null) continue;
 
+                var isStatic = prefab == pack.OldBufferStopSignal ?
+                    pack.OldBufferStopSignalIsStatic :
+                    pack.BufferStopSignalIsStatic;
                 var instance = Object.Instantiate(prefab, stop.transform);
                 instance.transform.ResetLocal();
                 instance.transform.localPosition = new Vector3(instance.Offset, 0, 0);
-                var controller = new StaticSignalController(instance, $"BFS{++i}");
+                var controller = new BufferStopSignalController(instance, $"BFS{++i}", stop, !isStatic);
                 bufferStopSignals.Add(controller);
+
+                // Move up the hierarchy so it stays with the track.
+                if (isStatic)
+                {
+                    instance.transform.SetParent(stop.transform.parent, true);
+                }
             }
 
             Patches.BufferStopControllerPatches.Stops.Clear();

@@ -8,11 +8,11 @@ namespace Signals.Game.Controllers
     public class StaticSignalController : BasicSignalController
     {
         private string _name;
+        private bool _updated;
 
         public StaticSignalController(SignalControllerDefinition def, string name) : base(def, null)
         {
             _name = name;
-            Update(true, false);
         }
 
         protected override string GenerateName()
@@ -20,6 +20,12 @@ namespace Signals.Game.Controllers
             return _name;
         }
 
-        public override bool ShouldUpdate() => false;
+        public override bool ShouldUpdate()
+        {
+            if (_updated) return false;
+
+            _updated = true;
+            return true;
+        }
     }
 }

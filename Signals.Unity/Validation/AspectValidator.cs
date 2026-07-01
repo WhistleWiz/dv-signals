@@ -12,7 +12,7 @@ namespace Signals.Unity.Validation
         {
             if (definition.Aspects.Length == 0)
             {
-                return Warning($"{definition.name} - signal should have at least 1 aspect");
+                return Skip();
             }
 
             var result = Pass();

@@ -123,5 +123,25 @@ namespace Signals.Game.Util
         }
 
         #endregion
+
+        #region BufferStop
+
+        private static FieldInfo? s_isBroken;
+        private static FieldInfo IsBrokenF
+        {
+            get
+            {
+                if (s_isBroken == null)
+                {
+                    s_isBroken = typeof(BufferStop).GetField("isBroken", PrivateFlags);
+                }
+
+                return s_isBroken;
+            }
+        }
+
+        public static bool IsBroken(BufferStop stop) => (bool)IsBrokenF.GetValue(stop);
+
+        #endregion
     }
 }

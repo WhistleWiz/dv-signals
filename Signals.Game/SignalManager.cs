@@ -61,12 +61,14 @@ namespace Signals.Game
             new List<DistantSignalController>();
         private List<TurntableSignalController> _turntableSignals =
             new List<TurntableSignalController>();
-        private List<StaticSignalController> _bufferStopSignals =
-            new List<StaticSignalController>();
+        private List<BufferStopSignalController> _bufferStopSignals =
+            new List<BufferStopSignalController>();
         private List<BasicSignalController> _controllerRegistry =
             new List<BasicSignalController>();
         private Dictionary<int, Signal> _signalRegistry =
             new Dictionary<int, Signal>();
+        private Dictionary<int, BasicSignalController> _idToController =
+            new Dictionary<int, BasicSignalController>();
 
         private Coroutine? _updateCoro;
 
@@ -139,6 +141,7 @@ namespace Signals.Game
                     else
                     {
                         InstalledPacks.Add(mod.Info.Id, pack);
+                        SignalsMod.Log("Loaded signal pack.");
                     }
 
                     ProcessControllers(pack);
@@ -399,6 +402,7 @@ namespace Signals.Game
         public void RegisterController(BasicSignalController controller)
         {
             _controllerRegistry.Add(controller);
+            _idToController.Add(controller.Id, controller);
         }
 
         /// <summary>
@@ -407,6 +411,7 @@ namespace Signals.Game
         /// <returns><see langword="true"/> if the signal was successfully removed, and <see langword="false"/> otherwise.</returns>
         public bool UnregisterController(BasicSignalController controller)
         {
+            _idToController.Remove(controller.Id);
             return _controllerRegistry.Remove(controller);
         }
 
@@ -559,8 +564,7 @@ namespace Signals.Game
         /// <returns><see langword="true"/> if a controller was found, otherwise <see langword="false"/>.</returns>
         public bool TryGetController(int id, out BasicSignalController signal)
         {
-            signal = AllControllers.First(x => x.Id == id);
-            return signal != null;
+            return _idToController.TryGetValue(id, out signal);
         }
 
         /// <summary>
