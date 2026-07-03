@@ -45,9 +45,21 @@ namespace Signals.Game.Util
             new Area( 5.0f,  7.0f, 0.5f),
         };
 
+        // Areas within the old areas that aren't old.
+        private static readonly Area[] s_invAreas = new[]
+        {
+            // MB
+            new Area(12.5f, 14.5f, 0.5f),
+        };
+
         public static bool IsWithinOldArea(Vector3 position)
         {
             var flat = new Vector2(position.x, position.z);
+
+            for (int i = 0; i < s_invAreas.Length; i++)
+            {
+                if (Vector2.SqrMagnitude(s_invAreas[i].Centre - flat) < s_invAreas[i].RadiusSqr) return false;
+            }
 
             for (int i = 0; i < s_areas.Length; i++)
             {
@@ -66,10 +78,24 @@ namespace Signals.Game.Util
                 var size = Mathf.Sqrt(area.RadiusSqr) * 2.0f;
                 var instance = GameObject.CreatePrimitive(PrimitiveType.Cylinder).transform;
                 instance.parent = t;
-                instance.transform.localScale = new Vector3(size, 1000, size);
+                instance.transform.localScale = new Vector3(size, 800, size);
                 instance.transform.position = new Vector3(area.Centre.x, 0, area.Centre.y);
 
-                foreach (var col in instance.GetComponentsInChildren<Collider>())
+                foreach (var col in instance.GetComponentsInChildren<Collider>(true))
+                {
+                    Object.Destroy(col);
+                }
+            }
+
+            foreach (var area in s_invAreas)
+            {
+                var size = Mathf.Sqrt(area.RadiusSqr) * 2.0f;
+                var instance = GameObject.CreatePrimitive(PrimitiveType.Cylinder).transform;
+                instance.parent = t;
+                instance.transform.localScale = new Vector3(size, 1200, size);
+                instance.transform.position = new Vector3(area.Centre.x, 0, area.Centre.y);
+
+                foreach (var col in instance.GetComponentsInChildren<Collider>(true))
                 {
                     Object.Destroy(col);
                 }

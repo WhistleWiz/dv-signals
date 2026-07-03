@@ -81,6 +81,7 @@ namespace Signals.Game
         /// Override the name of this signal.
         /// </summary>
         public string NameOverride = string.Empty;
+        public bool AllowReserving = true;
 
         #endregion
 

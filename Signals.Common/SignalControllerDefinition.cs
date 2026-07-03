@@ -45,6 +45,9 @@ namespace Signals.Common
         [Header("Optional")]
         [Tooltip("The shunting signals for this controller")]
         public SignalDefinition[] ShuntingSignals = new SignalDefinition[0];
+        [Tooltip("Additional static signals for hoverables\n" +
+            "These do not have blocks assigned")]
+        public SignalDefinition[] DisplaySignals = new SignalDefinition[0];
         public TracksideObject[] TracksideObjects = new TracksideObject[0];
         [Tooltip("If the controller's prefab is flipped, these transforms will be flipped back (useful for text)")]
         public Transform[] UnflipTransforms = new Transform[0];

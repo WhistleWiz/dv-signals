@@ -36,7 +36,8 @@ namespace Signals.Unity.Inspector
 
                         if (GUILayout.Button("Get Signals From Children"))
                         {
-                            def.Signals = def.GetComponentsInChildren<SignalDefinition>().Where(x => !def.ShuntingSignals.Contains(x)).ToArray();
+                            def.Signals = def.GetComponentsInChildren<SignalDefinition>()
+                                .Where(x => !def.ShuntingSignals.Contains(x) && !def.DisplaySignals.Contains(x)).ToArray();
                             AssetHelper.SaveAsset(target);
                         }
                         break;
@@ -47,7 +48,17 @@ namespace Signals.Unity.Inspector
 
                         if (GUILayout.Button("Get Signals From Children"))
                         {
-                            def.ShuntingSignals = def.GetComponentsInChildren<SignalDefinition>().Where(x => !def.Signals.Contains(x)).ToArray();
+                            def.ShuntingSignals = def.GetComponentsInChildren<SignalDefinition>()
+                                .Where(x => !def.Signals.Contains(x) && !def.DisplaySignals.Contains(x)).ToArray();
+                            AssetHelper.SaveAsset(target);
+                        }
+                        break;
+                    case nameof(SignalControllerDefinition.DisplaySignals):
+                        EditorGUILayout.PropertyField(prop);
+                        if (GUILayout.Button("Get Signals From Children"))
+                        {
+                            def.ShuntingSignals = def.GetComponentsInChildren<SignalDefinition>()
+                                .Where(x => !def.Signals.Contains(x) && !def.ShuntingSignals.Contains(x)).ToArray();
                             AssetHelper.SaveAsset(target);
                         }
                         break;

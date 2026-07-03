@@ -55,7 +55,7 @@ namespace Signals.Game.Generation
         private JunctionSignalGroup? CreateGroup(SignalPack pack, Junction junction)
         {
             var branchDistance = BranchSignalDistance(junction, BranchPlacementDistance);
-            var branchTrackKey = new Dictionary<RailTrack, PlacementHelper>();
+            var branchTrackKey = new Dictionary<RailTrack, PlacementHelper?>();
             var inTrack = junction.inBranch.track;
             var anyYard = false;
             var old = IsOld(junction);
@@ -63,21 +63,31 @@ namespace Signals.Game.Generation
             var deadCheck = false;
             var stationEnd = false;
             var stationCheck = false;
+            var hasShunting = pack.GetShuntingSignal(old) != null;
+            var logicShuntingOnly = old ? pack.OldShuntingSignalsOnlyOnLogicTracks : pack.ShuntingSignalsOnlyOnLogicTracks;
 
             if (junction.IsFromDoubleTrackModStation())
             {
                 foreach (var branch in junction.outBranches)
                 {
                     var track = branch.track.outBranch.track;
+                    var result = ShuntingOrSpacing(track, false);
 
-                    branchTrackKey.Add(track, ShuntingOrSpacing(track));
+                    if (result.HasValue)
+                    {
+                        branchTrackKey.Add(track, result.Value);
+                    }
                 }
 
-                var jplc = ShuntingOrSpacing(inTrack);
-                var ctrl = CreateSignalAtJunction(junction, jplc.Definition, JunctionPlacementDistance);
-                jplc.Apply(ctrl);
+                var jplc = ShuntingOrSpacing(inTrack, IsLogicYardTrack(inTrack));
+                if (jplc.HasValue)
+                {
+                    var ctrl = CreateSignalAtJunction(junction, jplc.Value.Definition, JunctionPlacementDistance);
+                    jplc.Value.Apply(ctrl);
+                    return new JunctionSignalGroup(junction, ctrl, CreateBranchSignals(junction, branchTrackKey, branchDistance));
+                }
 
-                return new JunctionSignalGroup(junction, ctrl, CreateBranchSignals(junction, branchTrackKey, branchDistance));
+                return WithoutJunction();
             }
 
             if (junction.IsFromDoubleTrackMod())
@@ -112,9 +122,16 @@ namespace Signals.Game.Generation
                 {
                     if (IsLoadingTrack(track) && !inTrack.IsPartOfStation())
                     {
-                        branchTrackKey.Add(track, ShuntingOrSpacing(track));
+                        branchTrackKey.Add(track, ShuntingOrSpacing(track, true));
                     }
-                    else
+                    else if (hasShunting && logicShuntingOnly)
+                    {
+                        if (!GoesToDeadEndIn())
+                        {
+                            branchTrackKey.Add(track, GetPlacement(PrefabType.Shunting, old));
+                        }
+                    }
+                    else if (hasShunting)
                     {
                         branchTrackKey.Add(track, GetPlacement(PrefabType.Shunting, old));
                     }
@@ -129,7 +146,11 @@ namespace Signals.Game.Generation
                     if (IsShortDeadEnd(track) || ComesFromStationAndIsShort(track))
                     {
                         anyYard = true;
-                        branchTrackKey.Add(track, GetPlacement(PrefabType.Shunting, old));
+
+                        if (!logicShuntingOnly)
+                        {
+                            branchTrackKey.Add(track, GetPlacement(PrefabType.Shunting, old));
+                        }
                     }
                     else if (!IsMainlineCountedAsYard(track) && (IsMainlineCountedAsYard(inTrack) || inTrack.IsPartOfStation()))
                     {
@@ -138,7 +159,7 @@ namespace Signals.Game.Generation
                     else if (IsMainlineCountedAsYard(track))
                     {
                         anyYard = true;
-                        branchTrackKey.Add(track, ShuntingOrSpacing(track));
+                        branchTrackKey.Add(track, ShuntingOrSpacing(track, false));
                     }
                     else
                     {
@@ -164,7 +185,17 @@ namespace Signals.Game.Generation
                     else
                     {
                         // If it goes to a dead end just use a shunting signal as usual, else do the spacing thingy.
-                        branchTrackKey.Add(track, GoesToDeadEndIn() ? GetPlacement(PrefabType.Shunting, old) : ShuntingOrSpacing(track));
+                        if (GoesToDeadEndIn())
+                        {
+                            if (hasShunting && !logicShuntingOnly)
+                            {
+                                branchTrackKey.Add(track, GetPlacement(PrefabType.Shunting, old));
+                            }
+                        }
+                        else
+                        {
+                            branchTrackKey.Add(track, ShuntingOrSpacing(track, false));
+                        }
                     }
                 }
 
@@ -206,7 +237,7 @@ namespace Signals.Game.Generation
                 return WithoutJunction();
             }
 
-            PlacementHelper junctionSignal;
+            PlacementHelper? junctionSignal;
             var isMain = false;
 
             // For the junction side, do the same checks for inputs and outputs.
@@ -226,11 +257,18 @@ namespace Signals.Game.Generation
                 // Special handling for loading tracks as they may act as mainlines (IME, CME...).
                 if (IsLoadingTrack(inTrack) || inTrack.IsNonSign())
                 {
-                    junctionSignal = ShuntingOrSpacing(inTrack);
+                    junctionSignal = ShuntingOrSpacing(inTrack, IsLogicYardTrack(inTrack));
                 }
                 else
                 {
-                    junctionSignal = GetPlacement(PrefabType.Shunting, old);
+                    if (hasShunting && (!logicShuntingOnly || IsLogicYardTrack(inTrack)))
+                    {
+                        junctionSignal = GetPlacement(PrefabType.Shunting, old);
+                    }
+                    else
+                    {
+                        junctionSignal = null;
+                    }
                 }
             }
             // If the track goes into any yard track...
@@ -241,7 +279,7 @@ namespace Signals.Game.Generation
                 // Same with yard tracks.
                 if(IsMainlineCountedAsYard(inTrack) || inTrack.IsPartOfStation())
                 {
-                    junctionSignal = ShuntingOrSpacing(inTrack);
+                    junctionSignal = ShuntingOrSpacing(inTrack, false);
                 }
                 else
                 {
@@ -258,15 +296,20 @@ namespace Signals.Game.Generation
                 isMain = true;
             }
 
+            if (!junctionSignal.HasValue)
+            {
+                return WithoutJunction();
+            }
+
             // Upgrade shunting signal.
-            if (junctionSignal.PrefabType == PrefabType.Shunting)
+            if (junctionSignal.Value.PrefabType == PrefabType.Shunting)
             {
                 junctionSignal = GetPlacement(PrefabType.ShuntingJunction, old);
             }
 
-            var junctionController = CreateSignalAtJunction(junction, junctionSignal.Definition,
+            var junctionController = CreateSignalAtJunction(junction, junctionSignal.Value.Definition,
                 isMain ? LongJunctionPlacementDistance : JunctionPlacementDistance);
-            junctionSignal.Apply(junctionController);
+            junctionSignal.Value.Apply(junctionController);
 
             return new JunctionSignalGroup(junction, junctionController,
                 CreateBranchSignals(junction, branchTrackKey, branchDistance));
@@ -276,7 +319,7 @@ namespace Signals.Game.Generation
                 return new PlacementHelper(GetForType(pack, prefabType, old), prefabType, old);
             }
 
-            PlacementHelper ShuntingOrSpacing(RailTrack track)
+            PlacementHelper? ShuntingOrSpacing(RailTrack track, bool logicTrack)
             {
                 var spacing = pack.GetSpacingSignal(old);
 
@@ -286,7 +329,14 @@ namespace Signals.Game.Generation
                 }
                 else
                 {
-                    return GetPlacement(PrefabType.Shunting, old);
+                    if (hasShunting && (logicTrack || !logicShuntingOnly))
+                    {
+                        return GetPlacement(PrefabType.Shunting, old);
+                    }
+                    else
+                    {
+                        return null;
+                    }
                 }
             }
 
@@ -418,7 +468,7 @@ namespace Signals.Game.Generation
         }
 
         private static List<TrackSignalController> CreateBranchSignals(Junction junction,
-            Dictionary<RailTrack, PlacementHelper> branchTrackKey, float distance)
+            Dictionary<RailTrack, PlacementHelper?> branchTrackKey, float distance)
         {
             var signals = new List<TrackSignalController>();
 
@@ -426,7 +476,7 @@ namespace Signals.Game.Generation
             {
                 var track = branch.track.outBranch.track;
 
-                if (!branchTrackKey.TryGetValue(track, out var helper)) continue;
+                if (!branchTrackKey.TryGetValue(track, out var helper) || !helper.HasValue) continue;
 
                 var kpSet = track.GetKinkedPointSet();
                 var tDirT = TrackUtils.TrackDirectionFromTrack(track, branch.track);
@@ -435,10 +485,10 @@ namespace Signals.Game.Generation
                 var point = kpSet.points[index];
 
                 var placement = new SignalPlacementInfo(track, tDirT, index, tSpan);
-                var signal = InstantiateFromDef(helper.Definition, point.position, tDirT.IsOut() ? point.forward : -point.forward, false, track);
+                var signal = InstantiateFromDef(helper.Value.Definition, point.position, tDirT.IsOut() ? point.forward : -point.forward, false, track);
                 var controller = new TrackSignalController(signal, branch.track, TrackDirection.In, placement);
 
-                helper.Apply(controller);
+                helper.Value.Apply(controller);
                 signals.Add(controller);
             }
 
@@ -446,7 +496,7 @@ namespace Signals.Game.Generation
         }
 
         private static List<TrackSignalController> CreateBranchSignalsOppositeDouble(Junction junction,
-            Dictionary<RailTrack, PlacementHelper> branchTrackKey, float distance)
+            Dictionary<RailTrack, PlacementHelper?> branchTrackKey, float distance)
         {
             var signals = new List<TrackSignalController>();
 
@@ -457,7 +507,7 @@ namespace Signals.Game.Generation
                 Junction.Branch? branch = junction.outBranches[i];
                 var track = branch.track.outBranch.track;
 
-                if (!branchTrackKey.TryGetValue(track, out var helper)) continue;
+                if (!branchTrackKey.TryGetValue(track, out var helper) || !helper.HasValue) continue;
 
                 var kpSet = track.GetKinkedPointSet();
                 var tDirT = TrackUtils.TrackDirectionFromTrack(track, branch.track);
@@ -466,11 +516,11 @@ namespace Signals.Game.Generation
                 var point = kpSet.points[index];
 
                 var placement = new SignalPlacementInfo(track, tDirT, index, tSpan);
-                var signal = InstantiateFromDef(helper.Definition, point.position, tDirT.IsOut() ? point.forward : -point.forward,
-                    helper.Definition.Offset > 0 ? i == 0 : i != 0, track);
+                var signal = InstantiateFromDef(helper.Value.Definition, point.position, tDirT.IsOut() ? point.forward : -point.forward,
+                    helper.Value.Definition.Offset > 0 ? i == 0 : i != 0, track);
                 var controller = new TrackSignalController(signal, branch.track, TrackDirection.In, placement);
 
-                helper.Apply(controller);
+                helper.Value.Apply(controller);
                 signals.Add(controller);
             }
 

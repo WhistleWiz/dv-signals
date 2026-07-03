@@ -9,7 +9,7 @@ namespace Signals.Unity.Validation
 
         public override Result ValidateController(SignalControllerDefinition definition)
         {
-            if (definition.Signals.Length == 0 && definition.ShuntingSignals.Length == 0)
+            if (definition.Signals.Length == 0 && definition.ShuntingSignals.Length == 0 && definition.DisplaySignals.Length == 0)
             {
                 return Critical("No signals in controller");
             }

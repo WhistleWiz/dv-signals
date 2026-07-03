@@ -66,7 +66,7 @@ namespace Signals.Game
             {
                 var signal = comp.Signal;
 
-                if (signal != _signal)
+                if (signal.AllowReserving && signal != _signal)
                 {
                     HighlightSignal(_signal, false);
                     HighlightSignal(signal, true);

@@ -1,7 +1,5 @@
 ﻿using Signals.Common;
 using Signals.Common.Displays;
-using System.Xml.Linq;
-using UnityEngine;
 
 namespace Signals.Unity.Validation
 {

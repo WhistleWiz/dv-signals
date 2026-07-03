@@ -199,20 +199,9 @@ namespace Signals.Unity.Inspector
                 goto Widths;
             }
 
-            if (_pack.ShuntingSignal == null)
-            {
-                var entry = new Result("Controller");
-                entry.AddCritical("Shunting controller cannot be null");
-                var result = new SignalResults(name);
-                result.Results.Add(entry);
-                _results.Add(result);
-                _hasErrors = true;
-                goto Widths;
-            }
-
             ValidateController(_pack.Signal, "Main Signal");
-            ValidateController(_pack.ShuntingSignal, "Shunting Signal");
 
+            ValidateController(_pack.ShuntingSignal, "Shunting Signal");
             ValidateController(_pack.DivergingSignal, "Diverging Signal");
             ValidateController(_pack.LeftJunctionSignal, "Left Junction Signal");
             ValidateController(_pack.RightJunctionSignal, "Right Junction Signal");
@@ -233,8 +222,8 @@ namespace Signals.Unity.Inspector
             ValidateController(_pack.CombinedRightJunctionSignal, "Combined Right Junction Signal");
 
             ValidateController(_pack.OldSignal, "Old Main Signal");
-            ValidateController(_pack.OldShuntingSignal, "Old Shunting Signal");
 
+            ValidateController(_pack.OldShuntingSignal, "Old Shunting Signal");
             ValidateController(_pack.OldDivergingSignal, "Old Diverging Signal");
             ValidateController(_pack.OldLeftJunctionSignal, "Old Left Junction Signal");
             ValidateController(_pack.OldRightJunctionSignal, "Old Right Junction Signal");
@@ -336,6 +325,7 @@ namespace Signals.Unity.Inspector
             yield return new SignalValidator();
             yield return new AspectValidator();
             yield return new DisplayValidator();
+            yield return new ComponentsValidator();
         }
 
         private static string Export(SignalPack pack)

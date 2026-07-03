@@ -54,9 +54,12 @@ namespace Signals.Game
 
         public void UpdateStateDisplay(Signal signal)
         {
-            signTypes.Clear();
+            UpdateFromElements(signal.GetAllHudElements().OrderBy(x => x.DisplayOrder));
+        }
 
-            var hudElements = signal.GetAllHudElements().OrderBy(x => x.DisplayOrder);
+        public void UpdateFromElements(IEnumerable<IHudDisplayable> hudElements)
+        {
+            signTypes.Clear();
 
             foreach (var element in hudElements)
             {

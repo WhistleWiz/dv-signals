@@ -89,6 +89,10 @@ namespace Signals.Game.Controllers
         /// </summary>
         public Signal[] ShuntingSignals { get; private set; }
         /// <summary>
+        /// The static signals belonging to this controller.
+        /// </summary>
+        public Signal[] DisplaySignals { get; private set; }
+        /// <summary>
         /// Information about where this signal was placed.
         /// </summary>
         public SignalPlacementInfo? PlacementInfo { get; private set; }
@@ -104,6 +108,11 @@ namespace Signals.Game.Controllers
                 }
 
                 foreach (var signal in ShuntingSignals)
+                {
+                    yield return signal;
+                }
+
+                foreach (var signal in DisplaySignals)
                 {
                     yield return signal;
                 }
@@ -185,6 +194,12 @@ namespace Signals.Game.Controllers
 
             Signals = def.Signals.Select(x => new Signal(this, x, false)).ToArray();
             ShuntingSignals = def.ShuntingSignals.Select(x => new Signal(this, x, true)).ToArray();
+            DisplaySignals = def.DisplaySignals.Select(x => new Signal(this, x, false)).ToArray();
+
+            foreach (var signal in DisplaySignals)
+            {
+                signal.AllowReserving = false;
+            }
 
             TrackChecker.OnMapBuilt += FixPositionDueToCrossing;
             SignalManager.Instance.RegisterController(this);

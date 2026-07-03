@@ -137,8 +137,8 @@ namespace Signals.Game.Generation
             PrefabType.Entry => pack.GetEntrySignal(old),
             PrefabType.Exit => pack.GetExitSignal(old),
             PrefabType.ExitPax => pack.GetExitPassengerSignal(old),
-            PrefabType.Shunting => pack.GetShuntingSignal(old),
-            PrefabType.ShuntingJunction => pack.GetJunctionShuntingSignal(old),
+            PrefabType.Shunting => pack.GetShuntingSignal(old)!,
+            PrefabType.ShuntingJunction => pack.GetJunctionShuntingSignal(old)!,
             PrefabType.ExitMainline => pack.GetExitMainlineSignal(old),
             _ => pack.GetMainlineSignal(old),
         };
@@ -208,132 +208,6 @@ namespace Signals.Game.Generation
             var signal = InstantiateFromDef(definition, point.position, tDirJ.IsOut() ? point.forward : -point.forward, false, track);
 
             return new JunctionSignalController(signal, junction, null, placement);
-        }
-
-        protected static TrackSignalController? CreateSignalFromJunction(Junction junction, SignalControllerDefinition definition)
-        {
-            var track = junction.inBranch.track;
-            var kpSet = track.GetKinkedPointSet();
-            var tDirJ = TrackUtils.TrackDirectionFromJunction(track, junction);
-            var tSpan = kpSet.GetSpan(JunctionPlacementDistance, tDirJ);
-            var index = kpSet.GetPointIndexForSpan(tSpan);
-            var point = kpSet.points[index];
-
-            tDirJ = tDirJ.Flipped();
-            var placement = new SignalPlacementInfo(track, tDirJ, index, tSpan);
-            var signal = InstantiateFromDef(definition, point.position, tDirJ.IsOut() ? point.forward : -point.forward, false, track);
-
-            return new TrackSignalController(signal, track, tDirJ.Flipped(), placement);
-        }
-
-        protected static List<TrackSignalController> CreateBranchSignals(Junction junction, SignalControllerDefinition definition)
-        {
-            var signals = new List<TrackSignalController>();
-
-            EquiPointSet.Point? prev = null;
-            float baseSpan = BranchPlacementDistance;
-
-            // Check potential placements to see if they're too close to eachother.
-            foreach (var branch in junction.outBranches)
-            {
-                var track = branch.track.outBranch.track;
-                var kpSet = track.GetKinkedPointSet();
-                var tDirT = TrackUtils.TrackDirectionFromTrack(track, branch.track);
-                var index = kpSet.GetPointIndexForSpan(kpSet.GetSpan(BranchPlacementDistance, tDirT));
-                var point = kpSet.points[index];
-
-                if (prev != null)
-                {
-                    var distance = (point.position - prev.Value.position).sqrMagnitude;
-
-                    // Just 1 confirmation is needed, so all of them are moved.
-                    if (distance < BranchDistanceThreshold)
-                    {
-                        baseSpan = BranchPlacementDistance + 10;
-                        break;
-                    }
-                }
-
-                prev = point;
-            }
-
-            foreach (var branch in junction.outBranches)
-            {
-                var track = branch.track.outBranch.track;
-
-                // Skip very small branch tracks to avoid placement issues.
-                if (IsSmallTrack(track)) continue;
-
-                var kpSet = track.GetKinkedPointSet();
-                var tDirT = TrackUtils.TrackDirectionFromTrack(track, branch.track);
-                var tSpan = kpSet.GetSpan(baseSpan, tDirT);
-                var index = kpSet.GetPointIndexForSpan(tSpan);
-                var point = kpSet.points[index];
-
-                var placement = new SignalPlacementInfo(track, tDirT, index, tSpan);
-                var signal = InstantiateFromDef(definition, point.position, tDirT.IsOut() ? point.forward : -point.forward, false, track);
-
-                signals.Add(new TrackSignalController(signal, branch.track, TrackDirection.In, placement));
-            }
-
-            return signals;
-        }
-
-        protected static List<TrackSignalController> CreateBranchSignalsPax(Junction junction, SignalControllerDefinition pax, SignalControllerDefinition nonPax)
-        {
-            var signals = new List<TrackSignalController>();
-
-            EquiPointSet.Point? prev = null;
-            float baseSpan = BranchPlacementDistance;
-
-            // Check potential placements to see if they're too close to eachother.
-            foreach (var branch in junction.outBranches)
-            {
-                var track = branch.track.outBranch.track;
-                var kpSet = track.GetKinkedPointSet();
-                var tDirT = TrackUtils.TrackDirectionFromTrack(track, branch.track);
-                var index = kpSet.GetPointIndexForSpan(kpSet.GetSpan(BranchPlacementDistance, tDirT));
-                var point = kpSet.points[index];
-
-                if (prev != null)
-                {
-                    var distance = (point.position - prev.Value.position).sqrMagnitude;
-
-                    // Just 1 confirmation is needed, so all of them are moved.
-                    if (distance < BranchDistanceThreshold)
-                    {
-                        baseSpan = BranchPlacementDistance + 10;
-                        break;
-                    }
-                }
-
-                prev = point;
-            }
-
-            foreach (var branch in junction.outBranches)
-            {
-                var track = branch.track.outBranch.track;
-                var kpSet = track.GetKinkedPointSet();
-                var tDirT = TrackUtils.TrackDirectionFromTrack(track, branch.track);
-                var tSpan = kpSet.GetSpan(baseSpan, tDirT);
-                var index = kpSet.GetPointIndexForSpan(tSpan);
-                var point = kpSet.points[index];
-
-                var paxEnd = IsPaxTrack(track);
-                var placement = new SignalPlacementInfo(track, tDirT, index, tSpan);
-                var signal = InstantiateFromDef(paxEnd ? pax : nonPax,
-                    point.position, tDirT.IsOut() ? point.forward : -point.forward, false, track);
-
-                var controller = new TrackSignalController(signal, branch.track, TrackDirection.In, placement)
-                {
-                    Type = paxEnd ? SignalType.ExitPax : SignalType.Mainline,
-                    PrefabType = paxEnd ? PrefabType.ExitPax : PrefabType.Mainline
-                };
-
-                signals.Add(controller);
-            }
-
-            return signals;
         }
 
         protected static DistantSignalController CreateDistantForSignal(BasicSignalController home, SignalControllerDefinition definition,

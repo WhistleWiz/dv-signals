@@ -1,5 +1,6 @@
 ﻿using DV.Utils;
 using Signals.Common;
+using Signals.Common.Animation;
 using Signals.Game.Controllers;
 using Signals.Game.Generation;
 using Signals.Game.Railway;
@@ -173,6 +174,16 @@ namespace Signals.Game
                 foreach (var signal in controller.ShuntingSignals)
                 {
                     ProcessSignal(signal);
+                }
+
+                foreach (var signal in controller.DisplaySignals)
+                {
+                    ProcessSignal(signal);
+                }
+
+                foreach (var source in controller.GetComponentsInChildren<AudioSource>(true))
+                {
+                    source.outputAudioMixerGroup = DVHelpers.OutdoorsMixerGroup;
                 }
             }
 
