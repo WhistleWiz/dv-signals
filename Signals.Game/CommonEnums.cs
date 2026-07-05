@@ -18,6 +18,7 @@
         ExitPax,
         ExitMainline,
         Shunting,
+        ShuntingMajor,
         ShuntingJunction,
         Spacing,
     }

@@ -25,6 +25,7 @@ namespace Signals.Game.Misc
             button.gameObject.layer = 13;
             button.createRigidbody = false;
             button.useJoints = false;
+            button.handPosesOverride = new DV.Interaction.InteractionHandPoses();
 
             var highlight = button.gameObject.AddComponent<HighlightTag>();
             highlight.renderers = source.HighlightRenderers;

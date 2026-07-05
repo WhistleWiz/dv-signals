@@ -32,6 +32,7 @@ namespace Signals.Game
             Add((x, y) => new SpeedLimitDisplay(x, y));
             Add((x, y) => new TrackInfoDisplay(x, y));
             Add((x, y) => new MoveSwapDisplay(x, y));
+            Add((x, y) => new AspectConditionalDisplay(x, y));
 
             s_defaultTypes = CreatorFunctions.Keys.ToArray();
 

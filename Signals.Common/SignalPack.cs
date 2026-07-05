@@ -19,10 +19,7 @@ namespace Signals.Common
             "It's also used as the fallback for all other signals if they're missing, unless specified")]
         public SignalControllerDefinition Signal = null!;
 
-        [Header("Optional Signals")]
-        [Tooltip("Used on junctions inside yards")]
-        public SignalControllerDefinition ShuntingSignal = null!;
-        public bool ShuntingSignalsOnlyOnLogicTracks = false;
+        [Header("Optional Main Signals")]
         [Tooltip("Used on all junctions on the diverging track in mainlines, facing towards the junction")]
         public SignalControllerDefinition? DivergingSignal;
         [Tooltip("Used on all junctions with a track diverging to the left in mainlines, facing the junction branches")]
@@ -39,9 +36,18 @@ namespace Signals.Common
         [Tooltip("Used on mainline station tracks\n" +
             "Falls back to exit signals")]
         public SignalControllerDefinition? ExitMainlineSignal;
-        [Tooltip("Used on junctions inside yards\n" +
+
+        [Header("Optional Shunting Signals")]
+        [Tooltip("Used on junctions inside yards")]
+        public SignalControllerDefinition? ShuntingSignal;
+        [Tooltip("Used on junctions of major yard tracks\n" +
+            "Falls back to shunting signals")]
+        public SignalControllerDefinition? MajorShuntingSignal;
+        [Tooltip("Used on junctions inside yards, facing the junction branches\n" +
             "Falls back to shunting signals")]
         public SignalControllerDefinition? JunctionShuntingSignal;
+
+        [Header("Optional Misc Signals")]
         [Tooltip("Used on very long station tracks\n" +
             "Does not fall back if missing")]
         public SignalControllerDefinition? SpacingSignal;
@@ -87,9 +93,6 @@ namespace Signals.Common
         public SignalControllerDefinition? OldSignal;
 
         [Space]
-        [Tooltip("Used on junctions inside yards")]
-        public SignalControllerDefinition? OldShuntingSignal;
-        public bool OldShuntingSignalsOnlyOnLogicTracks = true;
         [Tooltip("Used on all junctions on the diverging track in mainlines, facing towards the junction")]
         public SignalControllerDefinition? OldDivergingSignal;
         [Tooltip("Used on all junctions with a track diverging to the left in mainlines, facing the junction branches")]
@@ -106,12 +109,20 @@ namespace Signals.Common
         [Tooltip("Used on mainline station tracks\n" +
             "Falls back to exit signals")]
         public SignalControllerDefinition? OldExitMainlineSignal;
-        [Tooltip("Used on junctions inside yards\n" +
+
+        [Space]
+        [Tooltip("Used on junctions inside yards")]
+        public SignalControllerDefinition? OldShuntingSignal;
+        [Tooltip("Used on junctions of major yard tracks\n" +
+            "Falls back to shunting signals")]
+        public SignalControllerDefinition? OldMajorShuntingSignal;
+        [Tooltip("Used on junctions inside yards, facing the junction branches\n" +
             "Falls back to shunting signals")]
         public SignalControllerDefinition? OldJunctionShuntingSignal;
         [Tooltip("Used on very long station tracks\n" +
             "Does not fall back if missing")]
         public SignalControllerDefinition? OldSpacingSignal;
+        [Space]
         [Tooltip("Used on turntables\n" +
             "Does not fall back if missing")]
         public SignalControllerDefinition? OldTurntableSignal;
@@ -161,7 +172,6 @@ namespace Signals.Common
             {
                 // Main.
                 yield return Signal;
-                yield return ShuntingSignal;
 
                 // Optional.
                 if (DivergingSignal != null) yield return DivergingSignal;
@@ -171,6 +181,10 @@ namespace Signals.Common
                 if (ExitSignal != null) yield return ExitSignal;
                 if (ExitPassengerSignal != null) yield return ExitPassengerSignal;
                 if (ExitMainlineSignal != null) yield return ExitMainlineSignal;
+
+                // Shunting.
+                if (ShuntingSignal != null) yield return ShuntingSignal;
+                if (MajorShuntingSignal != null) yield return MajorShuntingSignal;
                 if (JunctionShuntingSignal != null) yield return JunctionShuntingSignal;
                 if (SpacingSignal != null) yield return SpacingSignal;
                 if (TurntableSignal != null) yield return TurntableSignal;
@@ -188,7 +202,6 @@ namespace Signals.Common
                 // ===== Old =====
                 // Old main.
                 if (OldSignal != null) yield return OldSignal;
-                if (OldShuntingSignal != null) yield return OldShuntingSignal;
 
                 // Old optional.
                 if (OldDivergingSignal != null) yield return OldDivergingSignal;
@@ -198,6 +211,10 @@ namespace Signals.Common
                 if (OldExitSignal != null) yield return OldExitSignal;
                 if (OldExitPassengerSignal != null) yield return OldExitPassengerSignal;
                 if (OldExitMainlineSignal != null) yield return OldExitMainlineSignal;
+
+                // Old shunting.
+                if (OldShuntingSignal != null) yield return OldShuntingSignal;
+                if (OldMajorShuntingSignal != null) yield return OldMajorShuntingSignal;
                 if (OldJunctionShuntingSignal != null) yield return OldJunctionShuntingSignal;
                 if (OldSpacingSignal != null) yield return OldSpacingSignal;
                 if (OldTurntableSignal != null) yield return OldTurntableSignal;
@@ -299,9 +316,18 @@ namespace Signals.Common
 
         public SignalControllerDefinition? GetShuntingSignal(bool old)
         {
-            if (OldAndEnabled(old) && OldShuntingSignal != null) return OldShuntingSignal;
+            if (OldAndEnabled(old)) return OldShuntingSignal;
 
             return ShuntingSignal;
+        }
+
+        public SignalControllerDefinition? GetMajorShuntingSignal(bool old)
+        {
+            if (OldAndEnabled(old) && OldMajorShuntingSignal != null) return OldMajorShuntingSignal;
+
+            if (MajorShuntingSignal != null) return MajorShuntingSignal;
+
+            return GetShuntingSignal(old);
         }
 
         public SignalControllerDefinition? GetJunctionShuntingSignal(bool old)
@@ -340,7 +366,6 @@ namespace Signals.Common
 
         public bool HasAnyDistantSignal => DistantSignal != null || OldDistantSignal != null;
         public bool HasAnyRepeaterSignal => RepeaterSignal != null || OldRepeaterSignal != null;
-        public bool HasAnySpacingSignal => SpacingSignal != null || OldSpacingSignal != null;
         public bool HasAnyTurntableSignal => TurntableSignal != null || OldTurntableSignal != null;
         public bool HasAnyBufferStopSignal => BufferStopSignal != null || OldBufferStopSignal != null;
     }

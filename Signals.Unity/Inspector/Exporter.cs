@@ -201,7 +201,6 @@ namespace Signals.Unity.Inspector
 
             ValidateController(_pack.Signal, "Main Signal");
 
-            ValidateController(_pack.ShuntingSignal, "Shunting Signal");
             ValidateController(_pack.DivergingSignal, "Diverging Signal");
             ValidateController(_pack.LeftJunctionSignal, "Left Junction Signal");
             ValidateController(_pack.RightJunctionSignal, "Right Junction Signal");
@@ -209,6 +208,9 @@ namespace Signals.Unity.Inspector
             ValidateController(_pack.ExitSignal, "Exit Signal");
             ValidateController(_pack.ExitPassengerSignal, "Exit Passenger Signal");
             ValidateController(_pack.ExitMainlineSignal, "Exit Mainline Signal");
+
+            ValidateController(_pack.ShuntingSignal, "Shunting Signal");
+            ValidateController(_pack.MajorShuntingSignal, "Major Shunting Signal");
             ValidateController(_pack.JunctionShuntingSignal, "Junction Shunting Signal");
             ValidateController(_pack.SpacingSignal, "Spacing Signal");
             ValidateController(_pack.TurntableSignal, "Turntable Signal");
@@ -223,7 +225,6 @@ namespace Signals.Unity.Inspector
 
             ValidateController(_pack.OldSignal, "Old Main Signal");
 
-            ValidateController(_pack.OldShuntingSignal, "Old Shunting Signal");
             ValidateController(_pack.OldDivergingSignal, "Old Diverging Signal");
             ValidateController(_pack.OldLeftJunctionSignal, "Old Left Junction Signal");
             ValidateController(_pack.OldRightJunctionSignal, "Old Right Junction Signal");
@@ -231,6 +232,9 @@ namespace Signals.Unity.Inspector
             ValidateController(_pack.OldExitSignal, "Old Exit Signal");
             ValidateController(_pack.OldExitPassengerSignal, "Old Exit Passenger Signal");
             ValidateController(_pack.OldExitMainlineSignal, "Old Exit Mainline Signal");
+
+            ValidateController(_pack.OldShuntingSignal, "Old Shunting Signal");
+            ValidateController(_pack.OldMajorShuntingSignal, "Old Major Shunting Signal");
             ValidateController(_pack.OldJunctionShuntingSignal, "Old Junction Shunting Signal");
             ValidateController(_pack.OldSpacingSignal, "Old Spacing Signal");
             ValidateController(_pack.OldTurntableSignal, "Old Turntable Signal");

@@ -10,12 +10,12 @@ namespace Signals.Game.Generation
     {
         private struct PlacementHelper
         {
-            public SignalControllerDefinition Definition;
+            public SignalControllerDefinition? Definition;
             public PrefabType PrefabType;
             public SignalType SignalType;
             public bool Old;
 
-            public PlacementHelper(SignalControllerDefinition definition, PrefabType prefabType, bool old)
+            public PlacementHelper(SignalControllerDefinition? definition, PrefabType prefabType, bool old)
             {
                 Definition = definition;
                 PrefabType = prefabType;
@@ -55,7 +55,7 @@ namespace Signals.Game.Generation
         private JunctionSignalGroup? CreateGroup(SignalPack pack, Junction junction)
         {
             var branchDistance = BranchSignalDistance(junction, BranchPlacementDistance);
-            var branchTrackKey = new Dictionary<RailTrack, PlacementHelper?>();
+            var branchTrackKey = new Dictionary<RailTrack, PlacementHelper>();
             var inTrack = junction.inBranch.track;
             var anyYard = false;
             var old = IsOld(junction);
@@ -63,38 +63,29 @@ namespace Signals.Game.Generation
             var deadCheck = false;
             var stationEnd = false;
             var stationCheck = false;
-            var hasShunting = pack.GetShuntingSignal(old) != null;
-            var logicShuntingOnly = old ? pack.OldShuntingSignalsOnlyOnLogicTracks : pack.ShuntingSignalsOnlyOnLogicTracks;
 
             if (junction.IsFromDoubleTrackModStation())
             {
                 foreach (var branch in junction.outBranches)
                 {
                     var track = branch.track.outBranch.track;
-                    var result = ShuntingOrSpacing(track, false);
-
-                    if (result.HasValue)
-                    {
-                        branchTrackKey.Add(track, result.Value);
-                    }
+                    branchTrackKey.Add(track, ShuntingOrSpacing(track, false));
                 }
 
                 var jplc = ShuntingOrSpacing(inTrack, IsLogicYardTrack(inTrack));
-                if (jplc.HasValue)
-                {
-                    var ctrl = CreateSignalAtJunction(junction, jplc.Value.Definition, JunctionPlacementDistance);
-                    jplc.Value.Apply(ctrl);
-                    return new JunctionSignalGroup(junction, ctrl, CreateBranchSignals(junction, branchTrackKey, branchDistance));
-                }
 
-                return WithoutJunction();
+                if (jplc.Definition == null) return WithoutJunction();
+
+                var ctrl = CreateSignalAtJunction(junction, jplc.Definition, JunctionPlacementDistance);
+                jplc.Apply(ctrl);
+                return new JunctionSignalGroup(junction, ctrl, CreateBranchSignals(junction, branchTrackKey, branchDistance));
             }
 
             if (junction.IsFromDoubleTrackMod())
             {
                 foreach (var branch in junction.outBranches)
                 {
-                    branchTrackKey.Add(branch.track.outBranch.track, GetPlacement(branch.IsThroughTrack() ? PrefabType.Mainline : PrefabType.Diverging, old));
+                    branchTrackKey.Add(branch.track.outBranch.track, GetPlacement(branch.IsThroughTrack() ? PrefabType.Mainline : PrefabType.Diverging));
                 }
 
                 return new JunctionSignalGroup(junction, null, CreateBranchSignalsOppositeDouble(junction, branchTrackKey, branchDistance));
@@ -110,12 +101,12 @@ namespace Signals.Game.Generation
                 // If it's any of the logic yard tracks, it needs a signal for exit.
                 if (IsPaxTrack(track) && !GoesToDeadEndIn() && LeavesStationIn())
                 {
-                    branchTrackKey.Add(track, GetPlacement(PrefabType.ExitPax, old));
+                    branchTrackKey.Add(track, GetPlacement(PrefabType.ExitPax));
                     anyYard = true;
                 }
                 else if (IsExitTrack(track) && !GoesToDeadEndIn() && LeavesStationIn())
                 {
-                    branchTrackKey.Add(track, GetPlacement(PrefabType.Exit, old));
+                    branchTrackKey.Add(track, GetPlacement(PrefabType.Exit));
                     anyYard = true;
                 }
                 else if (IsLogicYardTrack(track))
@@ -124,16 +115,13 @@ namespace Signals.Game.Generation
                     {
                         branchTrackKey.Add(track, ShuntingOrSpacing(track, true));
                     }
-                    else if (hasShunting && logicShuntingOnly)
+                    else if (!GoesToDeadEndIn())
                     {
-                        if (!GoesToDeadEndIn())
-                        {
-                            branchTrackKey.Add(track, GetPlacement(PrefabType.Shunting, old));
-                        }
+                        branchTrackKey.Add(track, GetPlacement(PrefabType.ShuntingMajor));
                     }
-                    else if (hasShunting)
+                    else
                     {
-                        branchTrackKey.Add(track, GetPlacement(PrefabType.Shunting, old));
+                        branchTrackKey.Add(track, GetPlacement(PrefabType.Shunting));
                     }
 
                     anyYard = true;
@@ -145,16 +133,12 @@ namespace Signals.Game.Generation
                     // use a shunting signal.
                     if (IsShortDeadEnd(track) || ComesFromStationAndIsShort(track))
                     {
+                        branchTrackKey.Add(track, GetPlacement(PrefabType.Shunting));
                         anyYard = true;
-
-                        if (!logicShuntingOnly)
-                        {
-                            branchTrackKey.Add(track, GetPlacement(PrefabType.Shunting, old));
-                        }
                     }
                     else if (!IsMainlineCountedAsYard(track) && (IsMainlineCountedAsYard(inTrack) || inTrack.IsPartOfStation()))
                     {
-                        branchTrackKey.Add(track, GetPlacement(PrefabType.Entry, old));
+                        branchTrackKey.Add(track, GetPlacement(PrefabType.Entry));
                     }
                     else if (IsMainlineCountedAsYard(track))
                     {
@@ -166,7 +150,7 @@ namespace Signals.Game.Generation
                         // Only place the mainline signal if the in track isn't a short dead end either.
                         if (SignalsMod.Settings.PlaceSignalsInBranches && !IsShortDeadEnd(inTrack))
                         {
-                            branchTrackKey.Add(track, GetPlacement(branch.IsThroughTrack() ? PrefabType.Mainline : PrefabType.Diverging, old));
+                            branchTrackKey.Add(track, GetPlacement(branch.IsThroughTrack() ? PrefabType.Mainline : PrefabType.Diverging));
                         }
                     }
                 }
@@ -180,22 +164,12 @@ namespace Signals.Game.Generation
                     // If this track can be considered a mainline through the yard, then give it proper signals.
                     if (IsYardTrackMainline(branch) && !GoesToDeadEndIn() && LeavesStationIn())
                     {
-                        branchTrackKey.Add(track, GetPlacement(PrefabType.ExitMainline, old));
+                        branchTrackKey.Add(track, GetPlacement(PrefabType.ExitMainline));
                     }
                     else
                     {
                         // If it goes to a dead end just use a shunting signal as usual, else do the spacing thingy.
-                        if (GoesToDeadEndIn())
-                        {
-                            if (hasShunting && !logicShuntingOnly)
-                            {
-                                branchTrackKey.Add(track, GetPlacement(PrefabType.Shunting, old));
-                            }
-                        }
-                        else
-                        {
-                            branchTrackKey.Add(track, ShuntingOrSpacing(track, false));
-                        }
+                        branchTrackKey.Add(track, GoesToDeadEndIn() ? GetPlacement(PrefabType.Shunting) : ShuntingOrSpacing(track, false));
                     }
                 }
 
@@ -237,17 +211,17 @@ namespace Signals.Game.Generation
                 return WithoutJunction();
             }
 
-            PlacementHelper? junctionSignal;
+            PlacementHelper junctionSignal;
             var isMain = false;
 
             // For the junction side, do the same checks for inputs and outputs.
             if (IsPaxTrack(inTrack) && !GoesToDeadEndOut() && LeavesStationOut())
             {
-                junctionSignal = GetPlacement(PrefabType.ExitPax, old);
+                junctionSignal = GetPlacement(PrefabType.ExitPax);
             }
             else if (IsExitTrack(inTrack) && !GoesToDeadEndOut() && LeavesStationOut())
             {
-                junctionSignal = GetPlacement(PrefabType.Exit, old);
+                junctionSignal = GetPlacement(PrefabType.Exit);
             }
             else if (IsLogicYardTrack(inTrack) || inTrack.IsNonSign() || IsShortDeadEnd(inTrack))
             {
@@ -261,14 +235,7 @@ namespace Signals.Game.Generation
                 }
                 else
                 {
-                    if (hasShunting && (!logicShuntingOnly || IsLogicYardTrack(inTrack)))
-                    {
-                        junctionSignal = GetPlacement(PrefabType.Shunting, old);
-                    }
-                    else
-                    {
-                        junctionSignal = null;
-                    }
+                    junctionSignal = GetPlacement(IsLogicYardTrack(inTrack) ? PrefabType.ShuntingMajor : PrefabType.Shunting);
                 }
             }
             // If the track goes into any yard track...
@@ -284,7 +251,7 @@ namespace Signals.Game.Generation
                 else
                 {
                     // Otherwise it's an entrance into a station, so entry signal.
-                    junctionSignal = GetPlacement(PrefabType.Entry, old);
+                    junctionSignal = GetPlacement(PrefabType.Entry);
                     isMain = true;
                 }
             }
@@ -292,34 +259,33 @@ namespace Signals.Game.Generation
             {
                 if (!SignalsMod.Settings.PlaceSignalsOutsideStations) return WithoutJunction();
 
-                junctionSignal = junction.IsLeft() ? GetPlacement(PrefabType.JunctionLeft, old) : GetPlacement(PrefabType.JunctionRight, old);
+                junctionSignal = junction.IsLeft() ? GetPlacement(PrefabType.JunctionLeft) : GetPlacement(PrefabType.JunctionRight);
                 isMain = true;
             }
 
-            if (!junctionSignal.HasValue)
-            {
-                return WithoutJunction();
-            }
-
             // Upgrade shunting signal.
-            if (junctionSignal.Value.PrefabType == PrefabType.Shunting)
+            // Shunting major gets upgraded if it doesn't have a prefab.
+            if (junctionSignal.PrefabType == PrefabType.Shunting ||
+                (junctionSignal.PrefabType == PrefabType.ShuntingMajor && junctionSignal.Definition == null))
             {
-                junctionSignal = GetPlacement(PrefabType.ShuntingJunction, old);
+                junctionSignal = GetPlacement(PrefabType.ShuntingJunction);
             }
 
-            var junctionController = CreateSignalAtJunction(junction, junctionSignal.Value.Definition,
+            if (junctionSignal.Definition == null) return WithoutJunction();
+
+            var junctionController = CreateSignalAtJunction(junction, junctionSignal.Definition,
                 isMain ? LongJunctionPlacementDistance : JunctionPlacementDistance);
-            junctionSignal.Value.Apply(junctionController);
+            junctionSignal.Apply(junctionController);
 
             return new JunctionSignalGroup(junction, junctionController,
                 CreateBranchSignals(junction, branchTrackKey, branchDistance));
 
-            PlacementHelper GetPlacement(PrefabType prefabType, bool old)
+            PlacementHelper GetPlacement(PrefabType prefabType)
             {
                 return new PlacementHelper(GetForType(pack, prefabType, old), prefabType, old);
             }
 
-            PlacementHelper? ShuntingOrSpacing(RailTrack track, bool logicTrack)
+            PlacementHelper ShuntingOrSpacing(RailTrack track, bool logicTrack)
             {
                 var spacing = pack.GetSpacingSignal(old);
 
@@ -327,16 +293,13 @@ namespace Signals.Game.Generation
                 {
                     return new PlacementHelper(spacing, PrefabType.Spacing, old);
                 }
+                else if (logicTrack)
+                {
+                    return GetPlacement(PrefabType.ShuntingMajor);
+                }
                 else
                 {
-                    if (hasShunting && (logicTrack || !logicShuntingOnly))
-                    {
-                        return GetPlacement(PrefabType.Shunting, old);
-                    }
-                    else
-                    {
-                        return null;
-                    }
+                    return GetPlacement(PrefabType.Shunting);
                 }
             }
 
@@ -468,7 +431,7 @@ namespace Signals.Game.Generation
         }
 
         private static List<TrackSignalController> CreateBranchSignals(Junction junction,
-            Dictionary<RailTrack, PlacementHelper?> branchTrackKey, float distance)
+            Dictionary<RailTrack, PlacementHelper> branchTrackKey, float distance)
         {
             var signals = new List<TrackSignalController>();
 
@@ -476,7 +439,7 @@ namespace Signals.Game.Generation
             {
                 var track = branch.track.outBranch.track;
 
-                if (!branchTrackKey.TryGetValue(track, out var helper) || !helper.HasValue) continue;
+                if (!branchTrackKey.TryGetValue(track, out var helper) || helper.Definition == null) continue;
 
                 var kpSet = track.GetKinkedPointSet();
                 var tDirT = TrackUtils.TrackDirectionFromTrack(track, branch.track);
@@ -485,10 +448,10 @@ namespace Signals.Game.Generation
                 var point = kpSet.points[index];
 
                 var placement = new SignalPlacementInfo(track, tDirT, index, tSpan);
-                var signal = InstantiateFromDef(helper.Value.Definition, point.position, tDirT.IsOut() ? point.forward : -point.forward, false, track);
+                var signal = InstantiateFromDef(helper.Definition, point.position, tDirT.IsOut() ? point.forward : -point.forward, false, track);
                 var controller = new TrackSignalController(signal, branch.track, TrackDirection.In, placement);
 
-                helper.Value.Apply(controller);
+                helper.Apply(controller);
                 signals.Add(controller);
             }
 
@@ -496,7 +459,7 @@ namespace Signals.Game.Generation
         }
 
         private static List<TrackSignalController> CreateBranchSignalsOppositeDouble(Junction junction,
-            Dictionary<RailTrack, PlacementHelper?> branchTrackKey, float distance)
+            Dictionary<RailTrack, PlacementHelper> branchTrackKey, float distance)
         {
             var signals = new List<TrackSignalController>();
 
@@ -507,7 +470,7 @@ namespace Signals.Game.Generation
                 Junction.Branch? branch = junction.outBranches[i];
                 var track = branch.track.outBranch.track;
 
-                if (!branchTrackKey.TryGetValue(track, out var helper) || !helper.HasValue) continue;
+                if (!branchTrackKey.TryGetValue(track, out var helper) || helper.Definition == null) continue;
 
                 var kpSet = track.GetKinkedPointSet();
                 var tDirT = TrackUtils.TrackDirectionFromTrack(track, branch.track);
@@ -516,11 +479,11 @@ namespace Signals.Game.Generation
                 var point = kpSet.points[index];
 
                 var placement = new SignalPlacementInfo(track, tDirT, index, tSpan);
-                var signal = InstantiateFromDef(helper.Value.Definition, point.position, tDirT.IsOut() ? point.forward : -point.forward,
-                    helper.Value.Definition.Offset > 0 ? i == 0 : i != 0, track);
+                var signal = InstantiateFromDef(helper.Definition, point.position, tDirT.IsOut() ? point.forward : -point.forward,
+                    helper.Definition.Offset > 0 ? i == 0 : i != 0, track);
                 var controller = new TrackSignalController(signal, branch.track, TrackDirection.In, placement);
 
-                helper.Value.Apply(controller);
+                helper.Apply(controller);
                 signals.Add(controller);
             }
 

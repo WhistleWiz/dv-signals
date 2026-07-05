@@ -58,6 +58,7 @@ namespace Signals.Unity.Inspector
                         {
                             var displays = def.GetComponentsInChildren<DisplayBaseDefinition>().ToList();
                             var actuals = displays.OfType<MoveSwapDisplayDefinition>().Select(x => x.ActualDisplay).ToHashSet();
+                            actuals.UnionWith(displays.OfType<AspectConditionalDisplayDefinition>().Select(x => x.ActualDisplay));
                             displays.RemoveAll(actuals.Contains);
                             def.Displays = displays.ToArray();
                             AssetHelper.SaveAsset(target);

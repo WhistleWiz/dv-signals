@@ -16,6 +16,7 @@ namespace Signals.Game.Generation
         protected const string InputEnd = "I]";
         protected const string LoadingEnd = "L]";
         protected const string StorageEnd = "S]";
+        protected const string PaxStorageEnd = "SP]";
         protected const float JunctionPlacementDistance = 2.0f;
         protected const float LongJunctionPlacementDistance = 15.0f;
         protected const float BranchPlacementDistance = 17.5f;
@@ -80,7 +81,7 @@ namespace Signals.Game.Generation
 
         public static bool IsStorageTrack(RailTrack track)
         {
-            return track.name.EndsWith(StorageEnd);
+            return track.name.EndsWith(StorageEnd) || track.name.EndsWith(PaxStorageEnd);
         }
 
         public static bool IsLogicYardTrack(RailTrack track)
@@ -129,7 +130,7 @@ namespace Signals.Game.Generation
 
         #region Basic Creation Methods
 
-        public static SignalControllerDefinition GetForType(SignalPack pack, PrefabType prefabType, bool old) => prefabType switch
+        public static SignalControllerDefinition? GetForType(SignalPack pack, PrefabType prefabType, bool old) => prefabType switch
         {
             PrefabType.Diverging => pack.GetDivergingSignal(old),
             PrefabType.JunctionLeft => pack.GetLeftJunctionSignal(old),
@@ -137,8 +138,21 @@ namespace Signals.Game.Generation
             PrefabType.Entry => pack.GetEntrySignal(old),
             PrefabType.Exit => pack.GetExitSignal(old),
             PrefabType.ExitPax => pack.GetExitPassengerSignal(old),
-            PrefabType.Shunting => pack.GetShuntingSignal(old)!,
+            PrefabType.Shunting => pack.GetShuntingSignal(old),
+            PrefabType.ShuntingMajor => pack.GetMajorShuntingSignal(old),
             PrefabType.ShuntingJunction => pack.GetJunctionShuntingSignal(old)!,
+            PrefabType.ExitMainline => pack.GetExitMainlineSignal(old),
+            _ => pack.GetMainlineSignal(old),
+        };
+
+        public static SignalControllerDefinition GetForTypeMain(SignalPack pack, PrefabType prefabType, bool old) => prefabType switch
+        {
+            PrefabType.Diverging => pack.GetDivergingSignal(old),
+            PrefabType.JunctionLeft => pack.GetLeftJunctionSignal(old),
+            PrefabType.JunctionRight => pack.GetRightJunctionSignal(old),
+            PrefabType.Entry => pack.GetEntrySignal(old),
+            PrefabType.Exit => pack.GetExitSignal(old),
+            PrefabType.ExitPax => pack.GetExitPassengerSignal(old),
             PrefabType.ExitMainline => pack.GetExitMainlineSignal(old),
             _ => pack.GetMainlineSignal(old),
         };
@@ -299,7 +313,7 @@ namespace Signals.Game.Generation
 
             var info = remain.PlacementInfo.Value;
             var point = info.Track.GetKinkedPointSet().points[info.PointIndex];
-            var signal = InstantiateFromDef(GetForType(pack, prefabType, remain.IsOld),
+            var signal = InstantiateFromDef(GetForTypeMain(pack, prefabType, remain.IsOld),
                 point.position, remain.Definition.transform.forward, false, info.Track);
 
             TrackSignalController controller;

@@ -72,5 +72,17 @@ namespace Signals.Unity.Validation
                 result.AddFailure($"{name} - Mover is null");
             }
         }
+
+        private void ValidateAspectConditional(string name, AspectConditionalDisplayDefinition aspectConditional, Result result)
+        {
+            if (aspectConditional.ActualDisplay == null)
+            {
+                result.AddFailure($"{name} - Actual Display is null");
+            }
+            else
+            {
+                result.Merge(ValidateDisplay(aspectConditional.ActualDisplay, name));
+            }
+        }
     }
 }

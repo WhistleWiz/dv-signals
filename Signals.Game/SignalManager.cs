@@ -1,6 +1,5 @@
 ﻿using DV.Utils;
 using Signals.Common;
-using Signals.Common.Animation;
 using Signals.Game.Controllers;
 using Signals.Game.Generation;
 using Signals.Game.Railway;
@@ -189,10 +188,14 @@ namespace Signals.Game
 
             static void ProcessSignal(SignalDefinition signal)
             {
-                if (signal.TryGetComponent<SignalHover>(out var hover)) return;
-
-                hover = signal.gameObject.AddComponent<SignalHover>();
-                hover.gameObject.layer = LaserPointerTargetLayer;
+                if (!VRManager.IsVREnabled())
+                {
+                    if (!signal.TryGetComponent<SignalHover>(out var hover))
+                    {
+                        hover = signal.gameObject.AddComponent<SignalHover>();
+                        hover.gameObject.layer = LaserPointerTargetLayer;
+                    }
+                }
             }
         }
 
