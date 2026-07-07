@@ -66,11 +66,6 @@ namespace Signals.Unity.Validation
             {
                 result.Merge(ValidateDisplay(moveSwap.ActualDisplay, name));
             }
-
-            if (moveSwap.Mover == null)
-            {
-                result.AddFailure($"{name} - Mover is null");
-            }
         }
 
         private void ValidateAspectConditional(string name, AspectConditionalDisplayDefinition aspectConditional, Result result)

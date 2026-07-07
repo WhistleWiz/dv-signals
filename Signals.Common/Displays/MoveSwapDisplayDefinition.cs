@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Signals.Common.Animation;
+using UnityEngine;
 
 namespace Signals.Common.Displays
 {
@@ -6,6 +7,10 @@ namespace Signals.Common.Displays
     public class MoveSwapDisplayDefinition : DisplayBaseDefinition
     {
         public DisplayBaseDefinition ActualDisplay = null!;
-        public TransformMoverTarget Mover = null!;
+        public TransformMoverTarget? Mover;
+        public Animator? Animator;
+        public MoveSwapTextTrigger? AnimationTrigger;
+        public bool HoldOnInvalid = false;
+        public string InvalidText = string.Empty;
     }
 }
