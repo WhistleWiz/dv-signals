@@ -263,6 +263,11 @@ namespace Signals.Game.Controllers
 
             foreach (var item in Definition.TracksideObjects)
             {
+                if (item.AlignWithSleepers)
+                {
+                    kpSet = placement.Track.GetSleeperPointSet();
+                }
+
                 var span = Helpers.ClampD(placement.Span + (isOut ? -item.OffsetFromController : item.OffsetFromController), 0, kpSet.span);
                 var point = kpSet.points[kpSet.GetPointIndexForSpan(span)];
                 var offset = placement.OppositeSide ? -item.OffsetFromTrack : item.OffsetFromTrack;

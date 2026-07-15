@@ -251,11 +251,7 @@ namespace Signals.Game
             SignalsMod.Log("Started creating signals...");
             //OldAreaCalculator.DebugCreateDummies();
 
-            TrackUtils.ClearCache();
-            SpeedCalculator.ClearCache();
-            StationControllerCache.ClearCache();
-            BasicSignalController.ResetIdGeneration();
-            Signal.ResetIdGeneration();
+            ClearCaches();
             UpdateGauge();
 
             Placer ??= new RealisticSignalPlacer();
@@ -352,6 +348,16 @@ namespace Signals.Game
 
         SetDefault:
             TracksideObject.SetGaugeToDefault();
+        }
+
+        private static void ClearCaches()
+        {
+            TrackUtils.ClearCache();
+            SpeedCalculator.ClearCache();
+            StationControllerCache.ClearCache();
+            SleeperPointSets.ClearCache();
+            BasicSignalController.ResetIdGeneration();
+            Signal.ResetIdGeneration();
         }
 
         #endregion

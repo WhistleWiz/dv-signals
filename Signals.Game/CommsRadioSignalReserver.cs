@@ -35,7 +35,6 @@ namespace Signals.Game
         private AudioClip? ConfirmSound => Controller.crewVehicleControl.confirmSound;
         private AudioClip? SuccessSound => Controller.crewVehicleControl.spawnVehicleSound;
         private AudioClip? CancelSound => Controller.crewVehicleControl.cancelSound;
-
         public ButtonBehaviourType ButtonBehaviour { get; private set; }
 
         private void Awake()
@@ -54,6 +53,7 @@ namespace Signals.Game
         public void Disable()
         {
             _active = false;
+            HighlightSignal(_signal, false);
             StopDisplayCoro();
         }
 

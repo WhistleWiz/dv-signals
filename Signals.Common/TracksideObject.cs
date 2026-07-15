@@ -23,6 +23,7 @@ namespace Signals.Common
         [Tooltip("If true, the object will be placed at the rail's position")]
         public bool AtRail = false;
         public bool MirrorWhenOnOppositeSide = false;
+        public bool AlignWithSleepers = false;
 
         private void OnDrawGizmos()
         {

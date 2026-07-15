@@ -407,6 +407,29 @@ namespace Signals.Game
             Hover?.UpdateStateDisplay(this);
         }
 
+        public void AlignAllSwitches()
+        {
+            if (Block == null) return;
+
+            foreach (var track in Block.Tracks)
+            {
+                var junction = track.Track.inJunction;
+
+                if (track.IsJunctionTrack && track.Direction == TrackDirection.In &&
+                    junction.GetCurrentBranch().track != track.Track)
+                {
+                    byte branch;
+
+                    for (branch = 0; branch < junction.outBranches.Count; branch++)
+                    {
+                        if (junction.outBranches[branch].track == track.Track) break;
+                    }
+
+                    junction.Switch(Junction.SwitchMode.REGULAR, branch);
+                }
+            }
+        }
+
         public bool SetShuntingStatus(bool allowed)
         {
             if (ShuntingAllowed == allowed) return false;

@@ -11,21 +11,28 @@ namespace Signals.Game.Patches
         [HarmonyPatch("Awake"), HarmonyPostfix]
         private static void AwakePostfix(CommsRadioController __instance)
         {
-            // Create the object as inactive to prevent Awake() from running too early.
+            var reserver = CreateReserver(__instance);
+
+            // Force the new modes into the private list of modes...
+            var t = typeof(CommsRadioController);
+            var f = t.GetField("allModes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var l = ((List<ICommsRadioMode>)f.GetValue(__instance));
+            l.Add(reserver);
+
+            // Reactivate the GOs.
+            reserver.gameObject.SetActive(true);
+        }
+
+        private static CommsRadioSignalReserver CreateReserver(CommsRadioController controller)
+        {
             var go = new GameObject(nameof(CommsRadioSignalReserver));
-            go.transform.parent = __instance.transform;
+            go.transform.parent = controller.transform;
             go.transform.localPosition = Vector3.zero;
             go.SetActive(false);
             var mode = go.AddComponent<CommsRadioSignalReserver>();
-            mode.Controller = __instance;
+            mode.Controller = controller;
 
-            // Force the new mode into the private list of modes...
-            var t = typeof(CommsRadioController);
-            var f = t.GetField("allModes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            ((List<ICommsRadioMode>)f.GetValue(__instance)).Add(mode);
-
-            // Reactivate the GO with the new mode and refresh the controller.
-            go.SetActive(true);
+            return mode;
         }
     }
 }

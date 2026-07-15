@@ -57,10 +57,10 @@ namespace Signals.Game.Displays
         {
             _inPosition = true;
             DisplayText = _actualDisplay.DisplayText;
+            Signal.UpdateHoverDisplay();
 
             if (Definition.HoldOnInvalid && _actualDisplay.DisplayText == Definition.InvalidText) return;
 
-            Signal.UpdateHoverDisplay();
             Definition.Mover?.Unapply();
             Definition.Animator?.SetBool(AnimatorHash, false);
             _inPosition = false;

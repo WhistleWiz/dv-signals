@@ -116,6 +116,11 @@ namespace Signals.Game
             return track.LogicTrack().ID;
         }
 
+        public static EquiPointSet GetSleeperPointSet(this RailTrack track)
+        {
+            return SleeperPointSets.GetSleepers(track);
+        }
+
         #endregion
 
         #region Junctions
