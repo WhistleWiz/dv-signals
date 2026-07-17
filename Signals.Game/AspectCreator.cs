@@ -24,6 +24,7 @@ namespace Signals.Game
 
             Add((x, y) => new TrainDetectedAspect(x, y));
             Add((x, y) => new TrackReservedAspect(x, y));
+            //Add((x, y) => new SpecialRequireReservationAspect(x, y));
 
             Add((x, y) => new IsNextAspectAspect(x, y));
             Add((x, y) => new IsNextAspectAnyAspect(x, y));

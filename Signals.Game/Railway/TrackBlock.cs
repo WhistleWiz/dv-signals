@@ -23,6 +23,7 @@ namespace Signals.Game.Railway
         }
 
         private bool _tracksCanChange;
+        private bool _turntables;
         private bool _dirty;
         private string? _station;
         private string? _yard;
@@ -54,7 +55,7 @@ namespace Signals.Game.Railway
         public float Length { get; private set; }
         public bool IsDeadEnd { get; private set; }
         public bool IsSelfLoop { get; private set; }
-        public bool ShouldBeUpdated => _dirty || JunctionsChanged();
+        public bool ShouldBeUpdated => _dirty || JunctionsChanged() || TurntablesChanged();
         /// <summary>
         /// Station covered by this block. Empty if not available.
         /// </summary>
@@ -163,6 +164,15 @@ namespace Signals.Game.Railway
 
         private void CheckIfTracksCanChange()
         {
+            for (int i = 0; i < Tracks.Length; i++)
+            {
+                if (TurntableHelper.IsTurntableEnd(Tracks[i].Track))
+                {
+                    _turntables = true;
+                    break;
+                }
+            }
+
             // Skip the first track, because if it is a junction signal, it'll update the blocks when the switch is changed.
             for (int i = 1; i < Tracks.Length; i++)
             {
@@ -202,6 +212,19 @@ namespace Signals.Game.Railway
             foreach (var item in _junctionStates)
             {
                 if (item.Key.selectedBranch != item.Value) return true;
+            }
+
+            return false;
+        }
+
+        private bool TurntablesChanged()
+        {
+            if (!_turntables) return false;
+
+            if (Tracks.Any(x => TurntableHelper.IsDirty(x.Track)))
+            {
+                FlagAsDirty();
+                return true;
             }
 
             return false;

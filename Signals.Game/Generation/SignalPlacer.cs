@@ -522,9 +522,7 @@ namespace Signals.Game.Generation
         {
             if (!pack.HasAnyTurntableSignal) return;
 
-            var tracks = Object.FindObjectsOfType<TurntableRailTrack>();
-
-            foreach (var turntableTrack in tracks)
+            foreach (var turntableTrack in TurntableHelper.TurntableTracks)
             {
                 // Exclude CS museum turntable.
                 if (turntableTrack.uniqueID == "T-CS-1") continue;

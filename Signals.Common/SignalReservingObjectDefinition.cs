@@ -8,9 +8,11 @@ namespace Signals.Common
     {
         public float Time = 60.0f;
         public Transform Button = null!;
-        [Min(0)]
         public Vector3 PushedLocalOffset = Vector3.zero;
+        public bool DisableVRTouchUse = true;
         public List<Renderer> HighlightRenderers = new List<Renderer>();
+
+        [Space]
         [Tooltip("Plays when a reservation is successfuly made")]
         public AudioClip? SuccessSound;
         [Tooltip("Plays when a reservation cannot be made")]

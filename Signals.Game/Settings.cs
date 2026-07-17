@@ -25,6 +25,8 @@ namespace Signals.Game
         public string CustomPack = string.Empty;
         [Draw("Enable Special Matching Path", Tooltip = "Enables the optional matching path aspects in signals")]
         public bool SpecialPath = true;
+        //[Draw("Require Reserving Signals to Clear", Tooltip = "Signals must be reserved to clear")]
+        //public bool SpecialReservation = true;
         [Draw("Exit Signals on Storage Tracks", Tooltip = "Places exit signals on storage tracks rather than shunting signals")]
         public bool ExitSignalsOnStorageTracks = true;
         [Draw("Outside Station Placement", Tooltip = "Enables signals outside stations")]

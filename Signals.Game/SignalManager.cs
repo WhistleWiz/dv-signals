@@ -300,6 +300,7 @@ namespace Signals.Game
                 $"current total is {_controllerRegistry.Count} ({sw.Elapsed.TotalSeconds:F4}s)");
 
             sw.Restart();
+            TurntableHelper.PrepareTracks();
             Placer.CreateTurntableSignals(pack, _turntableSignals);
             sw.Stop();
             SignalsMod.Log($"Finished creating {_turntableSignals.Count} turntable signal(s), " +
@@ -353,6 +354,7 @@ namespace Signals.Game
         private static void ClearCaches()
         {
             TrackUtils.ClearCache();
+            TurntableHelper.ClearCache();
             SpeedCalculator.ClearCache();
             StationControllerCache.ClearCache();
             SleeperPointSets.ClearCache();
@@ -375,6 +377,7 @@ namespace Signals.Game
             {
                 // Check how many signals to update per frame so they all update roughly once a second.
                 int count = Mathf.CeilToInt(_controllerRegistry.Count * Time.fixedDeltaTime);
+                TurntableHelper.ReduceDirty();
 
                 // Loop through all registered signals.
                 for (int start = 0; start < _controllerRegistry.Count; start += count)

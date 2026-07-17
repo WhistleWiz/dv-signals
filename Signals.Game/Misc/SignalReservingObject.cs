@@ -22,6 +22,7 @@ namespace Signals.Game.Misc
             var button = source.Button.gameObject.AddComponent<Button>();
             button.colliderGameObjects = new[] { button.gameObject };
             button.pushLocalOffset = source.PushedLocalOffset;
+            button.disableTouchUse = source.DisableVRTouchUse;
             button.gameObject.layer = 13;
             button.createRigidbody = false;
             button.useJoints = false;
