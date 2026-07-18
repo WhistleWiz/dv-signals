@@ -8,7 +8,6 @@
 
 
 
-
 <!-- TABLE OF CONTENTS -->
 <details>
 	<summary>Table of Contents</summary>
@@ -22,36 +21,29 @@
 
 
 
-
 <!-- ABOUT -->
-
 ## About
 
 This mod adds signals to Derail Valley. Besides the default look, it is also a framework mod that allows you to create your own signals with custom logic.
 
 
 
-
 <!-- FUTURE PLANS -->
-
 ## Future Plans
 
-* Shunting signals
-
+* Full Multiplayer support
+* Remote Dispatch support
 
 
 
 <!-- KNOWN BUGS -->
-
 ## Known Bugs
 
-* Signals may spawn on top of tracks crossing switches
-
+* None ATM
 
 
 
 <!-- LICENSE -->
-
 ## License
 
 Source code is distributed under the MIT license.
