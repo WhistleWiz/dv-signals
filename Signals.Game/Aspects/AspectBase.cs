@@ -13,6 +13,7 @@ namespace Signals.Game.Aspects
     public interface IAspect : IHudDisplayable
     {
         public string Id { get; }
+        public bool DisallowPassing { get; }
         public bool MeetsConditions();
         public void Apply();
         public void Unapply();
@@ -37,6 +38,7 @@ namespace Signals.Game.Aspects
 
         public string Id => Definition.Id;
         public TrackBlock? Block => Signal.Block;
+        public bool DisallowPassing => Definition.DisallowPassing;
         public bool Active { get; private set; }
         public bool ShouldDisplay => true;
         public int DisplayOrder => Definition.HUDDisplayOrder;

@@ -470,12 +470,23 @@ namespace Signals.Game
         /// <returns><see langword="true"/> if the aspect changed, <see langword="false"/> otherwise.</returns>
         public bool ChangeToMostRestrictive(bool withOverride)
         {
-            if (withOverride)
+            int target = 0;
+
+            for (int i = target; i < AllAspects.Length; i++)
             {
-                SetAspectOverride(0);
+                if (AllAspects[i].DisallowPassing)
+                {
+                    target = i;
+                    break;
+                }
             }
 
-            var changed = ChangeAspect(0);
+            if (withOverride)
+            {
+                SetAspectOverride(target);
+            }
+
+            var changed = ChangeAspect(target);
             UpdateDisplays(changed);
             UpdateIndicators();
 
@@ -489,12 +500,23 @@ namespace Signals.Game
         /// <returns><see langword="true"/> if the aspect changed, <see langword="false"/> otherwise.</returns>
         public bool ChangeToLeastRestrictive(bool withOverride)
         {
-            if (withOverride)
+            int target = AllAspects.Length - 1;
+
+            for (int i = target; i >= 0; i--)
             {
-                SetAspectOverride(AllAspects.Length - 1);
+                if (!AllAspects[i].DisallowPassing)
+                {
+                    target = i;
+                    break;
+                }
             }
 
-            var changed = ChangeAspect(AllAspects.Length - 1);
+            if (withOverride)
+            {
+                SetAspectOverride(target);
+            }
+
+            var changed = ChangeAspect(target);
             UpdateDisplays(changed);
             UpdateIndicators();
 

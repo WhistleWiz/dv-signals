@@ -31,6 +31,7 @@ namespace Signals.Game
             Add((x, y) => new IsParentAspectAspect(x, y));
             Add((x, y) => new IsSelfAspectAnyAspect(x, y));
             Add((x, y) => new IsDeadEndAspect(x, y));
+            Add((x, y) => new IsLogicYardAspect(x, y));
 
             Add((x, y) => new JunctionBranchAspect(x, y));
             Add((x, y) => new MatchingBranchAspect(x, y));
