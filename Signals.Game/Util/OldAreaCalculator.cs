@@ -36,7 +36,7 @@ namespace Signals.Game.Util
             // East
             new Area(14.0f,  6.0f, 1.0f),
             // IME
-            new Area(13.0f, 15.0f, 3.0f),
+            new Area(13.0f, 15.0f, 2.7f),
             // CME
             new Area(15.0f, 11.5f, 1.5f),
             // FRC

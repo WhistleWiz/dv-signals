@@ -121,6 +121,7 @@ namespace Signals.Game
             {
                 PlayRadioSound(SuccessSound);
                 SetSuccessDisplay();
+                _signal.AlignAllSwitches();
             }
             else
             {
