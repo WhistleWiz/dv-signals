@@ -222,6 +222,15 @@ namespace Signals.Game.Railway
             return true;
         }
 
+        /// <returns>All signal IDs with reservations.</returns>
+        public static IEnumerable<int> GetSignalIdsWithReservations()
+        {
+            foreach (var item in s_signals)
+            {
+                yield return item.Id;
+            }
+        }
+
         private static System.Collections.IEnumerator ClearRoutine(Signal signal, float delay)
         {
             yield return WaitFor.Seconds(delay);

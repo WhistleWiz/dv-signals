@@ -1,9 +1,12 @@
 ﻿using DV.Utils;
 using Signals.Common;
+using Signals.Game.Aspects;
 using Signals.Game.Controllers;
+using Signals.Game.Displays;
 using Signals.Game.Generation;
 using Signals.Game.Railway;
 using Signals.Game.Util;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -74,6 +77,16 @@ namespace Signals.Game
 
         public List<BasicSignalController> AllControllers => _controllerRegistry;
 
+        #region Events
+
+        public static Action<Signal, IAspect?>? AspectChanged;
+        public static Action<Signal, IDisplay[]>? DisplaysUpdated;
+        public static Action<Signal, SignalOperationMode>? OperationModeChanged;
+        public static Action<Signal, int>? OverrideChanged;
+        public static Action<Signal, bool>? ShuntingAllowedChanged;
+
+        #endregion
+
         public new static string AllowAutoCreate()
         {
             return "[SignalManager]";
@@ -141,7 +154,7 @@ namespace Signals.Game
                     else
                     {
                         InstalledPacks.Add(mod.Info.Id, pack);
-                        SignalsMod.Log("Loaded signal pack.");
+                        SignalsMod.Log($"Loaded signal pack from {mod.Info.Id}");
                     }
 
                     ProcessControllers(pack);
@@ -324,6 +337,7 @@ namespace Signals.Game
             _updateCoro = StartCoroutine(UpdateRoutine());
 
             Camera.onPostRender += DebugRender;
+            MultiplayerIntegration.StartInstance(this);
         }
 
         private void UpdateGauge()

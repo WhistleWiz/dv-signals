@@ -11,7 +11,7 @@
 	<ItemGroup>
 		<Reference Include="Assembly-CSharp" />
 		<Reference Include="UnityModManager" />
-    <Reference Include="0Harmony" />
+		<Reference Include="0Harmony" />
 		<Reference Include="UnityEngine" />
 		<Reference Include="UnityEngine.AnimationModule" />
 		<Reference Include="UnityEngine.AssetBundleModule" />
@@ -19,8 +19,8 @@
 		<Reference Include="UnityEngine.CoreModule" />
 		<Reference Include="UnityEngine.IMGUIModule" />
 		<Reference Include="UnityEngine.PhysicsModule" />
-    <Reference Include="UnityEngine.UI" />
-    <Reference Include="Unity.TextMeshPro" />
+		<Reference Include="UnityEngine.UI" />
+		<Reference Include="Unity.TextMeshPro" />
 		<Reference Include="DV.CabControls.Spec" />
 		<Reference Include="DV.Common" />
 		<Reference Include="DV.Interaction" />
@@ -35,11 +35,11 @@
 		<Reference Include="DV.UI" />
 		<Reference Include="DV.Utils" />
 		<Reference Include="DV.WeatherSystem" />
-    <Reference Include="WorldStreamer" />
+		<Reference Include="WorldStreamer" />
 		<Reference Include="BezierCurves" />
-    <Reference Include="CommandTerminal" />
+		<Reference Include="CommandTerminal" />
 		<Reference Include="net.smkd.vector3d" />
-    <Reference Include="DVLangHelper.Data" />
-    <Reference Include="DVLangHelper.Runtime" />
+		<Reference Include="DVLangHelper.Data" />
+		<Reference Include="DVLangHelper.Runtime" />
 	</ItemGroup>
 </Project>

@@ -273,6 +273,7 @@ namespace Signals.Game
             Definition.Animator?.SetInteger(AnimatorHash, OffValue);
 
             AspectChanged?.Invoke(null);
+            SignalManager.AspectChanged?.Invoke(this, null);
             return true;
         }
 
@@ -319,6 +320,7 @@ namespace Signals.Game
             Definition.Animator?.SetInteger(AnimatorHash, newAspect);
             AspectChanged?.Invoke(aspect);
             Controller.AnyAspectChanged?.Invoke(this, aspect);
+            SignalManager.AspectChanged?.Invoke(this, aspect);
             return true;
         }
 
@@ -436,6 +438,7 @@ namespace Signals.Game
 
             _shuntingAllowed = allowed;
             ShuntingAllowedChanged?.Invoke(allowed);
+            SignalManager.ShuntingAllowedChanged?.Invoke(this, allowed);
             return true;
         }
 
@@ -448,6 +451,7 @@ namespace Signals.Game
 
             _manualOverride = index;
             OverrideChanged?.Invoke(index);
+            SignalManager.OverrideChanged?.Invoke(this, index);
             return true;
         }
 

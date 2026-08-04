@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Signals.Unity", "Signals.Un
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Signals.Game", "Signals.Game\Signals.Game.csproj", "{3D957146-0D0F-45EC-B7CA-983C40CB81AD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Signals.MP", "Signals.MP\Signals.MP.csproj", "{28BFD094-649E-93CE-CF6B-5310BD2F7337}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,8 +29,15 @@ Global
 		{3D957146-0D0F-45EC-B7CA-983C40CB81AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3D957146-0D0F-45EC-B7CA-983C40CB81AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3D957146-0D0F-45EC-B7CA-983C40CB81AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{28BFD094-649E-93CE-CF6B-5310BD2F7337}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{28BFD094-649E-93CE-CF6B-5310BD2F7337}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{28BFD094-649E-93CE-CF6B-5310BD2F7337}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{28BFD094-649E-93CE-CF6B-5310BD2F7337}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C555D96C-89D2-45DB-BB73-B519F18E25D3}
 	EndGlobalSection
 EndGlobal
