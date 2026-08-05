@@ -235,6 +235,7 @@ namespace Signals.Game.Railway
         {
             yield return WaitFor.Seconds(delay);
 
+            MultiplayerIntegration.SendReservationCancelRequest(signal);
             ClearFromSignal(signal);
             s_clearRoutines.Remove(signal);
         }

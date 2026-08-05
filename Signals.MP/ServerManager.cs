@@ -2,7 +2,6 @@
 using MPAPI.Interfaces;
 using Signals.Game;
 using Signals.Game.Railway;
-using System;
 using UnityEngine;
 
 namespace Signals.MP
@@ -38,17 +37,17 @@ namespace Signals.MP
             {
                 foreach (var signal in controller.AllSignals)
                 {
-                    if (signal.Operation != SignalOperationMode.Automatic)
+                    if (!signal.IsDefaultOperationState)
                     {
                         _server.SendPacketToPlayer(OperationModePacket.FromSignal(signal), player);
                     }
 
-                    if (signal.ManualOverrideAspect != 0)
+                    if (!signal.IsDefaultAspectOverride)
                     {
                         _server.SendPacketToPlayer(OverridePacket.FromSignal(signal), player);
                     }
 
-                    if (signal.ShuntingAllowed)
+                    if (!signal.IsDefaultShuntingAllowed)
                     {
                         _server.SendPacketToPlayer(ShuntingAllowedPacket.FromSignal(signal), player);
                     }

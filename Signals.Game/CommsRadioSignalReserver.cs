@@ -264,6 +264,8 @@ namespace Signals.Game
 
             _reservationLocked = false;
             _mpRequestId = -1;
+
+            StartDisplayCoro();
         }
 
         private void StartDisplayCoro()

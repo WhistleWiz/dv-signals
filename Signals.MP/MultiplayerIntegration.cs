@@ -19,10 +19,12 @@ namespace Signals.MP
         {
             if (MultiplayerAPI.Instance.IsHost)
             {
-                var server = manager.gameObject.AddComponent<ServerManager>();
+                manager.gameObject.AddComponent<ServerManager>();
             }
 
-            var client = manager.gameObject.AddComponent<ClientManager>();
+            manager.gameObject.AddComponent<ClientManager>();
+
+            Game.MultiplayerIntegration.SetHostStatus(MultiplayerAPI.Instance.IsHost);
         }
 
         public static void SendChangeOperationMode(int id, SignalOperationMode mode)

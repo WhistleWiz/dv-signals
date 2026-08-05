@@ -9,6 +9,7 @@ namespace Signals.Game
     public static class MultiplayerIntegration
     {
         private static bool s_findDone = false;
+        private static bool s_host = false;
 
         private static MethodInfo? s_init;
         private static MethodInfo? s_instance;
@@ -32,6 +33,7 @@ namespace Signals.Game
 
         public static bool MpPresent => MpMod != null;
         public static bool IsMpActive => MpMod != null && MpMod.Active;
+        public static bool IsHost => s_host;
 
         public static Action<int, bool>? OnReservationRequestReceived;
 
@@ -80,6 +82,11 @@ namespace Signals.Game
             if (!IsMpActive || s_cancelReserve == null) return;
 
             s_cancelReserve.Invoke(null, new object[] { signal.Id });
+        }
+
+        public static void SetHostStatus(bool isHost)
+        {
+            s_host = isHost;
         }
     }
 }

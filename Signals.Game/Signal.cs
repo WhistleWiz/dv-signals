@@ -70,7 +70,7 @@ namespace Signals.Game
         private SignalDefinitionToInstance? _comp;
         private SignalOperationMode _operation = SignalOperationMode.Automatic;
         private int _manualOverride = 0;
-        private bool _shuntingAllowed = false;
+        private bool _shuntingAllowed = true;
         private string? _internalName;
         private IndicatorHudWrapper[] _indicatorWrapper;
 
@@ -115,6 +115,11 @@ namespace Signals.Game
         public int ManualOverrideAspect => _manualOverride;
         public string InternalName => _internalName ??= GetInternalName();
         public string Name => string.IsNullOrEmpty(NameOverride) ? InternalName : NameOverride;
+
+        // Default state checks for MP.
+        public bool IsDefaultOperationState => Operation == SignalOperationMode.Automatic;
+        public bool IsDefaultAspectOverride => ManualOverrideAspect != 0;
+        public bool IsDefaultShuntingAllowed => ShuntingAllowed;
 
         // IHudDisplayable implementation.
         public bool ShouldDisplay => true;

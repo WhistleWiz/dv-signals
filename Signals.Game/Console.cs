@@ -7,6 +7,7 @@ namespace Signals.Game
     internal static class Console
     {
         private static void OutsideSessionError() => Debug.LogError("Cannot be used outside of a loaded session!");
+        private static void MpClientError() => Debug.LogError("Cannot be used by clients in multiplayer!");
 
         [RegisterCommand("Signals.RestrictAll",
             Help = "Sets all signals in the registry to its most restrictive aspect, and their operation mode to temporarily manual",
@@ -16,6 +17,12 @@ namespace Signals.Game
             if (!SignalManager.Running)
             {
                 OutsideSessionError();
+                return;
+            }
+
+            if (MultiplayerIntegration.IsMpActive && !MultiplayerIntegration.IsHost)
+            {
+                MpClientError();
                 return;
             }
 
@@ -37,6 +44,12 @@ namespace Signals.Game
             if (!SignalManager.Running)
             {
                 OutsideSessionError();
+                return;
+            }
+
+            if (MultiplayerIntegration.IsMpActive && !MultiplayerIntegration.IsHost)
+            {
+                MpClientError();
                 return;
             }
 
@@ -81,11 +94,18 @@ namespace Signals.Game
                 }
             }
 
-            TrackReserver.ReserveForSignal(signal);
-
-            if (duration > 0)
+            if (MultiplayerIntegration.IsMpActive)
             {
-                TrackReserver.ClearFromSignalDelayed(signal, duration);
+                MultiplayerIntegration.SendReservationRequest(signal, duration);
+            }
+            else
+            {
+                TrackReserver.ReserveForSignal(signal);
+
+                if (duration > 0)
+                {
+                    TrackReserver.ClearFromSignalDelayed(signal, duration);
+                }
             }
         }
 
@@ -98,6 +118,12 @@ namespace Signals.Game
             if (!SignalManager.Running)
             {
                 OutsideSessionError();
+                return;
+            }
+
+            if (MultiplayerIntegration.IsMpActive && !MultiplayerIntegration.IsHost)
+            {
+                MpClientError();
                 return;
             }
 
@@ -127,6 +153,7 @@ namespace Signals.Game
             else
             {
                 TrackReserver.ClearFromSignal(signal);
+                MultiplayerIntegration.SendReservationCancelRequest(signal);
             }
         }
     }
