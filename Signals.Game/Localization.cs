@@ -10,6 +10,7 @@ namespace Signals.Game
             public static string Begin => LocalizationAPI.L("dv_signals/radio/begin");
             public static string ReservationFailed => LocalizationAPI.L("dv_signals/radio/reservation_failed");
             public static string Reserve => LocalizationAPI.L("dv_signals/radio/reserve");
+            public static string Reserving => LocalizationAPI.L("dv_signals/radio/reserving");
 
             public static string ReservationSuccess(float duration)
             {

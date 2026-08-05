@@ -30,13 +30,16 @@ namespace Signals.MP
         public int SignalId { get; set; }
     }
 
-    public class ReservationRequestPacket : SignalPacket { }
+    public class ReservationRequestPacket : SignalPacket
+    {
+        public float Duration { get; set; }
+    }
 
     public class ReservationSuccessPacket : SignalPacket { }
 
     public class ReservationFailurePacket : SignalPacket { }
 
-    public class ReservationClearPacket : SignalPacket { }
+    public class ReservationCancelPacket : SignalPacket { }
 
     public class OperationModePacket : SignalPacket
     {

@@ -21,8 +21,10 @@ namespace Signals.Game
         private const float ReturnToMainScreenTime = 4.0f;
 
         private int _durationIndex;
+        private int _mpRequestId = -1;
         private bool _active = false;
         private bool _displayOverriden = false;
+        private bool _reservationLocked = false;
         private RaycastHit _hit;
         private Signal? _signal;
         private Coroutine? _resetDisplayCoro;
@@ -47,7 +49,15 @@ namespace Signals.Game
         {
             _active = false;
             ButtonBehaviour = ButtonBehaviourType.Regular;
-            SetStartingDisplay();
+
+            if (_reservationLocked)
+            {
+                SetReservingDisplay();
+            }
+            else
+            {
+                SetStartingDisplay();
+            }
         }
 
         public void Disable()
@@ -59,7 +69,7 @@ namespace Signals.Game
 
         public void OnUpdate()
         {
-            if (!_active) return;
+            if (!_active || _reservationLocked) return;
 
             if (Physics.Raycast(SignalOrigin.position, SignalOrigin.forward, out _hit, 1000f, Mask) &&
                 _hit.transform.TryGetComponent(out SignalDefinitionToInstance comp))
@@ -91,6 +101,12 @@ namespace Signals.Game
 
         public void OnUse()
         {
+            if (_reservationLocked)
+            {
+                PlayRadioSound(CancelSound);
+                return;
+            }
+
             if (!_active)
             {
                 _active = true;
@@ -117,6 +133,12 @@ namespace Signals.Game
                 return;
             }
 
+            if (MultiplayerIntegration.IsMpActive)
+            {
+                SendReservationRequest(_signal);
+                return;
+            }
+
             if (TrackReserver.ReserveForSignal(_signal, Duration))
             {
                 PlayRadioSound(SuccessSound);
@@ -134,6 +156,8 @@ namespace Signals.Game
 
         public bool ButtonACustomAction()
         {
+            if (_reservationLocked) return false;
+
             _durationIndex--;
 
             if (_durationIndex < 0)
@@ -147,6 +171,8 @@ namespace Signals.Game
 
         public bool ButtonBCustomAction()
         {
+            if (_reservationLocked) return false;
+
             _durationIndex = (_durationIndex + 1) % s_durations.Length;
 
             SetDisplayToSignal();
@@ -181,6 +207,12 @@ namespace Signals.Game
             Display.SetContentAndAction(Localization.Radio.ReservationSuccess(Duration));
         }
 
+        private void SetReservingDisplay()
+        {
+            StopDisplayCoro();
+            Display.SetContentAndAction(Localization.Radio.Reserving);
+        }
+
         private void SetDisplayToSignal()
         {
             if (_displayOverriden) return;
@@ -201,6 +233,37 @@ namespace Signals.Game
             {
                 CommsRadioController.PlayAudioFromRadio(clip, transform);
             }
+        }
+
+        private void SendReservationRequest(Signal signal)
+        {
+            _reservationLocked = true;
+            _mpRequestId = signal.Id;
+            SetReservingDisplay();
+
+            MultiplayerIntegration.OnReservationRequestReceived += ReservationRequestResult;
+            MultiplayerIntegration.SendReservationRequest(signal, Duration);
+        }
+
+        private void ReservationRequestResult(int id, bool result)
+        {
+            if (id != _mpRequestId) return;
+
+            MultiplayerIntegration.OnReservationRequestReceived -= ReservationRequestResult;
+
+            if (result)
+            {
+                PlayRadioSound(SuccessSound);
+                SetSuccessDisplay();
+            }
+            else
+            {
+                PlayRadioSound(CancelSound);
+                SetFailedDisplay();
+            }
+
+            _reservationLocked = false;
+            _mpRequestId = -1;
         }
 
         private void StartDisplayCoro()

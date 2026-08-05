@@ -13,7 +13,6 @@ namespace Signals.MP
             if (!MultiplayerAPI.IsMultiplayerLoaded) return;
 
             MultiplayerAPI.Instance.SetModCompatibility(modEntry.Info.Id, MPAPI.Types.MultiplayerCompatibility.All);
-            NetworkEventManager.Init();
         }
 
         public static void StartInstance(SignalManager manager)
@@ -52,6 +51,16 @@ namespace Signals.MP
             {
                 MultiplayerAPI.Client.SendPacketToServer(packet);
             }
+        }
+
+        public static void SendReservationRequest(int id, float duration)
+        {
+            MultiplayerAPI.Client.SendPacketToServer(new ReservationRequestPacket() { SignalId = id, Duration = duration} );
+        }
+
+        public static void SendReservationCancelRequest(int id)
+        {
+            MultiplayerAPI.Client.SendPacketToServer(new ReservationCancelPacket() { SignalId = id });
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using MPAPI;
 using MPAPI.Interfaces;
 using Signals.Game;
+using Signals.Game.Railway;
 using UnityEngine;
 
 namespace Signals.MP
@@ -23,6 +24,8 @@ namespace Signals.MP
             _client.RegisterPacket<OperationModePacket>(OperationModeReceived);
             _client.RegisterPacket<OverridePacket>(OverrideReceived);
             _client.RegisterPacket<ShuntingAllowedPacket>(ShuntingReceived);
+            _client.RegisterPacket<ReservationSuccessPacket>(ReservationSuccessReceived);
+            _client.RegisterPacket<ReservationFailurePacket>(ReservationFailureReceived);
 
             SignalManager.OperationModeChanged += ChangeOperationMode;
             SignalManager.OverrideChanged += ChangeOverride;
@@ -93,6 +96,23 @@ namespace Signals.MP
             signal.SetShuntingStatus(packet.Allowed);
         }
 
+        private void ReservationSuccessReceived(ReservationSuccessPacket packet)
+        {
+            if (GetSignal(packet, "reservation success", out var signal))
+            {
+                TrackReserver.ReserveForSignal(signal);
+                Game.MultiplayerIntegration.OnReservationRequestReceived?.Invoke(packet.SignalId, true);
+            }
+        }
+
+        private void ReservationFailureReceived(ReservationFailurePacket packet)
+        {
+            if (GetSignal(packet, "reservation failure", out var signal))
+            {
+                Game.MultiplayerIntegration.OnReservationRequestReceived?.Invoke(packet.SignalId, false);
+            }
+        }
+
         private static void ChangeOperationMode(Signal signal, SignalOperationMode mode)
         {
             MultiplayerIntegration.SendChangeOperationMode(signal.Id, mode);
@@ -112,6 +132,14 @@ namespace Signals.MP
         {
             SignalsMod.Error($"[Networking] Received {name} for signal {signalId}, but it does not exist!\n" +
                 $"Ensure both clients have the same signal pack active.");
+        }
+
+        private static bool GetSignal(SignalPacket packet, string name, out Signal signal)
+        {
+            if (SignalManager.Instance.TryGetSignal(packet.SignalId, out signal)) return true;
+
+            PrintError(name, packet.SignalId);
+            return false;
         }
     }
 }

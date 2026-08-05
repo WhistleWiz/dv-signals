@@ -1,16 +1,19 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using UnityModManagerNet;
 
 using static UnityModManagerNet.UnityModManager;
 
 namespace Signals.Game
 {
-    internal static class MultiplayerIntegration
+    public static class MultiplayerIntegration
     {
         private static bool s_findDone = false;
 
         private static MethodInfo? s_init;
         private static MethodInfo? s_instance;
+        private static MethodInfo? s_reserve;
+        private static MethodInfo? s_cancelReserve;
 
         private static ModEntry? s_mp;
         private static ModEntry? MpMod
@@ -28,8 +31,9 @@ namespace Signals.Game
         }
 
         public static bool MpPresent => MpMod != null;
-
         public static bool IsMpActive => MpMod != null && MpMod.Active;
+
+        public static Action<int, bool>? OnReservationRequestReceived;
 
         public static void Initialise(ModEntry modEntry)
         {
@@ -42,10 +46,12 @@ namespace Signals.Game
                 var type = assembly.GetType("Signals.MP.MultiplayerIntegration");
                 s_init = type.GetMethod("Initialise");
                 s_instance = type.GetMethod("StartInstance");
+                s_reserve = type.GetMethod("SendReservationRequest");
+                s_cancelReserve = type.GetMethod("SendReservationCancelRequest");
 
                 s_init.Invoke(null, new object[] { modEntry });
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 SignalsMod.Error($"Failure loading Multiplayer integration: {e.Message}");
                 s_mp = null;
@@ -60,6 +66,20 @@ namespace Signals.Game
             if (!IsMpActive || s_instance == null) return;
 
             s_instance.Invoke(null, new object[] { manager });
+        }
+
+        public static void SendReservationRequest(Signal signal, float duration)
+        {
+            if (!IsMpActive || s_reserve == null) return;
+
+            s_reserve.Invoke(null, new object[] { signal.Id, duration });
+        }
+
+        public static void SendReservationCancelRequest(Signal signal)
+        {
+            if (!IsMpActive || s_cancelReserve == null) return;
+
+            s_cancelReserve.Invoke(null, new object[] { signal.Id });
         }
     }
 }

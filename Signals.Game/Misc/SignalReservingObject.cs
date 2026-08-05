@@ -14,6 +14,7 @@ namespace Signals.Game.Misc
         private AudioClip? _success;
         private AudioClip? _failure;
         private AudioClip? _cancel;
+        private AudioClip? _mp;
 
         public static SignalReservingObject Create(SignalReservingObjectDefinition source, Signal signal)
         {
@@ -38,6 +39,7 @@ namespace Signals.Game.Misc
             comp._cancel = source.CancelSound;
             comp._button = source.Button;
             comp._signal = signal;
+            comp._mp = source.MpSound;
 
             Destroy(source);
             return comp;
@@ -53,6 +55,18 @@ namespace Signals.Game.Misc
 
         private void ButtonUsed()
         {
+            if (MultiplayerIntegration.IsMpActive)
+            {
+                MultiplayerBehaviour();
+            }
+            else
+            {
+                RegularBehaviour();
+            }
+        }
+
+        private void RegularBehaviour()
+        {
             if (TrackReserver.HasReservation(_signal))
             {
                 TrackReserver.ClearFromSignal(_signal);
@@ -61,6 +75,36 @@ namespace Signals.Game.Misc
             }
 
             if (TrackReserver.ReserveForSignal(_signal, _time))
+            {
+                _success?.Play(transform.position);
+            }
+            else
+            {
+                _failure?.Play(transform.position);
+            }
+        }
+
+        private void MultiplayerBehaviour()
+        {
+            if (TrackReserver.HasReservation(_signal))
+            {
+                MultiplayerIntegration.SendReservationCancelRequest(_signal);
+                _cancel?.Play(transform.position);
+                return;
+            }
+
+            _mp?.Play(transform.position);
+            MultiplayerIntegration.OnReservationRequestReceived += ReservationRequestResult;
+            MultiplayerIntegration.SendReservationRequest(_signal, _time);
+        }
+
+        private void ReservationRequestResult(int id, bool result)
+        {
+            if (id != _signal.Id) return;
+
+            MultiplayerIntegration.OnReservationRequestReceived -= ReservationRequestResult;
+
+            if (result)
             {
                 _success?.Play(transform.position);
             }

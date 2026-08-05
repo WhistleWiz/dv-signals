@@ -2,6 +2,7 @@
 using MPAPI.Interfaces;
 using Signals.Game;
 using Signals.Game.Railway;
+using System;
 using UnityEngine;
 
 namespace Signals.MP
@@ -16,6 +17,9 @@ namespace Signals.MP
 
             _server.OnPlayerConnected += PlayerConnected;
             _server.OnPlayerReady += PlayerReady;
+
+            _server.RegisterPacket<ReservationRequestPacket>(ReservationRequested);
+            _server.RegisterPacket<ReservationCancelPacket>(ReservationCancelled);
         }
 
         private void PlayerConnected(IPlayer player)
@@ -50,6 +54,47 @@ namespace Signals.MP
                     }
                 }
             }
+        }
+
+        private void ReservationRequested(ReservationRequestPacket packet, IPlayer sender)
+        {
+            if (!SignalManager.Instance.TryGetSignal(packet.SignalId, out var signal))
+            {
+                PrintError("request reservation", packet.SignalId);
+                return;
+            }
+
+            var result = packet.Duration > 0 ?
+                TrackReserver.ReserveForSignal(signal, packet.Duration) :
+                TrackReserver.ReserveForSignal(signal);
+
+            if (result)
+            {
+                _server.SendPacketToAll(new ReservationSuccessPacket() { SignalId = packet.SignalId });
+            }
+            else
+            {
+                _server.SendPacketToAll(new ReservationFailurePacket() { SignalId = packet.SignalId });
+            }
+        }
+
+        private void ReservationCancelled(ReservationCancelPacket packet, IPlayer sender)
+        {
+            if (!SignalManager.Instance.TryGetSignal(packet.SignalId, out var signal))
+            {
+                PrintError("cancel reservation", packet.SignalId);
+                return;
+            }
+
+            TrackReserver.ClearFromSignal(signal);
+
+            _server.SendPacketToAll(new ReservationCancelPacket() { SignalId = packet.SignalId });
+        }
+
+        private static void PrintError(string name, int signalId)
+        {
+            SignalsMod.Error($"[Networking] Received {name} for signal {signalId}, but it does not exist!\n" +
+                $"Ensure both clients have the same signal pack active.");
         }
     }
 }
