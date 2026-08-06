@@ -101,6 +101,7 @@ namespace Signals.Game
             else
             {
                 TrackReserver.ReserveForSignal(signal);
+                signal.AlignAllSwitches();
 
                 if (duration > 0)
                 {

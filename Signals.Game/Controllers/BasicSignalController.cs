@@ -501,7 +501,8 @@ namespace Signals.Game.Controllers
                 // Update the reservation.
                 if (TrackReserver.HasReservation(signal) && !TrackReserver.UpdateReservation(signal))
                 {
-                    SignalsMod.Warning($"Could not update reservation for signal {signal.Id}, old reservation is kept.");
+                    SignalsMod.Warning($"Could not update reservation for signal {signal.Id}, reservation cleared.");
+                    TrackReserver.ClearFromSignal(signal);
                 }
 
                 signal.UpdateAspect(forced);

@@ -69,6 +69,7 @@ namespace Signals.MP
 
             if (result)
             {
+                signal.AlignAllSwitches();
                 _server.SendPacketToAll(new ReservationSuccessPacket() { SignalId = packet.SignalId });
             }
             else
