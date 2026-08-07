@@ -84,6 +84,7 @@ namespace Signals.Game
         public static Action<Signal, SignalOperationMode>? OperationModeChanged;
         public static Action<Signal, int>? OverrideChanged;
         public static Action<Signal, bool>? ShuntingAllowedChanged;
+        public static Action<BasicSignalController, int?>? RequiredBranchChanged;
 
         #endregion
 

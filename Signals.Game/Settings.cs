@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using UnityEngine;
 using UnityModManagerNet;
 
@@ -48,10 +49,13 @@ namespace Signals.Game
         public bool PlaceSignalsInBranches => OutsideStationPlacement != OutsideStationPlacement.None;
         public bool PlaceSignalsOutsideStations => OutsideStationPlacement == OutsideStationPlacement.Full;
 
+        public static event Action<Settings>? OnSettingsSaved;
+
         public override void Save(UnityModManager.ModEntry modEntry)
         {
             RebuildKeys();
             Save(this, modEntry);
+            OnSettingsSaved?.Invoke(this);
         }
 
         public void OnChange() { }

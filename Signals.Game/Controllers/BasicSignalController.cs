@@ -526,6 +526,7 @@ namespace Signals.Game.Controllers
 
                 RequiredJunctionBranch = null;
                 RequiredBranchChanged?.Invoke(null);
+                SignalManager.RequiredBranchChanged?.Invoke(this, null);
                 return;
             }
 
@@ -533,6 +534,7 @@ namespace Signals.Game.Controllers
 
             RequiredJunctionBranch = index;
             RequiredBranchChanged?.Invoke(index);
+            SignalManager.RequiredBranchChanged?.Invoke(this, index);
         }
 
         public virtual Signal? GetActiveSignal()

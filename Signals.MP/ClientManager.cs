@@ -1,6 +1,7 @@
 ﻿using MPAPI;
 using MPAPI.Interfaces;
 using Signals.Game;
+using Signals.Game.Controllers;
 using Signals.Game.Railway;
 using UnityEngine;
 
@@ -24,12 +25,15 @@ namespace Signals.MP
             _client.RegisterPacket<OperationModePacket>(OperationModeReceived);
             _client.RegisterPacket<OverridePacket>(OverrideReceived);
             _client.RegisterPacket<ShuntingAllowedPacket>(ShuntingReceived);
+            _client.RegisterPacket<RequiredBranchPacket>(RequiredBranchReceived);
             _client.RegisterPacket<ReservationSuccessPacket>(ReservationSuccessReceived);
             _client.RegisterPacket<ReservationFailurePacket>(ReservationFailureReceived);
+            _client.RegisterPacket<ReservationCancelSuccessPacket>(ReservationCancelSuccessReceived);
 
             SignalManager.OperationModeChanged += ChangeOperationMode;
             SignalManager.OverrideChanged += ChangeOverride;
             SignalManager.ShuntingAllowedChanged += ChangeShunting;
+            SignalManager.RequiredBranchChanged += ChangeRequiredBranch;
         }
 
         private void OnDestroy()
@@ -37,6 +41,7 @@ namespace Signals.MP
             SignalManager.OperationModeChanged -= ChangeOperationMode;
             SignalManager.OverrideChanged -= ChangeOverride;
             SignalManager.ShuntingAllowedChanged -= ChangeShunting;
+            SignalManager.RequiredBranchChanged -= ChangeRequiredBranch;
 
             if (!_settingsSet) return;
 
@@ -65,42 +70,50 @@ namespace Signals.MP
 
         private void OperationModeReceived(OperationModePacket packet)
         {
-            if (!SignalManager.Instance.TryGetSignal(packet.SignalId, out var signal))
+            if (GetSignal(packet, "operation mode change", out var signal))
             {
-                PrintError("operation mode change", packet.SignalId);
-                return;
+                signal.ChangeOperationMode(packet.Mode);
             }
-
-            signal.ChangeOperationMode(packet.Mode);
         }
 
         private void OverrideReceived(OverridePacket packet)
         {
-            if (!SignalManager.Instance.TryGetSignal(packet.SignalId, out var signal))
+            if (GetSignal(packet, "aspect override change", out var signal))
             {
-                PrintError("aspect override change", packet.SignalId);
-                return;
+                signal.SetAspectOverride(packet.Aspect);
             }
-
-            signal.SetAspectOverride(packet.Aspect);
         }
 
         private void ShuntingReceived(ShuntingAllowedPacket packet)
         {
-            if (!SignalManager.Instance.TryGetSignal(packet.SignalId, out var signal))
+            if (GetSignal(packet, "shunting allowed change", out var signal))
             {
-                PrintError("shunting allowed change", packet.SignalId);
+                signal.SetShuntingStatus(packet.Allowed);
+            }
+        }
+
+        private void RequiredBranchReceived(RequiredBranchPacket packet)
+        {
+            if (!SignalManager.Instance.TryGetController(packet.ControllerId, out var controller))
+            {
+                SignalsMod.Error($"[Networking] Received required branch change for controller {packet.ControllerId}, but it does not exist!\n" +
+                    $"Ensure both clients have the same signal pack active.");
                 return;
             }
 
-            signal.SetShuntingStatus(packet.Allowed);
+            controller.ChangeRequiredBranch(packet.Branch);
         }
 
         private void ReservationSuccessReceived(ReservationSuccessPacket packet)
         {
             if (GetSignal(packet, "reservation success", out var signal))
             {
-                TrackReserver.ReserveForSignal(signal);
+                // Host already reserved, but packet must still be received to call the functions.
+                if (!MultiplayerAPI.Instance.IsHost)
+                {
+                    TrackReserver.ReserveForSignal(signal);
+                }
+
                 Game.MultiplayerIntegration.OnReservationRequestReceived?.Invoke(packet.SignalId, true);
             }
         }
@@ -110,6 +123,14 @@ namespace Signals.MP
             if (GetSignal(packet, "reservation failure", out var signal))
             {
                 Game.MultiplayerIntegration.OnReservationRequestReceived?.Invoke(packet.SignalId, false);
+            }
+        }
+
+        private void ReservationCancelSuccessReceived(ReservationCancelSuccessPacket packet)
+        {
+            if (GetSignal(packet, "reservation cancel success", out var signal) && !MultiplayerAPI.Instance.IsHost)
+            {
+                TrackReserver.ClearFromSignal(signal);
             }
         }
 
@@ -126,6 +147,11 @@ namespace Signals.MP
         private static void ChangeShunting(Signal signal, bool allowed)
         {
             MultiplayerIntegration.SendChangeShunting(signal.Id, allowed);
+        }
+
+        private static void ChangeRequiredBranch(BasicSignalController controller, int? index)
+        {
+            MultiplayerIntegration.SendChangeRequiredBranch(controller.Id, index ?? -1);
         }
 
         private static void PrintError(string name, int signalId)

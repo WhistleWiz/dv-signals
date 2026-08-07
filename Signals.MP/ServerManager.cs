@@ -18,7 +18,7 @@ namespace Signals.MP
             _server.OnPlayerReady += PlayerReady;
 
             _server.RegisterPacket<ReservationRequestPacket>(ReservationRequested);
-            _server.RegisterPacket<ReservationCancelPacket>(ReservationCancelled);
+            _server.RegisterPacket<ReservationCancelRequestPacket>(ReservationCancelled);
         }
 
         private void PlayerConnected(IPlayer player)
@@ -57,6 +57,8 @@ namespace Signals.MP
 
         private void ReservationRequested(ReservationRequestPacket packet, IPlayer sender)
         {
+            SignalsMod.Log($"[MP] Received reservation request for signal {packet.SignalId}");
+
             if (!SignalManager.Instance.TryGetSignal(packet.SignalId, out var signal))
             {
                 PrintError("request reservation", packet.SignalId);
@@ -71,15 +73,19 @@ namespace Signals.MP
             {
                 signal.AlignAllSwitches();
                 _server.SendPacketToAll(new ReservationSuccessPacket() { SignalId = packet.SignalId });
+                SignalsMod.Log($"[MP] Sent reservation success for signal {packet.SignalId}");
             }
             else
             {
                 _server.SendPacketToAll(new ReservationFailurePacket() { SignalId = packet.SignalId });
+                SignalsMod.Log($"[MP] Sent reservation failure for signal {packet.SignalId}");
             }
         }
 
-        private void ReservationCancelled(ReservationCancelPacket packet, IPlayer sender)
+        private void ReservationCancelled(ReservationCancelRequestPacket packet, IPlayer sender)
         {
+            SignalsMod.Log($"[MP] Received reservation cancellation for signal {packet.SignalId}");
+
             if (!SignalManager.Instance.TryGetSignal(packet.SignalId, out var signal))
             {
                 PrintError("cancel reservation", packet.SignalId);
@@ -88,7 +94,7 @@ namespace Signals.MP
 
             TrackReserver.ClearFromSignal(signal);
 
-            _server.SendPacketToAll(new ReservationCancelPacket() { SignalId = packet.SignalId });
+            _server.SendPacketToAll(new ReservationCancelSuccessPacket() { SignalId = packet.SignalId });
         }
 
         private static void PrintError(string name, int signalId)

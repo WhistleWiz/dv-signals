@@ -1,5 +1,6 @@
 ﻿using MPAPI.Interfaces.Packets;
 using Signals.Game;
+using Signals.Game.Controllers;
 
 namespace Signals.MP
 {
@@ -39,7 +40,9 @@ namespace Signals.MP
 
     public class ReservationFailurePacket : SignalPacket { }
 
-    public class ReservationCancelPacket : SignalPacket { }
+    public class ReservationCancelRequestPacket : SignalPacket { }
+
+    public class ReservationCancelSuccessPacket : SignalPacket { }
 
     public class OperationModePacket : SignalPacket
     {
@@ -83,6 +86,26 @@ namespace Signals.MP
         public static ShuntingAllowedPacket FromSignal(Signal signal)
         {
             return new ShuntingAllowedPacket() { SignalId = signal.Id, Allowed = signal.ShuntingAllowed };
+        }
+    }
+
+    public class RequiredBranchPacket : IPacket
+    {
+        public int ControllerId { get; set; }
+        public int Branch { get; set; }
+
+        public void Apply(BasicSignalController controller)
+        {
+            controller.ChangeRequiredBranch(Branch);
+        }
+
+        public static RequiredBranchPacket FromController(BasicSignalController controller)
+        {
+            return new RequiredBranchPacket()
+            {
+                ControllerId = controller.Id,
+                Branch = controller.RequiredJunctionBranch ?? -1
+            };
         }
     }
 }

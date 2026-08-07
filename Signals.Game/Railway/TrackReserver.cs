@@ -33,7 +33,10 @@ namespace Signals.Game.Railway
         {
             foreach (var routine in s_clearRoutines)
             {
-                CoroutineManager.Instance.Stop(routine.Value);
+                if (routine.Value != null)
+                {
+                    CoroutineManager.Instance.Stop(routine.Value);
+                }
             }
 
             s_reservations.Clear();
