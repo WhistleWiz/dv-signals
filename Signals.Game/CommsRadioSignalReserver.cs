@@ -241,7 +241,7 @@ namespace Signals.Game
             _mpRequestId = signal.Id;
             SetReservingDisplay();
 
-            MultiplayerIntegration.OnReservationRequestReceived += ReservationRequestResult;
+            MultiplayerIntegration.OnReservationRequestResultReceived += ReservationRequestResult;
             MultiplayerIntegration.SendReservationRequest(signal, Duration);
         }
 
@@ -249,7 +249,7 @@ namespace Signals.Game
         {
             if (id != _mpRequestId) return;
 
-            MultiplayerIntegration.OnReservationRequestReceived -= ReservationRequestResult;
+            MultiplayerIntegration.OnReservationRequestResultReceived -= ReservationRequestResult;
 
             if (result)
             {

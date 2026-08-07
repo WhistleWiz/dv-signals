@@ -86,23 +86,25 @@ namespace Signals.Game.Misc
 
         private void MultiplayerBehaviour()
         {
+            _mp?.Play(transform.position);
+
             if (TrackReserver.HasReservation(_signal))
             {
+                MultiplayerIntegration.OnReservationClearResultReceived += ReservationClearResult;
                 MultiplayerIntegration.SendReservationCancelRequest(_signal);
-                _cancel?.Play(transform.position);
-                return;
             }
-
-            _mp?.Play(transform.position);
-            MultiplayerIntegration.OnReservationRequestReceived += ReservationRequestResult;
-            MultiplayerIntegration.SendReservationRequest(_signal, _time);
+            else
+            {
+                MultiplayerIntegration.OnReservationRequestResultReceived += ReservationRequestResult;
+                MultiplayerIntegration.SendReservationRequest(_signal, _time);
+            }
         }
 
         private void ReservationRequestResult(int id, bool result)
         {
             if (id != _signal.Id) return;
 
-            MultiplayerIntegration.OnReservationRequestReceived -= ReservationRequestResult;
+            MultiplayerIntegration.OnReservationRequestResultReceived -= ReservationRequestResult;
 
             if (result)
             {
@@ -112,6 +114,14 @@ namespace Signals.Game.Misc
             {
                 _failure?.Play(transform.position);
             }
+        }
+
+        private void ReservationClearResult(int id)
+        {
+            if (id != _signal.Id) return;
+
+            MultiplayerIntegration.OnReservationClearResultReceived -= ReservationClearResult;
+            _cancel?.Play(transform.position);
         }
     }
 }

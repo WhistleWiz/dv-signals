@@ -35,7 +35,8 @@ namespace Signals.Game
         public static bool IsMpActive => MpMod != null && MpMod.Active;
         public static bool IsHost => s_host;
 
-        public static Action<int, bool>? OnReservationRequestReceived;
+        public static Action<int, bool>? OnReservationRequestResultReceived;
+        public static Action<int>? OnReservationClearResultReceived;
 
         public static void Initialise(ModEntry modEntry)
         {

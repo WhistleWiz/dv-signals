@@ -114,7 +114,7 @@ namespace Signals.MP
                     TrackReserver.ReserveForSignal(signal);
                 }
 
-                Game.MultiplayerIntegration.OnReservationRequestReceived?.Invoke(packet.SignalId, true);
+                Game.MultiplayerIntegration.OnReservationRequestResultReceived?.Invoke(packet.SignalId, true);
             }
         }
 
@@ -122,15 +122,20 @@ namespace Signals.MP
         {
             if (GetSignal(packet, "reservation failure", out var signal))
             {
-                Game.MultiplayerIntegration.OnReservationRequestReceived?.Invoke(packet.SignalId, false);
+                Game.MultiplayerIntegration.OnReservationRequestResultReceived?.Invoke(packet.SignalId, false);
             }
         }
 
         private void ReservationCancelSuccessReceived(ReservationCancelSuccessPacket packet)
         {
-            if (GetSignal(packet, "reservation cancel success", out var signal) && !MultiplayerAPI.Instance.IsHost)
+            if (GetSignal(packet, "reservation cancel success", out var signal))
             {
-                TrackReserver.ClearFromSignal(signal);
+                if (!MultiplayerAPI.Instance.IsHost)
+                {
+                    TrackReserver.ClearFromSignal(signal);
+                }
+
+                Game.MultiplayerIntegration.OnReservationClearResultReceived?.Invoke(packet.SignalId);
             }
         }
 
