@@ -17,6 +17,12 @@ namespace Signals.MP
         private bool _exit;
         private OutsideStationPlacement _placement;
 
+        // Locks to prevent resending when receiving.
+        private bool _lockOp = false;
+        private bool _lockOv = false;
+        private bool _lockSh = false;
+        private bool _lockRb = false;
+
         private void Awake()
         {
             _client = MultiplayerAPI.Client;
@@ -72,7 +78,9 @@ namespace Signals.MP
         {
             if (GetSignal(packet, "operation mode change", out var signal))
             {
+                _lockOp = true;
                 signal.ChangeOperationMode(packet.Mode);
+                _lockOp = false;
             }
         }
 
@@ -80,7 +88,9 @@ namespace Signals.MP
         {
             if (GetSignal(packet, "aspect override change", out var signal))
             {
+                _lockOv = true;
                 signal.SetAspectOverride(packet.Aspect);
+                _lockOv = false;
             }
         }
 
@@ -88,7 +98,9 @@ namespace Signals.MP
         {
             if (GetSignal(packet, "shunting allowed change", out var signal))
             {
+                _lockSh = true;
                 signal.SetShuntingStatus(packet.Allowed);
+                _lockSh = false;
             }
         }
 
@@ -101,7 +113,9 @@ namespace Signals.MP
                 return;
             }
 
+            _lockRb = true;
             controller.ChangeRequiredBranch(packet.Branch);
+            _lockRb = false;
         }
 
         private void ReservationSuccessReceived(ReservationSuccessPacket packet)
@@ -139,24 +153,32 @@ namespace Signals.MP
             }
         }
 
-        private static void ChangeOperationMode(Signal signal, SignalOperationMode mode)
+        private void ChangeOperationMode(Signal signal, SignalOperationMode mode)
         {
-            MultiplayerIntegration.SendChangeOperationMode(signal.Id, mode);
+            if (_lockOp) return;
+
+            _client.SendPacketToServer(OperationModePacket.FromSignal(signal));
         }
 
-        private static void ChangeOverride(Signal signal, int aspect)
+        private void ChangeOverride(Signal signal, int aspect)
         {
-            MultiplayerIntegration.SendChangeOverride(signal.Id, aspect);
+            if (_lockOv) return;
+
+            _client.SendPacketToServer(OverridePacket.FromSignal(signal));
         }
 
-        private static void ChangeShunting(Signal signal, bool allowed)
+        private void ChangeShunting(Signal signal, bool allowed)
         {
-            MultiplayerIntegration.SendChangeShunting(signal.Id, allowed);
+            if (_lockSh) return;
+
+            _client.SendPacketToServer(ShuntingAllowedPacket.FromSignal(signal));
         }
 
-        private static void ChangeRequiredBranch(BasicSignalController controller, int? index)
+        private void ChangeRequiredBranch(BasicSignalController controller, int? index)
         {
-            MultiplayerIntegration.SendChangeRequiredBranch(controller.Id, index ?? -1);
+            if (_lockRb) return;
+
+            _client.SendPacketToServer(RequiredBranchPacket.FromController(controller));
         }
 
         private static void PrintError(string name, int signalId)

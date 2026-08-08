@@ -174,6 +174,7 @@ namespace Signals.Game.Controllers
                 return _internalName;
             }
         }
+        public bool IsDefaultRequiredBranch => RequiredJunctionBranch == null;
 
         #endregion
 

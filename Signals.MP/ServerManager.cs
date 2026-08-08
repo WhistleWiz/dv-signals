@@ -1,5 +1,6 @@
 ﻿using MPAPI;
 using MPAPI.Interfaces;
+using MPAPI.Interfaces.Packets;
 using Signals.Game;
 using Signals.Game.Railway;
 using UnityEngine;
@@ -17,6 +18,10 @@ namespace Signals.MP
             _server.OnPlayerConnected += PlayerConnected;
             _server.OnPlayerReady += PlayerReady;
 
+            _server.RegisterPacket<OperationModePacket>(ResendPacketToAllExceptSender);
+            _server.RegisterPacket<OverridePacket>(ResendPacketToAllExceptSender);
+            _server.RegisterPacket<ShuntingAllowedPacket>(ResendPacketToAllExceptSender);
+            _server.RegisterPacket<RequiredBranchPacket>(ResendPacketToAllExceptSender);
             _server.RegisterPacket<ReservationRequestPacket>(ReservationRequested);
             _server.RegisterPacket<ReservationCancelRequestPacket>(ReservationCancelled);
         }
@@ -35,6 +40,11 @@ namespace Signals.MP
 
             foreach (var controller in SignalManager.Instance.AllControllers)
             {
+                if (!controller.IsDefaultRequiredBranch)
+                {
+                    _server.SendPacketToPlayer(RequiredBranchPacket.FromController(controller), player);
+                }
+
                 foreach (var signal in controller.AllSignals)
                 {
                     if (!signal.IsDefaultOperationState)
@@ -53,6 +63,12 @@ namespace Signals.MP
                     }
                 }
             }
+        }
+
+        private void ResendPacketToAllExceptSender<T>(T packet, IPlayer sender)
+            where T : class, IPacket, new()
+        {
+            _server.SendPacketToAll(packet, excludePlayer: sender);
         }
 
         private void ReservationRequested(ReservationRequestPacket packet, IPlayer sender)
