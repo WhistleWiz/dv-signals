@@ -9,13 +9,14 @@ namespace Signals.MP
 {
     internal class ClientManager : MonoBehaviour
     {
-        private IClient _client = null!;
+        // Original settings stored.
+        private static bool s_settingsSet = false;
+        private static string s_pack = string.Empty;
+        private static bool s_path;
+        private static bool s_exit;
+        private static OutsideStationPlacement s_placement;
 
-        private bool _settingsSet = false;
-        private string _pack = string.Empty;
-        private bool _path;
-        private bool _exit;
-        private OutsideStationPlacement _placement;
+        private IClient _client = null!;
 
         // Locks to prevent resending when receiving.
         private bool _lockOp = false;
@@ -27,7 +28,6 @@ namespace Signals.MP
         {
             _client = MultiplayerAPI.Client;
 
-            _client.RegisterPacket<SettingsPacket>(SettingReceived);
             _client.RegisterPacket<OperationModePacket>(OperationModeReceived);
             _client.RegisterPacket<OverridePacket>(OverrideReceived);
             _client.RegisterPacket<ShuntingAllowedPacket>(ShuntingReceived);
@@ -40,6 +40,10 @@ namespace Signals.MP
             SignalManager.OverrideChanged += ChangeOverride;
             SignalManager.ShuntingAllowedChanged += ChangeShunting;
             SignalManager.RequiredBranchChanged += ChangeRequiredBranch;
+
+            Game.MultiplayerIntegration.SetRunningStatus(true);
+
+            SignalsMod.LogMP("Client loaded successfuly");
         }
 
         private void OnDestroy()
@@ -49,29 +53,15 @@ namespace Signals.MP
             SignalManager.ShuntingAllowedChanged -= ChangeShunting;
             SignalManager.RequiredBranchChanged -= ChangeRequiredBranch;
 
-            if (!_settingsSet) return;
+            Game.MultiplayerIntegration.SetRunningStatus(false);
+
+            if (!s_settingsSet) return;
 
             var settings = SignalsMod.Settings;
-            settings.CustomPack = _pack;
-            settings.SpecialPath = _path;
-            settings.ExitSignalsOnStorageTracks = _exit;
-            settings.OutsideStationPlacement = _placement;
-        }
-
-        private void SettingReceived(SettingsPacket packet)
-        {
-            var settings = SignalsMod.Settings;
-
-            _pack = settings.CustomPack;
-            _path = settings.SpecialPath;
-            _exit = settings.ExitSignalsOnStorageTracks;
-            _placement = settings.OutsideStationPlacement;
-            _settingsSet = true;
-
-            settings.CustomPack = packet.CustomPack;
-            settings.SpecialPath = packet.SpecialPath;
-            settings.ExitSignalsOnStorageTracks = packet.ExitSignalsOnStorageTracks;
-            settings.OutsideStationPlacement = packet.OutsideStationPlacement;
+            settings.CustomPack = s_pack;
+            settings.SpecialPath = s_path;
+            settings.ExitSignalsOnStorageTracks = s_exit;
+            settings.OutsideStationPlacement = s_placement;
         }
 
         private void OperationModeReceived(OperationModePacket packet)
@@ -183,7 +173,7 @@ namespace Signals.MP
 
         private static void PrintError(string name, int signalId)
         {
-            SignalsMod.Error($"[Networking] Received {name} for signal {signalId}, but it does not exist!\n" +
+            SignalsMod.ErrorMP($"Received {name} for signal {signalId}, but it does not exist!\n" +
                 $"Ensure both clients have the same signal pack active.");
         }
 
@@ -193,6 +183,29 @@ namespace Signals.MP
 
             PrintError(name, packet.SignalId);
             return false;
+        }
+
+        public static void Initialise(IClient client)
+        {
+            client.RegisterPacket<SettingsPacket>(SettingReceived);
+        }
+
+        private static void SettingReceived(SettingsPacket packet)
+        {
+            SignalsMod.LogMP("Received settings from server");
+
+            var settings = SignalsMod.Settings;
+
+            s_pack = settings.CustomPack;
+            s_path = settings.SpecialPath;
+            s_exit = settings.ExitSignalsOnStorageTracks;
+            s_placement = settings.OutsideStationPlacement;
+            s_settingsSet = true;
+
+            settings.CustomPack = packet.CustomPack;
+            settings.SpecialPath = packet.SpecialPath;
+            settings.ExitSignalsOnStorageTracks = packet.ExitSignalsOnStorageTracks;
+            settings.OutsideStationPlacement = packet.OutsideStationPlacement;
         }
     }
 }

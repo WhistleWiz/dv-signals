@@ -8,32 +8,12 @@ namespace Signals.MP
 {
     public static class MultiplayerIntegration
     {
-        //private static Dictionary<string, MultiplayerCompatibility> s_originalCompat = new Dictionary<string, MultiplayerCompatibility>();
-
         public static void Initialise(ModEntry modEntry)
         {
             if (!MultiplayerAPI.IsMultiplayerLoaded) return;
 
-            //Settings.OnSettingsSaved += UpdateModCompatibility;
+            MultiplayerAPI.ClientStarted += ClientManager.Initialise;
         }
-
-        //private static void UpdateModCompatibility(Settings settings)
-        //{
-        //    foreach (var item in s_originalCompat)
-        //    {
-        //        MultiplayerAPI.Instance.SetModCompatibility(item.Key, item.Value);
-        //    }
-
-        //    if (string.IsNullOrEmpty(settings.CustomPack)) return;
-
-        //    if (!s_originalCompat.ContainsKey(settings.CustomPack))
-        //    {
-        //        //s_originalCompat.Add(settings.CustomPack, MultiplayerAPI.Instance.GetModCompatibility(settings.CustomPack));
-        //        s_originalCompat.Add(settings.CustomPack, MultiplayerCompatibility.Client);
-        //    }
-
-        //    MultiplayerAPI.Instance.SetModCompatibility(settings.CustomPack, MultiplayerCompatibility.All);
-        //}
 
         public static void StartInstance(SignalManager manager)
         {
@@ -56,13 +36,13 @@ namespace Signals.MP
 
         public static void SendReservationRequest(int id, float duration)
         {
-            SignalsMod.Log($"[MP] Sending reservation request to server for signal {id}");
+            SignalsMod.LogMP($"Sending reservation request to server for signal {id}");
             MultiplayerAPI.Client.SendPacketToServer(new ReservationRequestPacket() { SignalId = id, Duration = duration} );
         }
 
         public static void SendReservationCancelRequest(int id)
         {
-            SignalsMod.Log($"[MP] Sending reservation cancellation request to server for signal {id}");
+            SignalsMod.LogMP($"Sending reservation cancellation request to server for signal {id}");
             MultiplayerAPI.Client.SendPacketToServer(new ReservationCancelRequestPacket() { SignalId = id });
         }
     }

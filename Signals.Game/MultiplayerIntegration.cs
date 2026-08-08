@@ -10,6 +10,7 @@ namespace Signals.Game
     {
         private static bool s_findDone = false;
         private static bool s_host = false;
+        private static bool s_running = false;
 
         private static MethodInfo? s_init;
         private static MethodInfo? s_instance;
@@ -33,6 +34,7 @@ namespace Signals.Game
 
         public static bool MpPresent => MpMod != null;
         public static bool IsMpActive => MpMod != null && MpMod.Active;
+        public static bool IsMpRunning => IsMpActive && s_running;
         public static bool IsHost => s_host;
 
         public static Action<int, bool>? OnReservationRequestResultReceived;
@@ -88,6 +90,11 @@ namespace Signals.Game
         public static void SetHostStatus(bool isHost)
         {
             s_host = isHost;
+        }
+
+        public static void SetRunningStatus(bool isRunning)
+        {
+            s_running = isRunning;
         }
     }
 }

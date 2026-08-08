@@ -49,23 +49,19 @@ namespace Signals.Game
         public bool PlaceSignalsInBranches => OutsideStationPlacement != OutsideStationPlacement.None;
         public bool PlaceSignalsOutsideStations => OutsideStationPlacement == OutsideStationPlacement.Full;
 
-        public static event Action<Settings>? OnSettingsSaved;
-
         public override void Save(UnityModManager.ModEntry modEntry)
         {
             RebuildKeys();
             Save(this, modEntry);
-            OnSettingsSaved?.Invoke(this);
         }
 
         public void OnChange() { }
 
         public void DrawGUI(UnityModManager.ModEntry modEntry)
         {
-            if (_widthLabel == null)
-            {
-                _widthLabel = GUILayout.Width(GUI.skin.label.CalcSize(_packText).x + 10);
-            }
+            GUI.enabled = !MultiplayerIntegration.IsMpRunning;
+
+            _widthLabel ??= GUILayout.Width(GUI.skin.label.CalcSize(_packText).x + 10);
 
             GUILayout.BeginHorizontal(_widthFull);
             GUILayout.Label(_packText, _widthLabel);
@@ -85,6 +81,8 @@ namespace Signals.Game
             GUILayout.EndHorizontal();
 
             this.Draw(modEntry);
+
+            GUI.enabled = true;
         }
 
         private void RebuildKeys()
@@ -95,7 +93,7 @@ namespace Signals.Game
 
             if (!string.IsNullOrEmpty(CustomPack))
             {
-                _index = System.Array.IndexOf(_keys, CustomPack);
+                _index = Array.IndexOf(_keys, CustomPack);
 
                 if (_index < 0)
                 {

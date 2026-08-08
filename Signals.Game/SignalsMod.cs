@@ -101,5 +101,15 @@ namespace Signals.Game
         {
             Instance.Logger.Error(message);
         }
+
+        public static void LogMP(string message)
+        {
+            Instance.Logger.Log($"[Multiplayer] {message}");
+        }
+
+        public static void ErrorMP(string message)
+        {
+            Instance.Logger.Error($"[Multiplayer] {message}");
+        }
     }
 }

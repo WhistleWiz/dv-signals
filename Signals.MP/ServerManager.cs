@@ -24,6 +24,8 @@ namespace Signals.MP
             _server.RegisterPacket<RequiredBranchPacket>(ResendPacketToAllExceptSender);
             _server.RegisterPacket<ReservationRequestPacket>(ReservationRequested);
             _server.RegisterPacket<ReservationCancelRequestPacket>(ReservationCancelled);
+
+            SignalsMod.LogMP("Server loaded successfuly");
         }
 
         private void PlayerConnected(IPlayer player)
@@ -33,6 +35,8 @@ namespace Signals.MP
 
         private void PlayerReady(IPlayer player)
         {
+            SignalsMod.LogMP("Starting state syncing");
+
             foreach (var id in TrackReserver.GetSignalIdsWithReservations())
             {
                 _server.SendPacketToPlayer(new ReservationSuccessPacket() { SignalId = id }, player);
@@ -73,7 +77,7 @@ namespace Signals.MP
 
         private void ReservationRequested(ReservationRequestPacket packet, IPlayer sender)
         {
-            SignalsMod.Log($"[MP] Received reservation request for signal {packet.SignalId}");
+            SignalsMod.LogMP($"Received reservation request for signal {packet.SignalId}");
 
             if (!SignalManager.Instance.TryGetSignal(packet.SignalId, out var signal))
             {
@@ -89,18 +93,18 @@ namespace Signals.MP
             {
                 signal.AlignAllSwitches();
                 _server.SendPacketToAll(new ReservationSuccessPacket() { SignalId = packet.SignalId });
-                SignalsMod.Log($"[MP] Sent reservation success for signal {packet.SignalId}");
+                SignalsMod.LogMP($"Sent reservation success for signal {packet.SignalId}");
             }
             else
             {
                 _server.SendPacketToAll(new ReservationFailurePacket() { SignalId = packet.SignalId });
-                SignalsMod.Log($"[MP] Sent reservation failure for signal {packet.SignalId}");
+                SignalsMod.LogMP($"Sent reservation failure for signal {packet.SignalId}");
             }
         }
 
         private void ReservationCancelled(ReservationCancelRequestPacket packet, IPlayer sender)
         {
-            SignalsMod.Log($"[MP] Received reservation cancellation for signal {packet.SignalId}");
+            SignalsMod.LogMP($"Received reservation cancellation for signal {packet.SignalId}");
 
             if (!SignalManager.Instance.TryGetSignal(packet.SignalId, out var signal))
             {
@@ -115,7 +119,7 @@ namespace Signals.MP
 
         private static void PrintError(string name, int signalId)
         {
-            SignalsMod.Error($"[Networking] Received {name} for signal {signalId}, but it does not exist!\n" +
+            SignalsMod.ErrorMP($"Received {name} for signal {signalId}, but it does not exist!\n" +
                 $"Ensure both clients have the same signal pack active.");
         }
     }
