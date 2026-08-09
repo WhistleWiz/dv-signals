@@ -403,6 +403,43 @@ namespace Signals.Game.Controllers
             return true;
         }
 
+        public void FlipSide()
+        {
+            if (!PlacementInfo.HasValue)
+            {
+                SignalsMod.Error("Cannot flip controller without placement info");
+                return;
+            }
+
+            if (!SafetyCheck())
+            {
+                SignalsMod.Error("Definition does not exist, cannot flip controller");
+                return;
+            }
+
+            var p = PlacementInfo.Value;
+            var t = Definition.transform;
+
+            t.position += t.right * Definition.Offset * (p.OppositeSide ? 2 : -2);
+
+            if (p.OppositeSide && Definition.FlipPrefabWhenInOppositeSide)
+            {
+                var scale = t.localScale;
+                t.localScale = new Vector3(-scale.x, scale.y, scale.z);
+
+                foreach (var item in Definition.UnflipTransforms)
+                {
+                    scale = item.localScale;
+                    item.localScale = new Vector3(-scale.x, scale.y, scale.z);
+                }
+            }
+
+            p.OppositeSide = !p.OppositeSide;
+            PlacementInfo = p;
+
+            UpdateTracksideObjects();
+        }
+
         /// <summary>
         /// Checks if it is safe to continue using this signal instance.
         /// </summary>

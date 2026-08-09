@@ -598,11 +598,11 @@ namespace Signals.Game
         /// Tries to find a <see cref="BasicSignalController"/> with the specified ID.
         /// </summary>
         /// <param name="id">The ID of the controller.</param>
-        /// <param name="signal">The signal, if found. Otherwise <see langword="null"/>.</param>
+        /// <param name="controller">The controller, if found. Otherwise <see langword="null"/>.</param>
         /// <returns><see langword="true"/> if a controller was found, otherwise <see langword="false"/>.</returns>
-        public bool TryGetController(int id, out BasicSignalController signal)
+        public bool TryGetController(int id, out BasicSignalController controller)
         {
-            return _idToController.TryGetValue(id, out signal);
+            return _idToController.TryGetValue(id, out controller);
         }
 
         /// <summary>
