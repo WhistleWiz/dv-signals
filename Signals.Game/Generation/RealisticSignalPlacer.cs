@@ -161,7 +161,7 @@ namespace Signals.Game.Generation
                     else
                     {
                         // Only place the mainline signal if the in track isn't a short dead end either.
-                        if (SignalsMod.Settings.PlaceSignalsInBranches && !IsShortDeadEnd(inTrack))
+                        if (/*SignalsMod.Settings.PlaceSignalsInBranches &&*/ !IsShortDeadEnd(inTrack))
                         {
                             branchTrackKey.Add(track, GetPlacement(branch.IsThroughTrack() ? PrefabType.Mainline : PrefabType.Diverging));
                         }
@@ -270,7 +270,7 @@ namespace Signals.Game.Generation
             }
             else
             {
-                if (!SignalsMod.Settings.PlaceSignalsOutsideStations) return WithoutJunction();
+                /*if (!SignalsMod.Settings.PlaceSignalsOutsideStations) return WithoutJunction();*/
 
                 junctionSignal = junction.IsLeft() ? GetPlacement(PrefabType.JunctionLeft) : GetPlacement(PrefabType.JunctionRight);
                 isMain = true;

@@ -13,8 +13,8 @@ namespace Signals.MP
         private static bool s_settingsSet = false;
         private static string s_pack = string.Empty;
         private static bool s_path;
+        private static bool s_rsrv;
         private static bool s_exit;
-        private static OutsideStationPlacement s_placement;
 
         private IClient _client = null!;
 
@@ -60,8 +60,8 @@ namespace Signals.MP
             var settings = SignalsMod.Settings;
             settings.CustomPack = s_pack;
             settings.SpecialPath = s_path;
+            settings.SpecialReservation = s_rsrv;
             settings.ExitSignalsOnStorageTracks = s_exit;
-            settings.OutsideStationPlacement = s_placement;
         }
 
         private void OperationModeReceived(OperationModePacket packet)
@@ -205,14 +205,14 @@ namespace Signals.MP
 
             s_pack = settings.CustomPack;
             s_path = settings.SpecialPath;
+            s_rsrv = settings.SpecialReservation;
             s_exit = settings.ExitSignalsOnStorageTracks;
-            s_placement = settings.OutsideStationPlacement;
             s_settingsSet = true;
 
             settings.CustomPack = packet.CustomPack;
             settings.SpecialPath = packet.SpecialPath;
+            settings.SpecialReservation = packet.SpecialReservation;
             settings.ExitSignalsOnStorageTracks = packet.ExitSignalsOnStorageTracks;
-            settings.OutsideStationPlacement = packet.OutsideStationPlacement;
         }
     }
 }

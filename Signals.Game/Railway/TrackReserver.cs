@@ -128,10 +128,7 @@ namespace Signals.Game.Railway
         /// <para>If the signal has already reserved tracks, they will be cleared before being reserved again.</para></remarks>
         public static bool ReserveForSignal(Signal signal)
         {
-            if (signal.Block == null)
-            {
-                signal.Controller.UpdateBlocks();
-            }
+            signal.Controller.UpdateBlocks();
 
             if (signal.Block == null || IsSignalReservedByAnother(signal))
             {
@@ -198,25 +195,9 @@ namespace Signals.Game.Railway
         /// <param name="signal">The signal reserving the tracks.</param>
         public static void ClearFromSignal(Signal signal)
         {
-            var reservedBy = s_reservations.Where(x => x.Value == signal).ToList();
-
-            // If there's no reserved tracks, don't even invoke the event.
-            if (!reservedBy.Any()) return;
-
-            foreach (var item in reservedBy)
-            {
-                s_reservations.Remove(item.Key);
-            }
-
-            if (s_clearRoutines.TryGetValue(signal, out var coroutine))
-            {
-                CoroutineManager.Instance.Stop(coroutine);
-                s_clearRoutines.Remove(signal);
-            }
-
-            s_times.Remove(signal);
-            s_signals.Remove(signal);
-            ReservationCleared?.Invoke(signal);
+            // Wrap since the clear routine flag is for internal use only,
+            // to avoid remaking the routine when updating a reservation.
+            ClearFromSignalInternal(signal, true);
         }
 
         /// <summary>
@@ -237,7 +218,7 @@ namespace Signals.Game.Railway
 
         public static bool UpdateReservation(Signal signal)
         {
-            if (!HasReservation(signal, out var time) || signal.Block == null) return false;
+            if (!HasReservation(signal) || signal.Block == null) return false;
 
             foreach (var track in signal.Block.AllTracks)
             {
@@ -248,17 +229,9 @@ namespace Signals.Game.Railway
                 }
             }
 
-            ClearFromSignal(signal);
-
-            // Maintain time from the previous reservation.
-            if (time > 0)
-            {
-                ReserveForSignal(signal, time);
-            }
-            else
-            {
-                ReserveForSignal(signal);
-            }
+            // Maintain time from the previous reservation by not clearing the routine.
+            ClearFromSignalInternal(signal, false);
+            ReserveForSignal(signal);
 
             return true;
         }
@@ -272,23 +245,49 @@ namespace Signals.Game.Railway
             }
         }
 
+        private static void ClearFromSignalInternal(Signal signal, bool clearRoutine)
+        {
+            var reservedBy = s_reservations.Where(x => x.Value == signal).ToList();
+
+            // If there's no reserved tracks, don't even invoke the event.
+            if (!reservedBy.Any()) return;
+
+            foreach (var item in reservedBy)
+            {
+                s_reservations.Remove(item.Key);
+            }
+
+            if (clearRoutine)
+            {
+                if (s_clearRoutines.TryGetValue(signal, out var coroutine))
+                {
+                    CoroutineManager.Instance.Stop(coroutine);
+                    s_clearRoutines.Remove(signal);
+                }
+
+                s_times.Remove(signal);
+            }
+
+            s_signals.Remove(signal);
+            ReservationCleared?.Invoke(signal);
+        }
+
         private static System.Collections.IEnumerator ClearRoutine(Signal signal, float delay)
         {
             while (delay > 0)
             {
-                Debug.Log($"{signal.Id}: {delay:F2}");
                 s_times[signal] = delay -= Time.deltaTime;
                 yield return null;
             }
-
-            Debug.Log($"{signal.Id} (out): {delay:F2}");
 
             if (MultiplayerIntegration.IsHost)
             {
                 MultiplayerIntegration.SendReservationCancelRequest(signal);
             }
-
-            ClearFromSignal(signal);
+            else
+            {
+                ClearFromSignal(signal);
+            }
         }
     }
 }

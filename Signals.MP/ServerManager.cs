@@ -25,7 +25,14 @@ namespace Signals.MP
             _server.RegisterPacket<ReservationRequestPacket>(ReservationRequested);
             _server.RegisterPacket<ReservationCancelRequestPacket>(ReservationCancelled);
 
+            Settings.SettingsChanged += ResendSettings;
+
             SignalsMod.LogMP("Server loaded successfuly");
+        }
+
+        private void OnDestroy()
+        {
+            Settings.SettingsChanged -= ResendSettings;
         }
 
         private void PlayerConnected(IPlayer player)
@@ -73,6 +80,11 @@ namespace Signals.MP
             where T : class, IPacket, new()
         {
             _server.SendPacketToAll(packet, excludePlayer: sender);
+        }
+
+        private void ResendSettings(Settings settings)
+        {
+            _server.SendPacketToAll(SettingsPacket.Get(), excludeSelf: true);
         }
 
         private void ReservationRequested(ReservationRequestPacket packet, IPlayer sender)

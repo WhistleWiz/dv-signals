@@ -26,12 +26,12 @@ namespace Signals.Game
         public string CustomPack = string.Empty;
         [Draw("Enable Special Matching Path", Tooltip = "Enables the optional matching path aspects in signals")]
         public bool SpecialPath = true;
-        //[Draw("Require Reserving Signals to Clear", Tooltip = "Signals must be reserved to clear")]
-        //public bool SpecialReservation = true;
+        [Draw("Require Reserving Signals to Clear", Tooltip = "Signals must be reserved to clear")]
+        public bool SpecialReservation = false;
         [Draw("Exit Signals on Storage Tracks", Tooltip = "Places exit signals on storage tracks rather than shunting signals")]
         public bool ExitSignalsOnStorageTracks = true;
-        [Draw("Outside Station Placement", Tooltip = "Enables signals outside stations")]
-        public OutsideStationPlacement OutsideStationPlacement = OutsideStationPlacement.Full;
+        //[Draw("Outside Station Placement", Tooltip = "Enables signals outside stations")]
+        //public OutsideStationPlacement OutsideStationPlacement = OutsideStationPlacement.Full;
         //[Draw("Flip Speed Sign Side", Tooltip = "Speed signs are placed on the left side of the track rather than the right")]
         //public bool FlipSpeedSigns = false;
         [Draw("Use Verbose Logging", Tooltip = "Logs a lot more information\n" +
@@ -46,8 +46,10 @@ namespace Signals.Game
         private GUILayoutOption _widthFull = GUILayout.MaxWidth(350);
         private GUILayoutOption? _widthLabel;
 
-        public bool PlaceSignalsInBranches => OutsideStationPlacement != OutsideStationPlacement.None;
-        public bool PlaceSignalsOutsideStations => OutsideStationPlacement == OutsideStationPlacement.Full;
+        //public bool PlaceSignalsInBranches => OutsideStationPlacement != OutsideStationPlacement.None;
+        //public bool PlaceSignalsOutsideStations => OutsideStationPlacement == OutsideStationPlacement.Full;
+
+        public static event Action<Settings>? SettingsChanged;
 
         public override void Save(UnityModManager.ModEntry modEntry)
         {
@@ -55,10 +57,14 @@ namespace Signals.Game
             Save(this, modEntry);
         }
 
-        public void OnChange() { }
+        public void OnChange()
+        {
+            SettingsChanged?.Invoke(this);
+        }
 
         public void DrawGUI(UnityModManager.ModEntry modEntry)
         {
+            // Don't allow changing the pack after starting a multiplayer session.
             GUI.enabled = !MultiplayerIntegration.IsMpRunning;
 
             _widthLabel ??= GUILayout.Width(GUI.skin.label.CalcSize(_packText).x + 10);
@@ -79,6 +85,9 @@ namespace Signals.Game
             }
 
             GUILayout.EndHorizontal();
+
+            // The rest of the settings can be changed by the host only.
+            GUI.enabled = !MultiplayerIntegration.IsMpRunning || MultiplayerIntegration.IsHost;
 
             this.Draw(modEntry);
 

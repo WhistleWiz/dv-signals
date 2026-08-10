@@ -9,8 +9,8 @@ namespace Signals.MP
         // API says no but eh.
         public string CustomPack { get; set; } = string.Empty;
         public bool SpecialPath { get; set; }
+        public bool SpecialReservation { get; set; }
         public bool ExitSignalsOnStorageTracks { get; set; }
-        public OutsideStationPlacement OutsideStationPlacement { get; set; }
 
         public static SettingsPacket Get()
         {
@@ -20,8 +20,8 @@ namespace Signals.MP
             {
                 CustomPack = settings.CustomPack,
                 SpecialPath = settings.SpecialPath,
-                ExitSignalsOnStorageTracks = settings.ExitSignalsOnStorageTracks,
-                OutsideStationPlacement = settings.OutsideStationPlacement
+                SpecialReservation = settings.SpecialReservation,
+                ExitSignalsOnStorageTracks = settings.ExitSignalsOnStorageTracks
             };
         }
     }
