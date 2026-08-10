@@ -26,6 +26,16 @@ namespace Signals.Game
             {
                 return LocalizationAPI.L("dv_signals/radio/display_signal", signal, duration.ToString("F0"));
             }
+
+            public static string DisplaySignalReserved(string signal, float duration)
+            {
+                return LocalizationAPI.L("dv_signals/radio/display_signal_reserved", signal, duration.ToString("F0"));
+            }
+
+            public static string DisplaySignalReservedTimed(string signal, float duration, float time)
+            {
+                return LocalizationAPI.L("dv_signals/radio/display_signal_reserved_timed", signal, duration.ToString("F0"), time.ToString("F0"));
+            }
         }
     }
 }

@@ -44,35 +44,37 @@ namespace Signals.Game.Controllers
             Update(true, true);
         }
 
-        public override void UpdateBlocks()
+        public override bool UpdateBlocks()
         {
+            var updated = false;
             StartingTrack = OverrideStart ?? Junction.GetCurrentBranch().track;
 
             if (Signals.Length == 1)
             {
-                CreateSingle(Signals[0], Type);
+                updated |= CreateSingle(Signals[0], Type);
             }
             else
             {
-                CreateMulti(Signals, Type);
+                updated |= CreateMulti(Signals, Type);
             }
 
             if (ShuntingSignals.Length == 1)
             {
-                CreateSingle(ShuntingSignals[0], SignalType.Shunting);
+                updated |= CreateSingle(ShuntingSignals[0], SignalType.Shunting);
             }
             else
             {
-                CreateMulti(ShuntingSignals, SignalType.Shunting);
+                updated |= CreateMulti(ShuntingSignals, SignalType.Shunting);
             }
 
             _junctionFlag = false;
+            return updated;
 
-            void CreateSingle(Signal signal, SignalType type)
+            bool CreateSingle(Signal signal, SignalType type)
             {
                 var block = signal.Block;
 
-                if (block != null && !block.ShouldBeUpdated && !_junctionFlag) return;
+                if (block != null && !block.ShouldBeUpdated && !_junctionFlag) return false;
 
                 block = type switch
                 {
@@ -82,11 +84,13 @@ namespace Signals.Game.Controllers
                 };
 
                 signal.SetBlock(block);
+                return true;
             }
 
-            void CreateMulti(Signal[] signals, SignalType type)
+            bool CreateMulti(Signal[] signals, SignalType type)
             {
                 var selected = Junction.selectedBranch;
+                var anyUpdated = false;
 
                 for (byte i = 0; i < signals.Length; i++)
                 {
@@ -105,9 +109,11 @@ namespace Signals.Game.Controllers
                     };
 
                     signals[i].SetBlock(block);
+                    anyUpdated = true;
                 }
 
                 Junction.selectedBranch = selected;
+                return anyUpdated;
             }
         }
 

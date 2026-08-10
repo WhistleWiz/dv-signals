@@ -24,8 +24,10 @@ namespace Signals.Game.Controllers
             return StartingTrack != track;
         }
 
-        public override void UpdateBlocks()
+        public override bool UpdateBlocks()
         {
+            var anyUpdated = false;
+
             foreach (var signal in Signals)
             {
                 var block = signal.Block;
@@ -35,6 +37,7 @@ namespace Signals.Game.Controllers
                 signal.SetBlock(Type == SignalType.Spacing ?
                     TrackBlock.CreateForSpacing(StartingTrack, Direction, this) :
                     TrackBlock.CreateUntilMainSignal(StartingTrack, Direction, this));
+                anyUpdated = true;
             }
 
             foreach (var signal in ShuntingSignals)
@@ -44,7 +47,10 @@ namespace Signals.Game.Controllers
                 if (block != null && !block.ShouldBeUpdated) continue;
 
                 signal.SetBlock(TrackBlock.CreateForShunting(StartingTrack, Direction, this));
+                anyUpdated = true;
             }
+
+            return anyUpdated;
         }
 
         public override IEnumerable<(Signal Signal, Dictionary<BasicSignalController, float> Controllers)> GetPotentialNextControllers()

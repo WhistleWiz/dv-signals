@@ -92,7 +92,7 @@ namespace Signals.MP
             if (result)
             {
                 signal.AlignAllSwitches();
-                _server.SendPacketToAll(new ReservationSuccessPacket() { SignalId = packet.SignalId });
+                _server.SendPacketToAll(new ReservationSuccessPacket() { SignalId = packet.SignalId, Duration = packet.Duration });
                 SignalsMod.LogMP($"Sent reservation success for signal {packet.SignalId}");
             }
             else

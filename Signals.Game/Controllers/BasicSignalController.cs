@@ -269,9 +269,10 @@ namespace Signals.Game.Controllers
                     kpSet = placement.Track.GetSleeperPointSet();
                 }
 
+                var opposite = placement.OppositeSide && !item.KeepInSameSide;
                 var span = Helpers.ClampD(placement.Span + (isOut ? -item.OffsetFromController : item.OffsetFromController), 0, kpSet.span);
                 var point = kpSet.points[kpSet.GetPointIndexForSpan(span)];
-                var offset = placement.OppositeSide ? -item.OffsetFromTrack : item.OffsetFromTrack;
+                var offset = opposite ? -item.OffsetFromTrack : item.OffsetFromTrack;
 
                 if (item.AtRail)
                 {
@@ -280,7 +281,7 @@ namespace Signals.Game.Controllers
 
                 item.transform.rotation = Quaternion.LookRotation(isOut ? point.forward : -point.forward);
                 item.transform.position = (Vector3)point.position + item.transform.right * offset;
-                item.transform.localScale = (placement.OppositeSide && item.MirrorWhenOnOppositeSide) ? new Vector3(-1, 1, 1) : Vector3.one;
+                item.transform.localScale = (opposite && item.MirrorWhenOnOppositeSide) ? new Vector3(-1, 1, 1) : Vector3.one;
             }
         }
 
@@ -514,7 +515,8 @@ namespace Signals.Game.Controllers
         /// <summary>
         /// Update the current <see cref="Block"/> before the signal is updated.
         /// </summary>
-        public virtual void UpdateBlocks() { }
+        /// <returns><see langword="true"/> if the blocks were changed, otherwise <see langword="false"/>.</returns>
+        public virtual bool UpdateBlocks() => false;
 
         public virtual void FlagAllBlocksForUpdating()
         {
@@ -532,12 +534,12 @@ namespace Signals.Game.Controllers
         /// <param name="startPropagate">Whether this signal should propagate its updates to the signals afterwards.</param>
         public void Update(bool forced, bool startPropagate)
         {
-            UpdateBlocks();
+            var blocksUpdated = UpdateBlocks();
 
             foreach (var signal in AllSignals)
             {
                 // Update the reservation.
-                if (TrackReserver.HasReservation(signal) && !TrackReserver.UpdateReservation(signal))
+                if (TrackReserver.HasReservation(signal) && blocksUpdated && !TrackReserver.UpdateReservation(signal))
                 {
                     SignalsMod.Warning($"Could not update reservation for signal {signal.Id}, reservation cleared.");
                     TrackReserver.ClearFromSignal(signal);

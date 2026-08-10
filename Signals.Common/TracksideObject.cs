@@ -22,6 +22,8 @@ namespace Signals.Common
         public float OffsetFromTrack = -2.05f;
         [Tooltip("If true, the object will be placed at the rail's position")]
         public bool AtRail = false;
+        [Tooltip("If true, the object will always be placed on the same side of the track even if the controller swaps sides")]
+        public bool KeepInSameSide = false;
         public bool MirrorWhenOnOppositeSide = false;
         public bool AlignWithSleepers = false;
 

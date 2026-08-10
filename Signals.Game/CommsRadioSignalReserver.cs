@@ -25,6 +25,7 @@ namespace Signals.Game
         private bool _active = false;
         private bool _displayOverriden = false;
         private bool _reservationLocked = false;
+        private bool _timeUpdate = false;
         private RaycastHit _hit;
         private Signal? _signal;
         private Coroutine? _resetDisplayCoro;
@@ -76,12 +77,13 @@ namespace Signals.Game
             {
                 var signal = comp.Signal;
 
-                if (signal.AllowReserving && signal != _signal)
+                if (signal.AllowReserving && (_timeUpdate || signal != _signal))
                 {
                     HighlightSignal(_signal, false);
                     HighlightSignal(signal, true);
 
-                    _signal = comp.Signal;
+                    _signal = signal;
+                    _timeUpdate = false;
 
                     SetDisplayToSignal();
                 }
@@ -223,7 +225,22 @@ namespace Signals.Game
             }
             else
             {
-                Display.SetContentAndAction(Localization.Radio.DisplaySignal(_signal.Id.ToString(), Duration), Localization.Radio.Reserve);
+                if (TrackReserver.HasReservation(_signal, out var time))
+                {
+                    if (time > 0)
+                    {
+                        _timeUpdate = true;
+                        Display.SetContentAndAction(Localization.Radio.DisplaySignalReservedTimed(_signal.Id.ToString(), Duration, time), Localization.Radio.Reserve);
+                    }
+                    else
+                    {
+                        Display.SetContentAndAction(Localization.Radio.DisplaySignalReserved(_signal.Id.ToString(), Duration), Localization.Radio.Reserve);
+                    }
+                }
+                else
+                {
+                    Display.SetContentAndAction(Localization.Radio.DisplaySignal(_signal.Id.ToString(), Duration), Localization.Radio.Reserve);
+                }
             }
         }
 

@@ -115,7 +115,14 @@ namespace Signals.MP
                 // Host already reserved, but packet must still be received to call the functions.
                 if (!MultiplayerAPI.Instance.IsHost)
                 {
-                    TrackReserver.ReserveForSignal(signal);
+                    if (packet.Duration > 0)
+                    {
+                        TrackReserver.ReserveForSignal(signal, packet.Duration);
+                    }
+                    else
+                    {
+                        TrackReserver.ReserveForSignal(signal);
+                    }
                 }
 
                 Game.MultiplayerIntegration.OnReservationRequestResultReceived?.Invoke(packet.SignalId, true);

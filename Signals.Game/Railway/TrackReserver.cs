@@ -15,6 +15,7 @@ namespace Signals.Game.Railway
     {
         private static readonly Dictionary<RailTrack, Signal> s_reservations = new Dictionary<RailTrack, Signal>();
         private static readonly Dictionary<Signal, Coroutine> s_clearRoutines = new Dictionary<Signal, Coroutine>();
+        private static readonly Dictionary<Signal, float> s_times = new Dictionary<Signal, float>();
         private static readonly HashSet<Signal> s_signals = new HashSet<Signal>();
 
         /// <summary>
@@ -103,6 +104,22 @@ namespace Signals.Game.Railway
         }
 
         /// <summary>
+        /// Checks if a signal already reserved tracks.
+        /// </summary>
+        /// <param name="signal">The signal to check.</param>
+        /// <param name="time">The time left in the reservation if the reservation exists and will be cleared automatically, or <c>-1</c> otherwise.</param>
+        /// <returns><see langword="true"/> if <paramref name="signal"/> has any track reservations, <see langword="false"/> otherwise.</returns>
+        public static bool HasReservation(Signal signal, out float time)
+        {
+            if (!s_times.TryGetValue(signal, out time))
+            {
+                time = -1;
+            }
+
+            return s_signals.Contains(signal);
+        }
+
+        /// <summary>
         /// Reserves a signal's tracks.
         /// </summary>
         /// <param name="controller">The signal reserving the tracks.</param>
@@ -111,6 +128,11 @@ namespace Signals.Game.Railway
         /// <para>If the signal has already reserved tracks, they will be cleared before being reserved again.</para></remarks>
         public static bool ReserveForSignal(Signal signal)
         {
+            if (signal.Block == null)
+            {
+                signal.Controller.UpdateBlocks();
+            }
+
             if (signal.Block == null || IsSignalReservedByAnother(signal))
             {
                 SignalsMod.Warning("Reservation failed: block was null or overlapped reservation");
@@ -186,6 +208,13 @@ namespace Signals.Game.Railway
                 s_reservations.Remove(item.Key);
             }
 
+            if (s_clearRoutines.TryGetValue(signal, out var coroutine))
+            {
+                CoroutineManager.Instance.Stop(coroutine);
+                s_clearRoutines.Remove(signal);
+            }
+
+            s_times.Remove(signal);
             s_signals.Remove(signal);
             ReservationCleared?.Invoke(signal);
         }
@@ -208,7 +237,7 @@ namespace Signals.Game.Railway
 
         public static bool UpdateReservation(Signal signal)
         {
-            if (!HasReservation(signal) || signal.Block == null) return false;
+            if (!HasReservation(signal, out var time) || signal.Block == null) return false;
 
             foreach (var track in signal.Block.AllTracks)
             {
@@ -220,7 +249,16 @@ namespace Signals.Game.Railway
             }
 
             ClearFromSignal(signal);
-            ReserveForSignal(signal);
+
+            // Maintain time from the previous reservation.
+            if (time > 0)
+            {
+                ReserveForSignal(signal, time);
+            }
+            else
+            {
+                ReserveForSignal(signal);
+            }
 
             return true;
         }
@@ -236,11 +274,21 @@ namespace Signals.Game.Railway
 
         private static System.Collections.IEnumerator ClearRoutine(Signal signal, float delay)
         {
-            yield return WaitFor.Seconds(delay);
+            while (delay > 0)
+            {
+                Debug.Log($"{signal.Id}: {delay:F2}");
+                s_times[signal] = delay -= Time.deltaTime;
+                yield return null;
+            }
 
-            MultiplayerIntegration.SendReservationCancelRequest(signal);
+            Debug.Log($"{signal.Id} (out): {delay:F2}");
+
+            if (MultiplayerIntegration.IsHost)
+            {
+                MultiplayerIntegration.SendReservationCancelRequest(signal);
+            }
+
             ClearFromSignal(signal);
-            s_clearRoutines.Remove(signal);
         }
     }
 }

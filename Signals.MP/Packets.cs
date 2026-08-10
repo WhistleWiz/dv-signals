@@ -36,7 +36,10 @@ namespace Signals.MP
         public float Duration { get; set; }
     }
 
-    public class ReservationSuccessPacket : SignalPacket { }
+    public class ReservationSuccessPacket : SignalPacket
+    {
+        public float Duration { get; set; }
+    }
 
     public class ReservationFailurePacket : SignalPacket { }
 
