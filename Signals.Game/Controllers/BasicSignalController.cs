@@ -205,6 +205,13 @@ namespace Signals.Game.Controllers
             TrackChecker.OnMapBuilt += FixPositionDueToCrossing;
             SignalManager.Instance.RegisterController(this);
 
+            //var notShuntingOnly = !(Signals.Length == 0 && ShuntingSignals.Length > 0);
+
+            //if (notShuntingOnly && placementInfo.HasValue && placementInfo.Value.Track != TrackChecker.GetClosestTrack(Definition.transform))
+            //{
+            //    FlipSide();
+            //}
+
             UpdateTracksideObjects();
         }
 
@@ -280,7 +287,7 @@ namespace Signals.Game.Controllers
 
                 item.transform.rotation = Quaternion.LookRotation(isOut ? point.forward : -point.forward);
                 item.transform.position = (Vector3)point.position + item.transform.right * offset;
-                item.transform.localScale = item.MirrorWhenOnOppositeSide ? new Vector3(-1, 1, 1) : Vector3.one;
+                item.transform.localScale = (placement.OppositeSide && item.MirrorWhenOnOppositeSide) ? new Vector3(-1, 1, 1) : Vector3.one;
             }
         }
 

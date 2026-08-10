@@ -2,6 +2,7 @@
 using Signals.Common;
 using Signals.Game.Aspects;
 using Signals.Game.Controllers;
+using Signals.Game.Curves;
 using Signals.Game.Displays;
 using Signals.Game.Generation;
 using Signals.Game.Railway;
@@ -375,6 +376,7 @@ namespace Signals.Game
             SleeperPointSets.ClearCache();
             BasicSignalController.ResetIdGeneration();
             Signal.ResetIdGeneration();
+            BezierHelper.ClearCache();
         }
 
         #endregion

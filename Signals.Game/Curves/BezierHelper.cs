@@ -8,10 +8,10 @@ namespace Signals.Game.Curves
     {
         private const float AproxStep = 0.02f;
 
-        private static Dictionary<BezierCurve, Bounds> s_boundCache = new Dictionary<BezierCurve, Bounds>();
-        private static Vector3 s_misalignedFix = Vector3.up * 0.5f;
+        private static readonly Dictionary<BezierCurve, Bounds> s_boundCache = new Dictionary<BezierCurve, Bounds>();
+        private static readonly Vector3 s_misalignedFix = Vector3.up * 0.5f;
 
-        internal static void Clear()
+        internal static void ClearCache()
         {
             s_boundCache.Clear();
         }
@@ -19,35 +19,8 @@ namespace Signals.Game.Curves
         public static bool Intersects(BezierCurve c1, BezierCurve c2, float precision, out Vector3 result)
         {
             // Get or create the big bounding boxes for each curve.
-            if (!s_boundCache.TryGetValue(c1, out var b1))
-            {
-                var list = new List<Vector3> { c1[0].position };
-
-                for (int i = 1; i < c1.pointCount; i++)
-                {
-                    list.Add(c1[i - 1].globalHandle2);
-                    list.Add(c1[i].globalHandle1);
-                    list.Add(c1[i].position);
-                }
-
-                b1 = Helpers.AABBFromCollection(list);
-                s_boundCache.Add(c1, b1);
-            }
-
-            if (!s_boundCache.TryGetValue(c2, out var b2))
-            {
-                var list = new List<Vector3> { c2[0].position };
-
-                for (int i = 1; i < c2.pointCount; i++)
-                {
-                    list.Add(c2[i - 1].globalHandle2);
-                    list.Add(c2[i].globalHandle1);
-                    list.Add(c2[i].position);
-                }
-
-                b2 = Helpers.AABBFromCollection(list);
-                s_boundCache.Add(c2, b2);
-            }
+            var b1 = GetBounds(c1);
+            var b2 = GetBounds(c2);
 
             if (!b1.Intersects(b2))
             {
@@ -71,6 +44,31 @@ namespace Signals.Game.Curves
 
             result = Vector3.zero;
             return false;
+        }
+
+        private static Bounds GetBounds(BezierCurve c)
+        {
+            if (!s_boundCache.TryGetValue(c, out var b))
+            {
+                b = CreateBounds(c);
+                s_boundCache.Add(c, b);
+            }
+
+            return b;
+        }
+
+        private static Bounds CreateBounds(BezierCurve c)
+        {
+            var list = new List<Vector3> { c[0].position };
+
+            for (int i = 1; i < c.pointCount; i++)
+            {
+                list.Add(c[i - 1].globalHandle2);
+                list.Add(c[i].globalHandle1);
+                list.Add(c[i].position);
+            }
+
+            return Helpers.AABBFromCollection(list);
         }
 
         public static bool Intersects(CubicBezier c1,  CubicBezier c2, float precision, out Vector3 result)
@@ -191,6 +189,13 @@ namespace Signals.Game.Curves
             var length = Mathf.Sqrt(lengthSqr);
 
             return Vector3.Cross(d1, d2).magnitude / (length * length * length);
+        }
+
+        public static bool IsWithinBounds(Transform t, BezierCurve curve)
+        {
+            var bounds = GetBounds(curve);
+            bounds.Expand(4);
+            return bounds.Contains(t.position);
         }
     }
 }
