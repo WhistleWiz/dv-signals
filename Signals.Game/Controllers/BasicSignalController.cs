@@ -205,13 +205,6 @@ namespace Signals.Game.Controllers
             TrackChecker.OnMapBuilt += FixPositionDueToCrossing;
             SignalManager.Instance.RegisterController(this);
 
-            //var notShuntingOnly = !(Signals.Length == 0 && ShuntingSignals.Length > 0);
-
-            //if (notShuntingOnly && placementInfo.HasValue && placementInfo.Value.Track != TrackChecker.GetClosestTrack(Definition.transform))
-            //{
-            //    FlipSide();
-            //}
-
             UpdateTracksideObjects();
         }
 

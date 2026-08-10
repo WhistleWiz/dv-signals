@@ -88,7 +88,20 @@ namespace Signals.Game.Generation
                     branchTrackKey.Add(branch.track.outBranch.track, GetPlacement(branch.IsThroughTrack() ? PrefabType.Mainline : PrefabType.Diverging));
                 }
 
-                return new JunctionSignalGroup(junction, null, CreateBranchSignalsOppositeDouble(junction, branchTrackKey, branchDistance));
+                var group = new JunctionSignalGroup(junction, null, CreateBranchSignalsOppositeDouble(junction, branchTrackKey, branchDistance));
+
+                foreach (var controller in group.AllControllers)
+                {
+                    if (!controller.PlacementInfo.HasValue) continue;
+
+                    var info = controller.PlacementInfo.Value;
+                    if (info.Track != TrackChecker.GetClosestTrack(controller.Definition.transform))
+                    {
+                        controller.FlipSide();
+                    }
+                }
+
+                return group;
             }
 
             // Check branches.
