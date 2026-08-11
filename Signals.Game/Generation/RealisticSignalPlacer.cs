@@ -68,6 +68,8 @@ namespace Signals.Game.Generation
             {
                 foreach (var branch in junction.outBranches)
                 {
+                    if (IsBranchOutNull(branch)) continue;
+
                     var track = branch.track.outBranch.track;
                     branchTrackKey.Add(track, ShuntingOrSpacing(track, false));
                 }
@@ -85,6 +87,8 @@ namespace Signals.Game.Generation
             {
                 foreach (var branch in junction.outBranches)
                 {
+                    if (IsBranchOutNull(branch)) continue;
+
                     branchTrackKey.Add(branch.track.outBranch.track, GetPlacement(branch.IsThroughTrack() ? PrefabType.Mainline : PrefabType.Diverging));
                 }
 
@@ -107,6 +111,8 @@ namespace Signals.Game.Generation
             // Check branches.
             foreach (var branch in junction.outBranches)
             {
+                if (IsBranchOutNull(branch)) continue;
+
                 var track = branch.track.outBranch.track;
                 deadCheck = false;
                 stationCheck = false;
@@ -367,11 +373,11 @@ namespace Signals.Game.Generation
 
             var branch = track.inJunction == null ? track.GetInBranch() : track.GetOutBranch();
 
-            if (branch == null || !branch.track.isJunctionTrack) return false;
+            if (branch == null || branch.track == null || !branch.track.isJunctionTrack) return false;
 
             branch = branch.track.GetInBranch();
 
-            return branch != null && branch.track.IsPartOfStation();
+            return branch != null && branch.track != null && branch.track.IsPartOfStation();
         }
 
         private static bool IsYardTrackMainline(Junction.Branch branch)
@@ -450,6 +456,8 @@ namespace Signals.Game.Generation
 
             foreach (var branch in junction.outBranches)
             {
+                if (IsBranchOutNull(branch)) continue;
+
                 var track = branch.track.outBranch.track;
 
                 if (!branchTrackKey.TryGetValue(track, out var helper) || helper.Definition == null) continue;
@@ -481,6 +489,9 @@ namespace Signals.Game.Generation
             for (int i = 0; i < junction.outBranches.Count; i++)
             {
                 Junction.Branch? branch = junction.outBranches[i];
+
+                if (IsBranchOutNull(branch)) continue;
+
                 var track = branch.track.outBranch.track;
 
                 if (!branchTrackKey.TryGetValue(track, out var helper) || helper.Definition == null) continue;

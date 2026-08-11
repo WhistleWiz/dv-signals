@@ -98,6 +98,8 @@ namespace Signals.Game.Generation
         {
             foreach (var item in junction.outBranches)
             {
+                if (IsBranchOutNull(item)) continue;
+
                 var track = item.track.outBranch.track;
 
                 if (track == null || track.GetLength() > VerySmallTrackThreshold || !track.IsNonSign())
@@ -112,6 +114,11 @@ namespace Signals.Game.Generation
         public static bool IsOld(Junction junction)
         {
             return OldAreaCalculator.IsWithinOldArea(junction.position);
+        }
+
+        public static bool IsBranchOutNull(Junction.Branch branch)
+        {
+            return branch.track.outBranch == null || branch.track.outBranch.track == null;
         }
 
         protected static bool GetsDistant(SignalType type)
