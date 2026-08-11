@@ -68,7 +68,7 @@ namespace Signals.Game.Railway
         /// <returns><see langword="true"/> if the track is reserved by a signal from another controller, <see langword="false"/> otherwise.</returns>
         public static bool IsTrackReservedByAnother(RailTrack track, Signal signal)
         {
-            return s_reservations.TryGetValue(track, out var by) && by.Controller != signal.Controller;
+            return s_reservations.TryGetValue(track, out var by) && by.Controller != signal.Controller && CheckShuntingReserveAnother(signal, by);
         }
 
         /// <summary>
@@ -270,6 +270,42 @@ namespace Signals.Game.Railway
 
             s_signals.Remove(signal);
             ReservationCleared?.Invoke(signal);
+        }
+
+        private static bool CheckShuntingReserveAnother(Signal reserving, Signal reserved)
+        {
+            // Only applies to shunting signals.
+            if (!reserving.IsShunting) return true;
+
+            // We know the blocks aren't null at this point.
+            var block = reserving.Block!;
+            var otherTracks = reserved.Block!.Tracks;
+
+            foreach (var track in block.Tracks)
+            {
+                var check = true;
+
+                for (int i = 0; i < otherTracks.Length; i++)
+                {
+                    if (otherTracks[i].Track == track.Track)
+                    {
+                        // If we have overlapping tracks, they must be in the same direction.
+                        if (otherTracks[i].Direction != track.Direction)
+                        {
+                            return true;
+                        }
+
+                        check = false;
+                    }
+                }
+
+                // If the check wasn't triggered, that means the block isn't contained entirely
+                // within the main signal, so block the reservation.
+                if (check) return true;
+            }
+
+            // Shunting block was contained entirely within the main block, so don't count as reserved.
+            return false;
         }
 
         private static System.Collections.IEnumerator ClearRoutine(Signal signal, float delay)
