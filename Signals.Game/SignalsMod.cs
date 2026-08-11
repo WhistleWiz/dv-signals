@@ -41,6 +41,8 @@ namespace Signals.Game
             var harmony = new Harmony(modEntry.Info.Id);
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
+            MultiplayerIntegration.Initialise(modEntry);
+
             return true;
         }
 
@@ -70,7 +72,7 @@ namespace Signals.Game
         {
             foreach (var mod in UnityModManager.modEntries)
             {
-                if (mod.Active)
+                if (mod.Active && mod.Info.Id != Instance.Info.Id)
                 {
                     SignalManager.LoadSignals(mod);
                 }
@@ -98,6 +100,16 @@ namespace Signals.Game
         public static void Error(string message)
         {
             Instance.Logger.Error(message);
+        }
+
+        public static void LogMP(string message)
+        {
+            Instance.Logger.Log($"[Multiplayer] {message}");
+        }
+
+        public static void ErrorMP(string message)
+        {
+            Instance.Logger.Error($"[Multiplayer] {message}");
         }
     }
 }

@@ -10,6 +10,7 @@ namespace Signals.Game
             public static string Begin => LocalizationAPI.L("dv_signals/radio/begin");
             public static string ReservationFailed => LocalizationAPI.L("dv_signals/radio/reservation_failed");
             public static string Reserve => LocalizationAPI.L("dv_signals/radio/reserve");
+            public static string Reserving => LocalizationAPI.L("dv_signals/radio/reserving");
 
             public static string ReservationSuccess(float duration)
             {
@@ -24,6 +25,16 @@ namespace Signals.Game
             public static string DisplaySignal(string signal, float duration)
             {
                 return LocalizationAPI.L("dv_signals/radio/display_signal", signal, duration.ToString("F0"));
+            }
+
+            public static string DisplaySignalReserved(string signal, float duration)
+            {
+                return LocalizationAPI.L("dv_signals/radio/display_signal_reserved", signal, duration.ToString("F0"));
+            }
+
+            public static string DisplaySignalReservedTimed(string signal, float duration, float time)
+            {
+                return LocalizationAPI.L("dv_signals/radio/display_signal_reserved_timed", signal, duration.ToString("F0"), time.ToString("F0"));
             }
         }
     }

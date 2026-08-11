@@ -1,9 +1,13 @@
 ﻿using DV.Utils;
 using Signals.Common;
+using Signals.Game.Aspects;
 using Signals.Game.Controllers;
+using Signals.Game.Curves;
+using Signals.Game.Displays;
 using Signals.Game.Generation;
 using Signals.Game.Railway;
 using Signals.Game.Util;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -74,6 +78,17 @@ namespace Signals.Game
 
         public List<BasicSignalController> AllControllers => _controllerRegistry;
 
+        #region Events
+
+        public static Action<Signal, IAspect?>? AspectChanged;
+        public static Action<Signal, IDisplay[]>? DisplaysUpdated;
+        public static Action<Signal, SignalOperationMode>? OperationModeChanged;
+        public static Action<Signal, int>? OverrideChanged;
+        public static Action<Signal, bool>? ShuntingAllowedChanged;
+        public static Action<BasicSignalController, int?>? RequiredBranchChanged;
+
+        #endregion
+
         public new static string AllowAutoCreate()
         {
             return "[SignalManager]";
@@ -141,7 +156,7 @@ namespace Signals.Game
                     else
                     {
                         InstalledPacks.Add(mod.Info.Id, pack);
-                        SignalsMod.Log("Loaded signal pack.");
+                        SignalsMod.Log($"Loaded signal pack from {mod.Info.Id}");
                     }
 
                     ProcessControllers(pack);
@@ -324,6 +339,7 @@ namespace Signals.Game
             _updateCoro = StartCoroutine(UpdateRoutine());
 
             Camera.onPostRender += DebugRender;
+            MultiplayerIntegration.StartInstance(this);
         }
 
         private void UpdateGauge()
@@ -360,6 +376,7 @@ namespace Signals.Game
             SleeperPointSets.ClearCache();
             BasicSignalController.ResetIdGeneration();
             Signal.ResetIdGeneration();
+            BezierHelper.ClearCache();
         }
 
         #endregion
@@ -583,11 +600,11 @@ namespace Signals.Game
         /// Tries to find a <see cref="BasicSignalController"/> with the specified ID.
         /// </summary>
         /// <param name="id">The ID of the controller.</param>
-        /// <param name="signal">The signal, if found. Otherwise <see langword="null"/>.</param>
+        /// <param name="controller">The controller, if found. Otherwise <see langword="null"/>.</param>
         /// <returns><see langword="true"/> if a controller was found, otherwise <see langword="false"/>.</returns>
-        public bool TryGetController(int id, out BasicSignalController signal)
+        public bool TryGetController(int id, out BasicSignalController controller)
         {
-            return _idToController.TryGetValue(id, out signal);
+            return _idToController.TryGetValue(id, out controller);
         }
 
         /// <summary>

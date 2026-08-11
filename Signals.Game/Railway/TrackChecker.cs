@@ -206,8 +206,6 @@ namespace Signals.Game.Railway
                 }
             }
 
-            BezierHelper.Clear();
-
             sw.Stop();
             SignalsMod.Log($"Finished building intersection map with {s_intersectionMap.Count} entries ({sw.Elapsed.TotalSeconds:F4}s)");
 
@@ -256,6 +254,11 @@ namespace Signals.Game.Railway
             }
 
             return result;
+        }
+
+        public static RailTrack GetClosestTrack(Transform t)
+        {
+            return RailTrack.GetClosest(t.position, 0, RailTrackRegistryBase.RailTracks.Where(x => BezierHelper.IsWithinBounds(t, x.curve)).ToList()).track;
         }
     }
 }

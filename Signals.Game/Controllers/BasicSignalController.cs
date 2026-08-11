@@ -174,6 +174,7 @@ namespace Signals.Game.Controllers
                 return _internalName;
             }
         }
+        public bool IsDefaultRequiredBranch => RequiredJunctionBranch == null;
 
         #endregion
 
@@ -268,9 +269,10 @@ namespace Signals.Game.Controllers
                     kpSet = placement.Track.GetSleeperPointSet();
                 }
 
+                var opposite = placement.OppositeSide && !item.KeepInSameSide;
                 var span = Helpers.ClampD(placement.Span + (isOut ? -item.OffsetFromController : item.OffsetFromController), 0, kpSet.span);
                 var point = kpSet.points[kpSet.GetPointIndexForSpan(span)];
-                var offset = placement.OppositeSide ? -item.OffsetFromTrack : item.OffsetFromTrack;
+                var offset = opposite ? -item.OffsetFromTrack : item.OffsetFromTrack;
 
                 if (item.AtRail)
                 {
@@ -279,7 +281,7 @@ namespace Signals.Game.Controllers
 
                 item.transform.rotation = Quaternion.LookRotation(isOut ? point.forward : -point.forward);
                 item.transform.position = (Vector3)point.position + item.transform.right * offset;
-                item.transform.localScale = item.MirrorWhenOnOppositeSide ? new Vector3(-1, 1, 1) : Vector3.one;
+                item.transform.localScale = (opposite && item.MirrorWhenOnOppositeSide) ? new Vector3(-1, 1, 1) : Vector3.one;
             }
         }
 
@@ -402,6 +404,43 @@ namespace Signals.Game.Controllers
             return true;
         }
 
+        public void FlipSide()
+        {
+            if (!PlacementInfo.HasValue)
+            {
+                SignalsMod.Error("Cannot flip controller without placement info");
+                return;
+            }
+
+            if (!SafetyCheck())
+            {
+                SignalsMod.Error("Definition does not exist, cannot flip controller");
+                return;
+            }
+
+            var p = PlacementInfo.Value;
+            var t = Definition.transform;
+
+            t.position += t.right * Definition.Offset * (p.OppositeSide ? 2 : -2);
+
+            if (p.OppositeSide && Definition.FlipPrefabWhenInOppositeSide)
+            {
+                var scale = t.localScale;
+                t.localScale = new Vector3(-scale.x, scale.y, scale.z);
+
+                foreach (var item in Definition.UnflipTransforms)
+                {
+                    scale = item.localScale;
+                    item.localScale = new Vector3(-scale.x, scale.y, scale.z);
+                }
+            }
+
+            p.OppositeSide = !p.OppositeSide;
+            PlacementInfo = p;
+
+            UpdateTracksideObjects();
+        }
+
         /// <summary>
         /// Checks if it is safe to continue using this signal instance.
         /// </summary>
@@ -476,7 +515,8 @@ namespace Signals.Game.Controllers
         /// <summary>
         /// Update the current <see cref="Block"/> before the signal is updated.
         /// </summary>
-        public virtual void UpdateBlocks() { }
+        /// <returns><see langword="true"/> if the blocks were changed, otherwise <see langword="false"/>.</returns>
+        public virtual bool UpdateBlocks() => false;
 
         public virtual void FlagAllBlocksForUpdating()
         {
@@ -494,14 +534,15 @@ namespace Signals.Game.Controllers
         /// <param name="startPropagate">Whether this signal should propagate its updates to the signals afterwards.</param>
         public void Update(bool forced, bool startPropagate)
         {
-            UpdateBlocks();
+            var blocksUpdated = UpdateBlocks();
 
             foreach (var signal in AllSignals)
             {
                 // Update the reservation.
-                if (TrackReserver.HasReservation(signal) && !TrackReserver.UpdateReservation(signal))
+                if (TrackReserver.HasReservation(signal) && blocksUpdated && !TrackReserver.UpdateReservation(signal))
                 {
-                    SignalsMod.Warning($"Could not update reservation for signal {signal.Id}, old reservation is kept.");
+                    SignalsMod.Warning($"Could not update reservation for signal {signal.Id}, reservation cleared.");
+                    TrackReserver.ClearFromSignal(signal);
                 }
 
                 signal.UpdateAspect(forced);
@@ -525,6 +566,7 @@ namespace Signals.Game.Controllers
 
                 RequiredJunctionBranch = null;
                 RequiredBranchChanged?.Invoke(null);
+                SignalManager.RequiredBranchChanged?.Invoke(this, null);
                 return;
             }
 
@@ -532,6 +574,7 @@ namespace Signals.Game.Controllers
 
             RequiredJunctionBranch = index;
             RequiredBranchChanged?.Invoke(index);
+            SignalManager.RequiredBranchChanged?.Invoke(this, index);
         }
 
         public virtual Signal? GetActiveSignal()

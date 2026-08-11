@@ -88,7 +88,20 @@ namespace Signals.Game.Generation
                     branchTrackKey.Add(branch.track.outBranch.track, GetPlacement(branch.IsThroughTrack() ? PrefabType.Mainline : PrefabType.Diverging));
                 }
 
-                return new JunctionSignalGroup(junction, null, CreateBranchSignalsOppositeDouble(junction, branchTrackKey, branchDistance));
+                var group = new JunctionSignalGroup(junction, null, CreateBranchSignalsOppositeDouble(junction, branchTrackKey, branchDistance));
+
+                foreach (var controller in group.AllControllers)
+                {
+                    if (!controller.PlacementInfo.HasValue) continue;
+
+                    var info = controller.PlacementInfo.Value;
+                    if (info.Track != TrackChecker.GetClosestTrack(controller.Definition.transform))
+                    {
+                        controller.FlipSide();
+                    }
+                }
+
+                return group;
             }
 
             // Check branches.
@@ -148,7 +161,7 @@ namespace Signals.Game.Generation
                     else
                     {
                         // Only place the mainline signal if the in track isn't a short dead end either.
-                        if (SignalsMod.Settings.PlaceSignalsInBranches && !IsShortDeadEnd(inTrack))
+                        if (/*SignalsMod.Settings.PlaceSignalsInBranches &&*/ !IsShortDeadEnd(inTrack))
                         {
                             branchTrackKey.Add(track, GetPlacement(branch.IsThroughTrack() ? PrefabType.Mainline : PrefabType.Diverging));
                         }
@@ -257,7 +270,7 @@ namespace Signals.Game.Generation
             }
             else
             {
-                if (!SignalsMod.Settings.PlaceSignalsOutsideStations) return WithoutJunction();
+                /*if (!SignalsMod.Settings.PlaceSignalsOutsideStations) return WithoutJunction();*/
 
                 junctionSignal = junction.IsLeft() ? GetPlacement(PrefabType.JunctionLeft) : GetPlacement(PrefabType.JunctionRight);
                 isMain = true;

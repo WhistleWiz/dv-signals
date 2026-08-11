@@ -393,6 +393,7 @@ namespace Signals.Unity.Inspector
                 { "Author", pack.Author },
                 { "ManagerVersion", "0.27.3" },
                 { "Requirements", JToken.FromObject(reqs.ToArray()) },
+                { "MultiplayerCompatibility", "Client" },
             };
 
             // If a homepage was defined, also add the link.

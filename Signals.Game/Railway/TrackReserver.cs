@@ -15,6 +15,7 @@ namespace Signals.Game.Railway
     {
         private static readonly Dictionary<RailTrack, Signal> s_reservations = new Dictionary<RailTrack, Signal>();
         private static readonly Dictionary<Signal, Coroutine> s_clearRoutines = new Dictionary<Signal, Coroutine>();
+        private static readonly Dictionary<Signal, float> s_times = new Dictionary<Signal, float>();
         private static readonly HashSet<Signal> s_signals = new HashSet<Signal>();
 
         /// <summary>
@@ -33,7 +34,10 @@ namespace Signals.Game.Railway
         {
             foreach (var routine in s_clearRoutines)
             {
-                CoroutineManager.Instance.Stop(routine.Value);
+                if (routine.Value != null)
+                {
+                    CoroutineManager.Instance.Stop(routine.Value);
+                }
             }
 
             s_reservations.Clear();
@@ -100,6 +104,22 @@ namespace Signals.Game.Railway
         }
 
         /// <summary>
+        /// Checks if a signal already reserved tracks.
+        /// </summary>
+        /// <param name="signal">The signal to check.</param>
+        /// <param name="time">The time left in the reservation if the reservation exists and will be cleared automatically, or <c>-1</c> otherwise.</param>
+        /// <returns><see langword="true"/> if <paramref name="signal"/> has any track reservations, <see langword="false"/> otherwise.</returns>
+        public static bool HasReservation(Signal signal, out float time)
+        {
+            if (!s_times.TryGetValue(signal, out time))
+            {
+                time = -1;
+            }
+
+            return s_signals.Contains(signal);
+        }
+
+        /// <summary>
         /// Reserves a signal's tracks.
         /// </summary>
         /// <param name="controller">The signal reserving the tracks.</param>
@@ -108,6 +128,8 @@ namespace Signals.Game.Railway
         /// <para>If the signal has already reserved tracks, they will be cleared before being reserved again.</para></remarks>
         public static bool ReserveForSignal(Signal signal)
         {
+            signal.Controller.UpdateBlocks();
+
             if (signal.Block == null || IsSignalReservedByAnother(signal))
             {
                 SignalsMod.Warning("Reservation failed: block was null or overlapped reservation");
@@ -173,18 +195,9 @@ namespace Signals.Game.Railway
         /// <param name="signal">The signal reserving the tracks.</param>
         public static void ClearFromSignal(Signal signal)
         {
-            var reservedBy = s_reservations.Where(x => x.Value == signal).ToList();
-
-            // If there's no reserved tracks, don't even invoke the event.
-            if (!reservedBy.Any()) return;
-
-            foreach (var item in reservedBy)
-            {
-                s_reservations.Remove(item.Key);
-            }
-
-            s_signals.Remove(signal);
-            ReservationCleared?.Invoke(signal);
+            // Wrap since the clear routine flag is for internal use only,
+            // to avoid remaking the routine when updating a reservation.
+            ClearFromSignalInternal(signal, true);
         }
 
         /// <summary>
@@ -216,18 +229,65 @@ namespace Signals.Game.Railway
                 }
             }
 
-            ClearFromSignal(signal);
+            // Maintain time from the previous reservation by not clearing the routine.
+            ClearFromSignalInternal(signal, false);
             ReserveForSignal(signal);
 
             return true;
         }
 
+        /// <returns>All signal IDs with reservations.</returns>
+        public static IEnumerable<int> GetSignalIdsWithReservations()
+        {
+            foreach (var item in s_signals)
+            {
+                yield return item.Id;
+            }
+        }
+
+        private static void ClearFromSignalInternal(Signal signal, bool clearRoutine)
+        {
+            var reservedBy = s_reservations.Where(x => x.Value == signal).ToList();
+
+            // If there's no reserved tracks, don't even invoke the event.
+            if (!reservedBy.Any()) return;
+
+            foreach (var item in reservedBy)
+            {
+                s_reservations.Remove(item.Key);
+            }
+
+            if (clearRoutine)
+            {
+                if (s_clearRoutines.TryGetValue(signal, out var coroutine))
+                {
+                    CoroutineManager.Instance.Stop(coroutine);
+                    s_clearRoutines.Remove(signal);
+                }
+
+                s_times.Remove(signal);
+            }
+
+            s_signals.Remove(signal);
+            ReservationCleared?.Invoke(signal);
+        }
+
         private static System.Collections.IEnumerator ClearRoutine(Signal signal, float delay)
         {
-            yield return WaitFor.Seconds(delay);
+            while (delay > 0)
+            {
+                s_times[signal] = delay -= Time.deltaTime;
+                yield return null;
+            }
 
-            ClearFromSignal(signal);
-            s_clearRoutines.Remove(signal);
+            if (MultiplayerIntegration.IsHost)
+            {
+                MultiplayerIntegration.SendReservationCancelRequest(signal);
+            }
+            else
+            {
+                ClearFromSignal(signal);
+            }
         }
     }
 }

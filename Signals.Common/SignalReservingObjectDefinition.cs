@@ -19,6 +19,8 @@ namespace Signals.Common
         public AudioClip? FailureSound;
         [Tooltip("Plays when a reservation is cancelled")]
         public AudioClip? CancelSound;
+        [Tooltip("Plays when requests are sent through multiplayer")]
+        public AudioClip? MpSound;
 
         private void OnDrawGizmos()
         {

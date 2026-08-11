@@ -14,6 +14,11 @@ namespace Signals.Unity.Validation
 
             var colliders = definition.GetComponents<Collider>();
 
+            if (colliders.Length == 0)
+            {
+                result.AddWarning($"{definition.name} - signal does not have colliders, hover and comms radio won't work with it");
+            }
+
             if (colliders.Any(x => !x.isTrigger))
             {
                 result.AddWarning($"{definition.name} - colliders for the signal are not set to trigger");

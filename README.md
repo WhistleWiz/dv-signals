@@ -31,8 +31,7 @@ This mod adds signals to Derail Valley. Besides the default look, it is also a f
 <!-- FUTURE PLANS -->
 ## Future Plans
 
-* Full Multiplayer support
-* Remote Dispatch support
+* Remote Dispatch support (requires changing RD itself, delayed indefinitely)
 
 
 

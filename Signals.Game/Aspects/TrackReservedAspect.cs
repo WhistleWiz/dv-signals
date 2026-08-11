@@ -9,9 +9,9 @@ namespace Signals.Game.Aspects
 
         public override bool MeetsConditions()
         {
-            var another = TrackReserver.IsSignalReservedByAnother(Signal);
+            var reserved = Definition.BySelf ? TrackReserver.HasReservation(Signal) : TrackReserver.IsSignalReservedByAnother(Signal);
 
-            return Definition.Invert ? !another && TrackReserver.HasReservation(Signal) : another;
+            return ApplyInvert(reserved, Definition.Invert);
         }
     }
 }

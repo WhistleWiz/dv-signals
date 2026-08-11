@@ -17,6 +17,7 @@ namespace Signals.Game.Aspects
         public bool MeetsConditions();
         public void Apply();
         public void Unapply();
+        public AspectBaseDefinition GetDefinition();
     }
 
     /// <summary>

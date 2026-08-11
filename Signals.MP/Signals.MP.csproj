@@ -6,21 +6,14 @@
 		<LangVersion>8</LangVersion>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-	</ItemGroup>
-	<ItemGroup>
 		<ProjectReference Include="..\Signals.Common\Signals.Common.csproj" />
+		<ProjectReference Include="..\Signals.Game\Signals.Game.csproj" />
 	</ItemGroup>
-
 	<ItemGroup>
-		<Reference Include="System.IO.Compression" />
+		<Reference Include="UnityModManager" />
 		<Reference Include="UnityEngine" />
-		<Reference Include="UnityEngine.AnimationModule" />
-		<Reference Include="UnityEngine.AssetBundleModule" />
-		<Reference Include="UnityEngine.AudioModule" />
 		<Reference Include="UnityEngine.CoreModule" />
-		<Reference Include="UnityEngine.IMGUIModule" />
-		<Reference Include="UnityEngine.PhysicsModule" />
-		<Reference Include="UnityEditor" />
+		<Reference Include="DV.Utils" />
+		<Reference Include="MultiplayerAPI" />
 	</ItemGroup>
 </Project>
