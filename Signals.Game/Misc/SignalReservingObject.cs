@@ -77,6 +77,7 @@ namespace Signals.Game.Misc
             if (TrackReserver.ReserveForSignal(_signal, _time))
             {
                 _success?.Play(transform.position);
+                _signal.AlignAllSwitches();
             }
             else
             {

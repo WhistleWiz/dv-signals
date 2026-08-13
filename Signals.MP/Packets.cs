@@ -1,4 +1,5 @@
-﻿using MPAPI.Interfaces.Packets;
+﻿using MPAPI;
+using MPAPI.Interfaces.Packets;
 using Signals.Game;
 using Signals.Game.Controllers;
 
@@ -23,6 +24,36 @@ namespace Signals.MP
                 SpecialReservation = settings.SpecialReservation,
                 ExitSignalsOnStorageTracks = settings.ExitSignalsOnStorageTracks
             };
+        }
+    }
+
+    public class OccupyPacket : IPacket
+    {
+        public ushort RailNetId { get; set; }
+
+        public static OccupyPacket FromTrack(RailTrack track)
+        {
+            if (!MultiplayerAPI.Instance.TryGetNetId(track, out ushort id))
+            {
+                SignalsMod.ErrorMP($"Failed to get ID for track {track} for an OccupyPacket!");
+            }
+
+            return new OccupyPacket() { RailNetId = id };
+        }
+    }
+
+    public class UnoccupyPacket : IPacket
+    {
+        public ushort RailNetId { get; set; }
+
+        public static UnoccupyPacket FromTrack(RailTrack track)
+        {
+            if (!MultiplayerAPI.Instance.TryGetNetId(track, out ushort id))
+            {
+                SignalsMod.ErrorMP($"Failed to get ID for track {track} for an UnoccupyPacket!");
+            }
+
+            return new UnoccupyPacket() { RailNetId = id };
         }
     }
 

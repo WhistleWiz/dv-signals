@@ -22,6 +22,8 @@ namespace Signals.MP
             _server.RegisterPacket<OverridePacket>(ResendPacketToAllExceptSender);
             _server.RegisterPacket<ShuntingAllowedPacket>(ResendPacketToAllExceptSender);
             _server.RegisterPacket<RequiredBranchPacket>(ResendPacketToAllExceptSender);
+            _server.RegisterPacket<OccupyPacket>(ResendPacketToAllExceptSender);
+            _server.RegisterPacket<UnoccupyPacket>(ResendPacketToAllExceptSender);
             _server.RegisterPacket<ReservationRequestPacket>(ReservationRequested);
             _server.RegisterPacket<ReservationCancelRequestPacket>(ReservationCancelled);
 
@@ -49,6 +51,15 @@ namespace Signals.MP
                 _server.SendPacketToPlayer(new ReservationSuccessPacket() { SignalId = id }, player);
             }
 
+            SignalsMod.LogMP("Synced reservations");
+
+            foreach (var track in TrackChecker.GetAllOccupiedTracks())
+            {
+                _server.SendPacketToPlayer(OccupyPacket.FromTrack(track), player);
+            }
+
+            SignalsMod.LogMP("Synced occupied tracks");
+
             foreach (var controller in SignalManager.Instance.AllControllers)
             {
                 if (!controller.IsDefaultRequiredBranch)
@@ -74,6 +85,8 @@ namespace Signals.MP
                     }
                 }
             }
+
+            SignalsMod.LogMP("Synced signals; DONE");
         }
 
         private void ResendPacketToAllExceptSender<T>(T packet, IPlayer sender)

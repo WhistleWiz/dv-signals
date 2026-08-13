@@ -57,7 +57,7 @@ namespace Signals.Game.Displays
             if (!_conditionsChecked && _conditions.Any(x => !x.MeetsConditions(Signal)))
             {
                 // Remove the child renderers from the signal hover, or they'll be highlighted while invisible.
-                Signal.Hover?.ForceRemoveRenderers(Definition.GetComponentsInChildren<Renderer>(true));
+                Signal.ForceRemoveRenderers(Definition.GetComponentsInChildren<Renderer>(true));
                 Definition.gameObject.SetActive(false);
                 _disabled = true;
                 return false;

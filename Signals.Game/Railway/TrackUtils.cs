@@ -290,7 +290,7 @@ namespace Signals.Game.Railway
 
             var id = junction.junctionData.junctionIdLong;
 
-            if (!id.StartsWith(JData.ID_MARKER_STATION))
+            if (!id.StartsWith(JData.ID_MARKER_STATION) && !id.StartsWith("DTS"))
             {
                 return AddToCache(string.Empty);
             }

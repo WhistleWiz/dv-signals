@@ -13,6 +13,7 @@
 		<Reference Include="UnityModManager" />
 		<Reference Include="UnityEngine" />
 		<Reference Include="UnityEngine.CoreModule" />
+		<Reference Include="DV.RailTrack" />
 		<Reference Include="DV.Utils" />
 		<Reference Include="MultiplayerAPI" />
 	</ItemGroup>

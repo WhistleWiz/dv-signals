@@ -203,13 +203,10 @@ namespace Signals.Game
 
             static void ProcessSignal(SignalDefinition signal)
             {
-                if (!VRManager.IsVREnabled())
+                if (!signal.TryGetComponent<SignalHover>(out var hover))
                 {
-                    if (!signal.TryGetComponent<SignalHover>(out var hover))
-                    {
-                        hover = signal.gameObject.AddComponent<SignalHover>();
-                        hover.gameObject.layer = LaserPointerTargetLayer;
-                    }
+                    hover = signal.gameObject.AddComponent<SignalHover>();
+                    hover.gameObject.layer = LaserPointerTargetLayer;
                 }
             }
         }
@@ -370,6 +367,7 @@ namespace Signals.Game
         private static void ClearCaches()
         {
             TrackUtils.ClearCache();
+            TrackChecker.ClearCache();
             TurntableHelper.ClearCache();
             SpeedCalculator.ClearCache();
             StationControllerCache.ClearCache();

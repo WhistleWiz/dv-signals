@@ -129,6 +129,7 @@ namespace Signals.Game
         private const string TrackThrough = "[track through]";
         private const string DoubleTrackTag = "DT-";
         private const string DoubleTrackStationTag = "DTS-";
+        private const string DoubleTrackCrossoverTag = "DTC-";
 
         public static Branch GetCurrentBranch(this Junction junction)
         {
@@ -163,6 +164,11 @@ namespace Signals.Game
         public static bool IsFromDoubleTrackModStation(this Junction junction)
         {
             return junction.junctionData.junctionIdLong.StartsWith(DoubleTrackStationTag);
+        }
+
+        public static bool IsFromDoubleTrackModCrossover(this Junction junction)
+        {
+            return junction.junctionData.junctionIdLong.StartsWith(DoubleTrackCrossoverTag);
         }
 
         public static string GetStation(this Junction junction)

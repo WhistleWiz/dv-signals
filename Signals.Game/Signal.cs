@@ -88,7 +88,7 @@ namespace Signals.Game
         #region Properties
 
         // Used for comms radio highlighting.
-        internal Renderer[] HighlightRenderers => Hover != null ? ReflectionHelpers.GetRenderers(Hover) : s_emptyRenderers;
+        internal Renderer[] HighlightRenderers { get; private set; }
 
         public BasicSignalController Controller { get; private set; }
         public SignalDefinition Definition { get; private set; }
@@ -146,6 +146,7 @@ namespace Signals.Game
             Controller = controller;
             Definition = def;
             CurrentAspectIndex = OffValue;
+            HighlightRenderers = Definition.GetComponentsInChildren<MeshRenderer>(true);
 
             // Instantiate all aspect implementations.
             AllAspects = def.Aspects.Select(x => AspectCreator.Create(this, x)).Where(x => x != null).ToArray()!;
@@ -165,7 +166,7 @@ namespace Signals.Game
 
             SignalManager.Instance.RegisterSignal(this);
 
-            if (Definition.gameObject.TryGetComponent(out Hover))
+            if (!VRManager.IsVREnabled() && Definition.gameObject.TryGetComponent(out Hover))
             {
                 Hover!.Initialise(Definition.OffStateHUDSprite);
             }
@@ -197,7 +198,7 @@ namespace Signals.Game
 
             if (array.Length > 1)
             {
-                var index = Array.IndexOf(array, this);
+                var index = Array.IndexOf(array, this) + 1;
 
                 if (SignalManager.CurrentPack.UseLettersForMultipleSignalsInControllers)
                 {
@@ -210,6 +211,15 @@ namespace Signals.Game
             }
 
             return name;
+        }
+
+        internal void ForceRemoveRenderers(Renderer[] renderers)
+        {
+            Hover?.ForceRemoveRenderers(renderers);
+
+            var original = HighlightRenderers.ToList();
+            original.RemoveAll(x => renderers.Contains(x));
+            HighlightRenderers = original.ToArray();
         }
 
         protected bool IsAspectManuallyOverriden(int index)
@@ -247,7 +257,7 @@ namespace Signals.Game
         {
             if (DistantSignal == null) return;
 
-            Hover?.ForceRemoveRenderers(DistantSignal.Definition.GetComponentsInChildren<Renderer>(true));
+            ForceRemoveRenderers(DistantSignal.Definition.GetComponentsInChildren<Renderer>(true));
             DistantSignal.Destroy();
             DistantSignal = null;
         }

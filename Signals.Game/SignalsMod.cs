@@ -66,6 +66,8 @@ namespace Signals.Game
             {
                 SignalManager.UnloadSignals(modEntry);
             }
+
+            Settings.RebuildKeys();
         }
 
         private static void ScanMods()

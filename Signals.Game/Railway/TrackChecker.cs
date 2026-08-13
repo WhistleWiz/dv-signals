@@ -95,11 +95,14 @@ namespace Signals.Game.Railway
         private const float DefaultPrecision = 0.5f;
 
         private static Dictionary<RailTrack, TrackIntersectionPoints> s_intersectionMap = new Dictionary<RailTrack, TrackIntersectionPoints>();
+        private static HashSet<RailTrack> s_occupied = new HashSet<RailTrack>();
 
         /// <summary>
         /// Called when the intersection map finishes building.
         /// </summary>
-        public static Action<Dictionary<RailTrack, TrackIntersectionPoints>>? OnMapBuilt;
+        public static event Action<Dictionary<RailTrack, TrackIntersectionPoints>>? OnMapBuilt;
+        public static event Action<RailTrack>? OnTrackOccupiedManually;
+        public static event Action<RailTrack>? OnTrackClearedManually;
 
         /// <summary>
         /// Checks if a track is occupied by a train.
@@ -108,7 +111,7 @@ namespace Signals.Game.Railway
         /// <param name="crossingMode">The check behaviour if there are cached intersections for the track.</param>
         public static bool IsOccupied(RailTrack track, CrossingCheckMode crossingMode)
         {
-            if (track.HasBogies())
+            if (track.HasBogies() || s_occupied.Contains(track))
             {
                 return true;
             }
@@ -148,6 +151,12 @@ namespace Signals.Game.Railway
             return intersection.TestReservedByAnother(signal);
         }
 
+        internal static void ClearCache()
+        {
+            s_intersectionMap.Clear();
+            s_occupied.Clear();
+        }
+
         internal static void StartBuildingMap()
         {
             RailTrackRegistry.Instance.StartCoroutine(BuildRoutine());
@@ -157,8 +166,9 @@ namespace Signals.Game.Railway
         {
             SignalsMod.Log($"Started building intersection map...");
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            s_intersectionMap.Clear();
             var tracks = RailTrackRegistry.Instance.AllTracks;
+
+            ClearCache();
 
             int length = tracks.Length;
 
@@ -260,5 +270,23 @@ namespace Signals.Game.Railway
         {
             return RailTrack.GetClosest(t.position, 0, RailTrackRegistryBase.RailTracks.Where(x => BezierHelper.IsWithinBounds(t, x.curve)).ToList()).track;
         }
+
+        public static void MarkTrackAsOccupied(RailTrack track)
+        {
+            if (s_occupied.Add(track))
+            {
+                OnTrackOccupiedManually?.Invoke(track);
+            }
+        }
+
+        public static void ClearTrack(RailTrack track)
+        {
+            if (s_occupied.Remove(track))
+            {
+                OnTrackClearedManually?.Invoke(track);
+            }
+        }
+
+        public static HashSet<RailTrack> GetAllOccupiedTracks() => s_occupied.ToHashSet();
     }
 }

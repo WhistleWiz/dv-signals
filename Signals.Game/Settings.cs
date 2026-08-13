@@ -94,7 +94,7 @@ namespace Signals.Game
             GUI.enabled = true;
         }
 
-        private void RebuildKeys()
+        public void RebuildKeys()
         {
             var entries = NoCustomPack.ToList();
             entries.AddRange(SignalManager.InstalledPacks.Keys);

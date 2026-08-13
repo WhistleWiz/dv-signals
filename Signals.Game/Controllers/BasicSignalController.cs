@@ -539,10 +539,22 @@ namespace Signals.Game.Controllers
             foreach (var signal in AllSignals)
             {
                 // Update the reservation.
-                if (TrackReserver.HasReservation(signal) && blocksUpdated && !TrackReserver.UpdateReservation(signal))
+                if (TrackReserver.HasReservation(signal) && blocksUpdated)
                 {
-                    SignalsMod.Warning($"Could not update reservation for signal {signal.Id}, reservation cleared.");
-                    TrackReserver.ClearFromSignal(signal);
+                    // Update the reservation.
+                    if (TrackReserver.UpdateReservation(signal))
+                    {
+                        // If it's a multiplayer client, let the server handle it.
+                        if (!MultiplayerIntegration.IsMpRunning || MultiplayerIntegration.IsHost)
+                        {
+                            signal.AlignAllSwitches();
+                        }
+                    }
+                    else
+                    {
+                        SignalsMod.Warning($"Could not update reservation for signal {signal.Id}, reservation cleared.");
+                        TrackReserver.ClearFromSignal(signal);
+                    }
                 }
 
                 signal.UpdateAspect(forced);

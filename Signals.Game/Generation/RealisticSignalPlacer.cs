@@ -64,6 +64,22 @@ namespace Signals.Game.Generation
             var stationEnd = false;
             var stationCheck = false;
 
+            #region Double Track Mod Special Cases
+
+            // Actually skip this because we can use the regular code for this case, which will merge the signals.
+            // Should also allow for better guessing with station entrances and other locations.
+            //if (junction.IsFromDoubleTrackModCrossover())
+            //{
+            //    // Junction placement always has a definition.
+            //    var jplc = junction.IsLeft() ? GetPlacement(PrefabType.JunctionLeft) : GetPlacement(PrefabType.JunctionRight);
+            //    var ctrl = CreateSignalAtJunction(junction, jplc.Definition!, JunctionPlacementDistance);
+            //    var group = new JunctionSignalGroup(junction, ctrl);
+
+            //    FlipGroupSignals(group);
+
+            //    return group;
+            //}
+
             if (junction.IsFromDoubleTrackModStation())
             {
                 foreach (var branch in junction.outBranches)
@@ -94,19 +110,12 @@ namespace Signals.Game.Generation
 
                 var group = new JunctionSignalGroup(junction, null, CreateBranchSignalsOppositeDouble(junction, branchTrackKey, branchDistance));
 
-                foreach (var controller in group.AllControllers)
-                {
-                    if (!controller.PlacementInfo.HasValue) continue;
-
-                    var info = controller.PlacementInfo.Value;
-                    if (info.Track != TrackChecker.GetClosestTrack(controller.Definition.transform))
-                    {
-                        controller.FlipSide();
-                    }
-                }
+                FlipGroupSignals(group);
 
                 return group;
             }
+
+            #endregion
 
             // Check branches.
             foreach (var branch in junction.outBranches)
@@ -447,6 +456,20 @@ namespace Signals.Game.Generation
 
             //s_stationTracks.Add(track);
             //return true;
+        }
+
+        private static void FlipGroupSignals(JunctionSignalGroup group)
+        {
+            foreach (var controller in group.AllControllers)
+            {
+                if (!controller.PlacementInfo.HasValue) continue;
+
+                var info = controller.PlacementInfo.Value;
+                if (info.Track != TrackChecker.GetClosestTrack(controller.Definition.transform))
+                {
+                    controller.FlipSide();
+                }
+            }
         }
 
         private static List<TrackSignalController> CreateBranchSignals(Junction junction,

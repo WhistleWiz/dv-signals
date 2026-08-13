@@ -23,6 +23,8 @@ namespace Signals.MP
         private bool _lockOv = false;
         private bool _lockSh = false;
         private bool _lockRb = false;
+        private bool _lockOt = false;
+        private bool _lockCt = false;
 
         private void Awake()
         {
@@ -32,6 +34,8 @@ namespace Signals.MP
             _client.RegisterPacket<OverridePacket>(OverrideReceived);
             _client.RegisterPacket<ShuntingAllowedPacket>(ShuntingReceived);
             _client.RegisterPacket<RequiredBranchPacket>(RequiredBranchReceived);
+            _client.RegisterPacket<OccupyPacket>(OccupyReceived);
+            _client.RegisterPacket<UnoccupyPacket>(UnoccupyReceived);
             _client.RegisterPacket<ReservationSuccessPacket>(ReservationSuccessReceived);
             _client.RegisterPacket<ReservationFailurePacket>(ReservationFailureReceived);
             _client.RegisterPacket<ReservationCancelSuccessPacket>(ReservationCancelSuccessReceived);
@@ -40,6 +44,9 @@ namespace Signals.MP
             SignalManager.OverrideChanged += ChangeOverride;
             SignalManager.ShuntingAllowedChanged += ChangeShunting;
             SignalManager.RequiredBranchChanged += ChangeRequiredBranch;
+
+            TrackChecker.OnTrackOccupiedManually += OccupyTrack;
+            TrackChecker.OnTrackClearedManually += ClearTrack;
 
             Game.MultiplayerIntegration.SetRunningStatus(true);
 
@@ -106,6 +113,34 @@ namespace Signals.MP
             _lockRb = true;
             controller.ChangeRequiredBranch(packet.Branch);
             _lockRb = false;
+        }
+
+        private void OccupyReceived(OccupyPacket packet)
+        {
+            if (MultiplayerAPI.Instance.TryGetObjectFromNetId(packet.RailNetId, out RailTrack track))
+            {
+                _lockOt = true;
+                TrackChecker.MarkTrackAsOccupied(track);
+                _lockOt = false;
+            }
+            else
+            {
+                SignalsMod.ErrorMP($"Received OccupyPacket, but could not get RailTrack with ID {packet.RailNetId}!");
+            }
+        }
+
+        private void UnoccupyReceived(UnoccupyPacket packet)
+        {
+            if (MultiplayerAPI.Instance.TryGetObjectFromNetId(packet.RailNetId, out RailTrack track))
+            {
+                _lockCt = true;
+                TrackChecker.ClearTrack(track);
+                _lockCt = false;
+            }
+            else
+            {
+                SignalsMod.ErrorMP($"Received UnoccupyPacket, but could not get RailTrack with ID {packet.RailNetId}!");
+            }
         }
 
         private void ReservationSuccessReceived(ReservationSuccessPacket packet)
@@ -176,6 +211,20 @@ namespace Signals.MP
             if (_lockRb) return;
 
             _client.SendPacketToServer(RequiredBranchPacket.FromController(controller));
+        }
+
+        private void OccupyTrack(RailTrack track)
+        {
+            if (_lockOt) return;
+
+            _client.SendPacketToServer(OccupyPacket.FromTrack(track));
+        }
+
+        private void ClearTrack(RailTrack track)
+        {
+            if (_lockCt) return;
+
+            _client.SendPacketToServer(UnoccupyPacket.FromTrack(track));
         }
 
         private static void PrintError(string name, int signalId)
