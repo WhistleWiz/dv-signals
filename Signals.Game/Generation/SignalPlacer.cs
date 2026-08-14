@@ -86,7 +86,7 @@ namespace Signals.Game.Generation
 
         public static bool IsLogicYardTrack(RailTrack track)
         {
-            return !track.GetId().IsGeneric();
+            return track.IsLogicYardTrack();
         }
 
         public static bool IsShortDeadEnd(RailTrack track)

@@ -101,6 +101,11 @@ namespace Signals.Game
             return track.name.StartsWith(NoSign);
         }
 
+        public static bool IsLogicYardTrack(this RailTrack track)
+        {
+            return !track.GetId().IsGeneric();
+        }
+
         public static bool IsPartOfStation(this RailTrack track)
         {
             return track.IsPartOfYard() || track.IsNonSign();

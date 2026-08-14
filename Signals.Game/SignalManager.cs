@@ -155,6 +155,13 @@ namespace Signals.Game
                     }
                     else
                     {
+                        if (new Version(pack.ExporterVersion) < Constants.MinimumVersion)
+                        {
+                            SignalsMod.Log($"Failed to load signal pack from {mod.Info.Id}: " +
+                                $"export version is {pack.ExporterVersion}, required is {Constants.MinimumVersion}");
+                            continue;
+                        }
+
                         InstalledPacks.Add(mod.Info.Id, pack);
                         SignalsMod.Log($"Loaded signal pack from {mod.Info.Id}");
                     }

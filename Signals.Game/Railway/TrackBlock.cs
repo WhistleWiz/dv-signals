@@ -235,6 +235,12 @@ namespace Signals.Game.Railway
             return Tracks.Any(x => x.Track.IsOccupied(crossingMode)) || ExtraTracks.Any(x => x.IsOccupied(crossingMode));
         }
 
+        public bool IsOccupiedIgnoreLogic(CrossingCheckMode crossingMode)
+        {
+            return Tracks.Any(x => !x.Track.IsLogicYardTrack() && x.Track.IsOccupied(crossingMode)) ||
+                ExtraTracks.Any(x => !x.IsLogicYardTrack() && x.IsOccupied(crossingMode));
+        }
+
         public void FlagAsDirty()
         {
             _dirty = true;

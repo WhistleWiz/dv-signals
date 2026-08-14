@@ -368,5 +368,8 @@ namespace Signals.Common
         public bool HasAnyRepeaterSignal => RepeaterSignal != null || OldRepeaterSignal != null;
         public bool HasAnyTurntableSignal => TurntableSignal != null || OldTurntableSignal != null;
         public bool HasAnyBufferStopSignal => BufferStopSignal != null || OldBufferStopSignal != null;
+
+        [HideInInspector]
+        public string ExporterVersion = "1.0.0";
     }
 }

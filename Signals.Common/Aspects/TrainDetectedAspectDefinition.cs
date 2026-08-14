@@ -11,6 +11,8 @@ namespace Signals.Common.Aspects
             " • Whole Track: anything detected on any track intersecting at the crossing\n" +
             " • Intersection Only: ignores other tracks except on the intersection itself")]
         public CrossingCheckMode CrossingCheckMode;
+        [Tooltip("Ignores trains on logic tracks")]
+        public bool IgnoreLogicTracks = false;
 
         private void Reset()
         {

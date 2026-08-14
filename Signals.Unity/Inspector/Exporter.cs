@@ -334,6 +334,8 @@ namespace Signals.Unity.Inspector
 
         private static string Export(SignalPack pack)
         {
+            pack.ExporterVersion = Constants.ExporterVersion.ToString();
+
             using var memoryStream = new MemoryStream();
             var fileName = pack.ModId;
             var path = AssetBundleHelper.GetFullPath(pack);

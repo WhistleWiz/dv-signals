@@ -10,7 +10,9 @@ namespace Signals.Game.Aspects
         {
             var block = Block;
 
-            return block != null && block.IsOccupied(Definition.CrossingCheckMode);
+            return block != null && (Definition.IgnoreLogicTracks ?
+                block.IsOccupiedIgnoreLogic(Definition.CrossingCheckMode) :
+                block.IsOccupied(Definition.CrossingCheckMode));
         }
     }
 }
