@@ -63,40 +63,35 @@ namespace Signals.Game.Generation
             var deadCheck = false;
             var stationEnd = false;
             var stationCheck = false;
+            var flipFlag = false;
 
             #region Double Track Mod Special Cases
 
-            // Actually skip this because we can use the regular code for this case, which will merge the signals.
-            // Should also allow for better guessing with station entrances and other locations.
-            //if (junction.IsFromDoubleTrackModCrossover())
-            //{
-            //    // Junction placement always has a definition.
-            //    var jplc = junction.IsLeft() ? GetPlacement(PrefabType.JunctionLeft) : GetPlacement(PrefabType.JunctionRight);
-            //    var ctrl = CreateSignalAtJunction(junction, jplc.Definition!, JunctionPlacementDistance);
-            //    var group = new JunctionSignalGroup(junction, ctrl);
-
-            //    FlipGroupSignals(group);
-
-            //    return group;
-            //}
+            // We use the regular code for this case, but mark it as flippable.
+            if (junction.IsFromDoubleTrackModCrossover())
+            {
+                flipFlag = true;
+            }
 
             if (junction.IsFromDoubleTrackModStation())
             {
-                foreach (var branch in junction.outBranches)
-                {
-                    if (IsBranchOutNull(branch)) continue;
+                flipFlag = true;
 
-                    var track = branch.track.outBranch.track;
-                    branchTrackKey.Add(track, ShuntingOrSpacing(track, false));
-                }
+                //foreach (var branch in junction.outBranches)
+                //{
+                //    if (IsBranchOutNull(branch)) continue;
 
-                var jplc = ShuntingOrSpacing(inTrack, IsLogicYardTrack(inTrack));
+                //    var track = branch.track.outBranch.track;
+                //    branchTrackKey.Add(track, ShuntingOrSpacing(track, false));
+                //}
 
-                if (jplc.Definition == null) return WithoutJunction();
+                //var jplc = ShuntingOrSpacing(inTrack, IsLogicYardTrack(inTrack));
 
-                var ctrl = CreateSignalAtJunction(junction, jplc.Definition, JunctionPlacementDistance);
-                jplc.Apply(ctrl);
-                return new JunctionSignalGroup(junction, ctrl, CreateBranchSignals(junction, branchTrackKey, branchDistance));
+                //if (jplc.Definition == null) return WithoutJunction();
+
+                //var ctrl = CreateSignalAtJunction(junction, jplc.Definition, JunctionPlacementDistance);
+                //jplc.Apply(ctrl);
+                //return new JunctionSignalGroup(junction, ctrl, CreateBranchSignals(junction, branchTrackKey, branchDistance));
             }
 
             if (junction.IsFromDoubleTrackMod())
@@ -105,7 +100,11 @@ namespace Signals.Game.Generation
                 {
                     if (IsBranchOutNull(branch)) continue;
 
-                    branchTrackKey.Add(branch.track.outBranch.track, GetPlacement(branch.IsThroughTrack() ? PrefabType.Mainline : PrefabType.Diverging));
+                    var track = branch.track.outBranch.track;
+                    // No signals on DT derails.
+                    if (track.name.StartsWith("Derail-")) continue;
+
+                    branchTrackKey.Add(track, GetPlacement(branch.IsThroughTrack() ? PrefabType.Mainline : PrefabType.Diverging));
                 }
 
                 var group = new JunctionSignalGroup(junction, null, CreateBranchSignalsOppositeDouble(junction, branchTrackKey, branchDistance));
@@ -123,6 +122,10 @@ namespace Signals.Game.Generation
                 if (IsBranchOutNull(branch)) continue;
 
                 var track = branch.track.outBranch.track;
+
+                // No signals on DT derails.
+                if (track.name.StartsWith("Derail-")) continue;
+
                 deadCheck = false;
                 stationCheck = false;
 
@@ -305,8 +308,16 @@ namespace Signals.Game.Generation
                 isMain ? LongJunctionPlacementDistance : JunctionPlacementDistance);
             junctionSignal.Apply(junctionController);
 
-            return new JunctionSignalGroup(junction, junctionController,
+            var result = new JunctionSignalGroup(junction, junctionController,
                 CreateBranchSignals(junction, branchTrackKey, branchDistance));
+
+            if (flipFlag)
+            {
+                FlipGroupSignals(result);
+                FlipGroupSignals(result);
+            }
+
+            return result;
 
             PlacementHelper GetPlacement(PrefabType prefabType)
             {

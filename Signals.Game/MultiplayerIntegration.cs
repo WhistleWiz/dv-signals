@@ -32,7 +32,7 @@ namespace Signals.Game
             }
         }
 
-        public static bool MpPresent => MpMod != null;
+        public static bool IsMpPresent => MpMod != null;
         public static bool IsMpActive => MpMod != null && MpMod.Active;
         public static bool IsMpRunning => IsMpActive && s_running;
         public static bool IsHost => s_host;
@@ -42,7 +42,7 @@ namespace Signals.Game
 
         public static void Initialise(ModEntry modEntry)
         {
-            if (!MpPresent) return;
+            if (!IsMpActive) return;
 
             try
             {

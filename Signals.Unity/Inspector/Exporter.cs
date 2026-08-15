@@ -83,6 +83,17 @@ namespace Signals.Unity.Inspector
             public static float TextSize(string text) => EditorStyles.label.CalcSize(new GUIContent(text)).x + Padding;
         }
 
+        private class NameTestStrings
+        {
+            public static readonly string[] Entry = new[] { "1234", "HB", "1", "A" };
+            public static readonly string[] Exit = new[] { "1234", "CW", "3", "C", "8", "H" };
+            public static readonly string[] Station = new[] { "1234", "MF", "4", "D" };
+            public static readonly string[] TrackMainline = new[] { "1234", "17", "9", "I" };
+            public static readonly string[] DistantRepeater = new[] { "HOME", "1234" };
+            public static readonly string[] SubDistant = new[] { "PARENT" };
+            public static readonly string[] Fallback = new[] { "1234" };
+        }
+
         public static void Open(SignalPack pack)
         {
             var window = GetWindow<Exporter>();
@@ -121,6 +132,11 @@ namespace Signals.Unity.Inspector
                 if (!otherReached && result.Name.StartsWith("Other"))
                 {
                     otherReached = true;
+                    EditorHelper.DrawSeparator();
+                }
+
+                if (result.Name == "Pack")
+                {
                     EditorHelper.DrawSeparator();
                 }
 
@@ -264,6 +280,8 @@ namespace Signals.Unity.Inspector
                 ValidateController(_pack.OtherSignals[i], $"Other {i}");
             }
 
+            ValidatePack(_pack);
+
         Widths:
 
             _widths.Reset();
@@ -330,6 +348,51 @@ namespace Signals.Unity.Inspector
             yield return new AspectValidator();
             yield return new DisplayValidator();
             yield return new ComponentsValidator();
+        }
+
+        private void ValidatePack(SignalPack pack)
+        {
+            var results = new SignalResults("Pack");
+            _results.Add(results);
+
+            ValidateNaming("Entry Format", pack.EntryFormat, NameTestStrings.Entry);
+            ValidateNaming("Exit Format", pack.ExitFormat, NameTestStrings.Exit);
+            ValidateNaming("Generic Station Format", pack.GenericStationFormat, NameTestStrings.Station);
+            ValidateNaming("Track Format", pack.TrackFormat, NameTestStrings.TrackMainline);
+            ValidateNaming("Mainline Format", pack.MainlineFormat, NameTestStrings.TrackMainline);
+            ValidateNaming("Distant Format", pack.DistantFormat, NameTestStrings.DistantRepeater);
+            ValidateNaming("Repeater Format", pack.RepeaterFormat, NameTestStrings.DistantRepeater);
+            ValidateNaming("Sub Distant Format", pack.SubDistantFormat, NameTestStrings.SubDistant);
+            ValidateNaming("Fallback Format", pack.FallbackFormat, NameTestStrings.Fallback);
+
+            if (results.Results.Count == 0)
+            {
+                var result = new Result("Naming Conventions");
+                results.Results.Add(result);
+            }
+
+            void ValidateNaming(string name, string format, string[] check)
+            {
+                if (!ValidateStringFormat(format, check))
+                {
+                    var result = new Result(name);
+                    result.AddFailure($"format string is not valid (index must be greater than or equal to 0 and less than {check.Length})");
+                    results.Results.Add(result);
+                }
+            }
+        }
+
+        private bool ValidateStringFormat(string format, string[] check)
+        {
+            try
+            {
+                string.Format(format, check);
+                return true;
+            }
+            catch (System.Exception)
+            {
+                return false;
+            }
         }
 
         private static string Export(SignalPack pack)

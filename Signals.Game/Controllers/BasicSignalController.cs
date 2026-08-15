@@ -341,6 +341,10 @@ namespace Signals.Game.Controllers
                 {
                     // Get the track numbers.
                     var numbers = new string(PlacementInfo.Value.Track.name.Where(char.IsDigit).ToArray());
+
+                    // Emergency fallback in case a track is somehow missing numbers.
+                    if (string.IsNullOrEmpty(numbers)) numbers = "99";
+
                     text = ApplyFormat(Type == SignalType.Mainline ? pack.MainlineFormat : pack.TrackFormat, Id, numbers, index);
                     goto End;
                 }
