@@ -107,11 +107,12 @@ namespace Signals.Game.Generation
                     branchTrackKey.Add(track, GetPlacement(branch.IsThroughTrack() ? PrefabType.Mainline : PrefabType.Diverging));
                 }
 
-                var group = new JunctionSignalGroup(junction, null, CreateBranchSignalsOppositeDouble(junction, branchTrackKey, branchDistance));
+                var dtGroup = new JunctionSignalGroup(junction, null, CreateBranchSignalsOppositeDouble(junction, branchTrackKey, branchDistance));
 
-                FlipGroupSignals(group);
+                FlipGroupSignals(dtGroup);
+                FlipGroupSignals(dtGroup);
 
-                return group;
+                return dtGroup;
             }
 
             #endregion
@@ -308,16 +309,16 @@ namespace Signals.Game.Generation
                 isMain ? LongJunctionPlacementDistance : JunctionPlacementDistance);
             junctionSignal.Apply(junctionController);
 
-            var result = new JunctionSignalGroup(junction, junctionController,
+            var group = new JunctionSignalGroup(junction, junctionController,
                 CreateBranchSignals(junction, branchTrackKey, branchDistance));
 
             if (flipFlag)
             {
-                FlipGroupSignals(result);
-                FlipGroupSignals(result);
+                FlipGroupSignals(group);
+                FlipGroupSignals(group);
             }
 
-            return result;
+            return group;
 
             PlacementHelper GetPlacement(PrefabType prefabType)
             {
@@ -536,9 +537,9 @@ namespace Signals.Game.Generation
                 var index = kpSet.GetPointIndexForSpan(tSpan);
                 var point = kpSet.points[index];
 
-                var placement = new SignalPlacementInfo(track, tDirT, index, tSpan);
-                var signal = InstantiateFromDef(helper.Definition, point.position, tDirT.IsOut() ? point.forward : -point.forward,
-                    helper.Definition.Offset > 0 ? i == 0 : i != 0, track);
+                var opposite = helper.Definition.Offset > 0 ? i == 0 : i != 0;
+                var placement = new SignalPlacementInfo(track, tDirT, index, tSpan, opposite);
+                var signal = InstantiateFromDef(helper.Definition, point.position, tDirT.IsOut() ? point.forward : -point.forward, opposite, track);
                 var controller = new TrackSignalController(signal, branch.track, TrackDirection.In, placement);
 
                 helper.Apply(controller);

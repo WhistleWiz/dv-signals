@@ -168,7 +168,7 @@ namespace Signals.Game.Generation
             Vector3d position, Vector3 direction, bool opposite, RailTrack track)
         {
             var go = Object.Instantiate(definition, (Vector3)position, Helpers.FlattenLook(direction), track.transform);
-            go.transform.position += go.transform.right * (opposite ? -definition.Offset : definition.Offset);
+            go.transform.position += Vector3.Cross(Vector3.up, go.transform.forward) * (opposite ? -definition.Offset : definition.Offset);
 
             if (opposite && definition.FlipPrefabWhenInOppositeSide)
             {

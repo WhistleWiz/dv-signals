@@ -425,9 +425,9 @@ namespace Signals.Game.Controllers
             var p = PlacementInfo.Value;
             var t = Definition.transform;
 
-            t.position += t.right * Definition.Offset * (p.OppositeSide ? 2 : -2);
+            t.position += Vector3.Cross(Vector3.up, t.forward) * Definition.Offset * (p.OppositeSide ? 2 : -2);
 
-            if (p.OppositeSide && Definition.FlipPrefabWhenInOppositeSide)
+            if (Definition.FlipPrefabWhenInOppositeSide)
             {
                 var scale = t.localScale;
                 t.localScale = new Vector3(-scale.x, scale.y, scale.z);
@@ -439,8 +439,7 @@ namespace Signals.Game.Controllers
                 }
             }
 
-            p.OppositeSide = !p.OppositeSide;
-            PlacementInfo = p;
+            PlacementInfo = p.GetFlipped();
 
             UpdateTracksideObjects();
         }
