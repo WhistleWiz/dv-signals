@@ -194,7 +194,7 @@ namespace Signals.Game.Curves
         public static bool IsWithinBounds(Transform t, BezierCurve curve)
         {
             var bounds = GetBounds(curve);
-            bounds.Expand(4);
+            bounds.Expand(10);
             return bounds.Contains(t.position);
         }
     }
