@@ -428,21 +428,30 @@ namespace Signals.Game
         {
             if (Block == null) return;
 
+            var set = new HashSet<Junction>();
+
             foreach (var track in Block.Tracks)
             {
                 var junction = track.Track.inJunction;
 
-                if (track.IsJunctionTrack && track.Direction == TrackDirection.In &&
-                    junction.GetCurrentBranch().track != track.Track)
+                if (track.IsJunctionTrack)
                 {
-                    byte branch;
+                    // Prevent switching the same switch multiple times.
+                    if (set.Contains(junction)) continue;
 
-                    for (branch = 0; branch < junction.outBranches.Count; branch++)
+                    if (track.Direction == TrackDirection.In && junction.GetCurrentBranch().track != track.Track)
                     {
-                        if (junction.outBranches[branch].track == track.Track) break;
+                        byte branch;
+
+                        for (branch = 0; branch < junction.outBranches.Count; branch++)
+                        {
+                            if (junction.outBranches[branch].track == track.Track) break;
+                        }
+
+                        junction.Switch(Junction.SwitchMode.REGULAR, branch);
                     }
 
-                    junction.Switch(Junction.SwitchMode.REGULAR, branch);
+                    set.Add(junction);
                 }
             }
         }

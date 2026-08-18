@@ -1,5 +1,6 @@
 ﻿using Signals.Common.Aspects;
 using Signals.Game.Railway;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Signals.Game.Aspects
@@ -14,18 +15,24 @@ namespace Signals.Game.Aspects
 
             if (block == null) return false;
 
-            return block.Tracks.Any(x => CheckTrack(x, Definition.Invert));
+            var set = new HashSet<Junction>();
 
-            static bool CheckTrack(TrackInfo track, bool invert)
+            return block.Tracks.Any(CheckTrack);
+
+            bool CheckTrack(TrackInfo track)
             {
                 if (!track.IsJunctionTrack) return false;
 
                 var junction = track.Track.inJunction;
 
+                if (set.Contains(junction)) return false;
+
+                set.Add(junction);
+
                 // If the direction of the track is pointing out, then we can't be against it.
                 if (track.Direction.IsOut()) return false;
 
-                return ApplyInvert(junction.GetCurrentBranch().track == track.Track, invert);
+                return ApplyInvert(junction.GetCurrentBranch().track == track.Track, Definition.Invert);
             }
         }
     }
