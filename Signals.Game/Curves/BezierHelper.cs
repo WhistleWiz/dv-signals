@@ -9,7 +9,6 @@ namespace Signals.Game.Curves
         private const float AproxStep = 0.02f;
 
         private static readonly Dictionary<BezierCurve, Bounds> s_boundCache = new Dictionary<BezierCurve, Bounds>();
-        private static readonly Vector3 s_misalignedFix = Vector3.up * 0.5f;
 
         internal static void ClearCache()
         {
@@ -59,26 +58,30 @@ namespace Signals.Game.Curves
 
         private static Bounds CreateBounds(BezierCurve c)
         {
-            var list = new List<Vector3> { c[0].position };
+            var bounds = new Bounds(c[0].position, Vector3.zero);
 
             for (int i = 1; i < c.pointCount; i++)
             {
-                list.Add(c[i - 1].globalHandle2);
-                list.Add(c[i].globalHandle1);
-                list.Add(c[i].position);
+                bounds.Encapsulate(c[i - 1].globalHandle2);
+                bounds.Encapsulate(c[i].globalHandle1);
+                bounds.Encapsulate(c[i].position);
             }
 
-            return Helpers.AABBFromCollection(list);
+            return VerticalFix(bounds);
         }
 
-        public static bool Intersects(CubicBezier c1,  CubicBezier c2, float precision, out Vector3 result)
+        private static Bounds VerticalFix(Bounds bounds)
         {
-            Bounds b1 = c1.GetBounds();
-            Bounds b2 = c2.GetBounds();
+            var extents = bounds.extents;
+            extents.y += 0.25f;
+            bounds.extents = extents;
+            return bounds;
+        }
 
-            // Vertical margin for misaligned tracks.
-            b1.Encapsulate(c1.P0 + s_misalignedFix);
-            b2.Encapsulate(c2.P0 + s_misalignedFix);
+        public static bool Intersects(CubicBezier c1, CubicBezier c2, float precision, out Vector3 result)
+        {
+            Bounds b1 = VerticalFix(c1.GetBounds());
+            Bounds b2 = VerticalFix(c2.GetBounds());
 
             if (!b1.Intersects(b2))
             {
@@ -122,7 +125,7 @@ namespace Signals.Game.Curves
             results[0].P0 = curve.P0;
             results[0].P1 = curve.P0 + (curve.P1 - curve.P0) * f;
             results[0].P2 = results[0].P1 + (mid - results[0].P1) * f;
-            results[0].P3 = BezierCurve.GetCubicCurvePoint(curve.P0, curve.P1, curve.P2, curve.P3, f);
+            results[0].P3 = curve.Evaluate(f);
 
             results[1].P3 = curve.P3;
             results[1].P2 = curve.P3 + (curve.P2 - curve.P3) * f;

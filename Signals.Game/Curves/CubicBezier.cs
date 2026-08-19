@@ -43,6 +43,12 @@ namespace Signals.Game.Curves
             yield return P3;
         }
 
+        public Vector3 Evaluate(float t)
+        {
+            float tInv = 1.0f - t;
+            return tInv * tInv * tInv * P0 + 3 * tInv * tInv * t * P1 + 3 * tInv * t * t * P2 + t * t * t * P3;
+        }
+
         public Vector3 Derivative(float t)
         {
             float tInv = 1.0f - t;
