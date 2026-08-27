@@ -87,6 +87,14 @@ namespace Signals.MP
             {
                 _lockOv = true;
                 signal.SetAspectOverride(packet.Aspect);
+                // The override alone only records the forced aspect; the signal's
+                // display only re-lights when the aspect is actually changed. Remote
+                // clients must force it here because Signal.UpdateAspect skips
+                // aspect selection entirely for FullManual signals, so a received
+                // override would otherwise never appear in-game.
+                var changed = signal.ChangeAspect(packet.Aspect);
+                signal.UpdateDisplays(changed);
+                signal.UpdateIndicators();
                 _lockOv = false;
             }
         }
