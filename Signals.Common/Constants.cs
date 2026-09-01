@@ -7,7 +7,7 @@ namespace Signals.Common
         public const string MainModId = "DVSignals";
         public const string Bundle = "signal_bundle";
         public const string ModInfo = "Info.json";
-        public static readonly Version ExporterVersion = new Version(1, 1, 0);
+        public static readonly Version ExporterVersion = new Version(1, 1, 2);
         public static readonly Version MinimumVersion = new Version(1, 0, 0);
     }
 }
