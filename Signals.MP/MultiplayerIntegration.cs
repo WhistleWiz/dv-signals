@@ -19,12 +19,15 @@ namespace Signals.MP
         {
             if (MultiplayerAPI.Instance.IsHost)
             {
-                var pack = SignalsMod.Settings.CustomPack;
+                // Unfortunately this seems to make the mods incompatible between host and client,
+                // even if they're exactly the same.
+                // So no way to force the pack to be required on clients.
+                //var pack = SignalsMod.Settings.CustomPack;
 
-                if (!string.IsNullOrEmpty(pack))
-                {
-                    MultiplayerAPI.Instance.SetModCompatibility(pack, MultiplayerCompatibility.All);
-                }
+                //if (!string.IsNullOrEmpty(pack))
+                //{
+                //    MultiplayerAPI.Instance.SetModCompatibility(pack, MultiplayerCompatibility.All);
+                //}
 
                 manager.gameObject.AddComponent<ServerManager>();
             }

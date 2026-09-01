@@ -41,7 +41,7 @@ namespace Signals.Game.Controllers
 
         private void UpdateFromHome(Signal signal, IAspect? aspect) => Update(true, false);
 
-        public override BasicSignalController? GetNextController()
+        public override BasicSignalController? GetNextController(bool shunting)
         {
             return Home;
         }

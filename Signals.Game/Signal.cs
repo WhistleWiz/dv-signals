@@ -341,10 +341,11 @@ namespace Signals.Game
 
         public void UpdateAspect(bool forced)
         {
-            bool changed = false;
+            bool changed;
 
             if (Operation.IsFullyManual())
             {
+                changed = ChangeAspect(ManualOverrideAspect);
                 goto Finalise;
             }
 
@@ -384,8 +385,6 @@ namespace Signals.Game
             {
                 item.CheckAndUpdate(aspectChanged);
             }
-
-            UpdateHoverDisplay();
 
             DisplaysUpdated?.Invoke(AllDisplays);
         }
@@ -488,6 +487,7 @@ namespace Signals.Game
 
             _operation = mode;
             OperationModeChanged?.Invoke(mode);
+            SignalManager.OperationModeChanged?.Invoke(this, mode);
             return true;
         }
 
@@ -517,6 +517,7 @@ namespace Signals.Game
             var changed = ChangeAspect(target);
             UpdateDisplays(changed);
             UpdateIndicators();
+            UpdateHoverDisplay();
 
             return changed;
         }
@@ -547,6 +548,7 @@ namespace Signals.Game
             var changed = ChangeAspect(target);
             UpdateDisplays(changed);
             UpdateIndicators();
+            UpdateHoverDisplay();
 
             return changed;
         }
@@ -573,7 +575,6 @@ namespace Signals.Game
             var visited = new HashSet<BasicSignalController> { Controller };
             var safety = 0;
 
-
             while (controller != null)
             {
                 if (visited.Contains(controller)) return null;
@@ -590,7 +591,7 @@ namespace Signals.Game
                     return null;
                 }
 
-                controller = controller.GetNextController();
+                controller = controller.GetNextController(true);
             }
 
             return null;

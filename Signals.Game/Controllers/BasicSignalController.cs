@@ -565,7 +565,7 @@ namespace Signals.Game.Controllers
 
             // Request the next signal to be updated to propagate out of range.
             UpdateRequested = Mathf.Max(UpdateRequested - 1, 0);
-            GetNextController()?.RequestUpdate(startPropagate ? UpdatePropagation : UpdateRequested);
+            GetNextController(true)?.RequestUpdate(startPropagate ? UpdatePropagation : UpdateRequested);
         }
 
         /// <summary>
@@ -592,20 +592,23 @@ namespace Signals.Game.Controllers
             SignalManager.RequiredBranchChanged?.Invoke(this, index);
         }
 
-        public virtual Signal? GetActiveSignal()
+        public virtual Signal? GetActiveSignal(bool shunting)
         {
-            return Signals.Length > 0 ? Signals[0] : null;
+            var signals = shunting ? ShuntingSignals : Signals;
+            return signals.Length > 0 ? signals[0] : null;
         }
 
-        public Signal? GetMostRestrictiveSignal()
+        public Signal? GetMostRestrictiveSignal(bool shunting)
         {
-            if (Signals.Length == 0) return null;
+            var signals = shunting ? ShuntingSignals : Signals;
 
-            var signal = Signals[0];
+            if (signals.Length == 0) return null;
 
-            for (int i = 1; i < Signals.Length; i++)
+            var signal = signals[0];
+
+            for (int i = 1; i < signals.Length; i++)
             {
-                var test = Signals[i];
+                var test = signals[i];
 
                 if (test.IsOff) continue;
 
@@ -618,19 +621,19 @@ namespace Signals.Game.Controllers
             return signal;
         }
 
-        public Signal? GetControllerSignal() => Definition.Mode switch
+        public Signal? GetControllerSignal(bool shunting) => Definition.Mode switch
         {
-            ControllerMode.MostRestrictive => GetMostRestrictiveSignal(),
-            _ => GetActiveSignal(),
+            ControllerMode.MostRestrictive => GetMostRestrictiveSignal(shunting),
+            _ => GetActiveSignal(shunting),
         };
 
         /// <summary>
         /// Gets the next controller from the active signal.
         /// </summary>
         /// <returns>The next</returns>
-        public virtual BasicSignalController? GetNextController()
+        public virtual BasicSignalController? GetNextController(bool shunting)
         {
-            var signal = GetControllerSignal();
+            var signal = GetControllerSignal(shunting);
 
             if (signal == null) return null;
 
@@ -642,9 +645,9 @@ namespace Signals.Game.Controllers
         /// </summary>
         /// <param name="condition">The condition a signal must meet.</param>
         /// <returns></returns>
-        public virtual BasicSignalController? GetNextControllerCondition(Predicate<BasicSignalController> condition)
+        public virtual BasicSignalController? GetNextControllerCondition(Predicate<BasicSignalController> condition, bool shunting)
         {
-            var signal = GetControllerSignal();
+            var signal = GetControllerSignal(shunting);
 
             if (signal == null) return null;
 
