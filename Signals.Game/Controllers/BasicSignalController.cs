@@ -539,6 +539,9 @@ namespace Signals.Game.Controllers
         {
             var blocksUpdated = UpdateBlocks();
 
+            // Request the next signal to be updated to propagate out of range.
+            UpdateRequested = Mathf.Max(UpdateRequested - 1, 0);
+
             foreach (var signal in AllSignals)
             {
                 // Update the reservation.
@@ -561,11 +564,8 @@ namespace Signals.Game.Controllers
                 }
 
                 signal.UpdateAspect(forced);
+                signal.GetNextController()?.RequestUpdate(startPropagate ? UpdatePropagation : UpdateRequested);
             }
-
-            // Request the next signal to be updated to propagate out of range.
-            UpdateRequested = Mathf.Max(UpdateRequested - 1, 0);
-            GetNextController(true)?.RequestUpdate(startPropagate ? UpdatePropagation : UpdateRequested);
         }
 
         /// <summary>
