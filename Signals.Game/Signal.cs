@@ -328,6 +328,11 @@ namespace Signals.Game
 
             CurrentAspect?.Unapply();
 
+            foreach (var item in AllLights)
+            {
+                item.TurnOff();
+            }
+
             var aspect = AllAspects[newAspect];
             SignalsMod.LogVerbose($"Setting signal '{Name}' to aspect '{aspect.Id}'");
             aspect.Apply();
