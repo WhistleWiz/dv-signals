@@ -596,7 +596,7 @@ namespace Signals.Game
                     return null;
                 }
 
-                controller = controller.GetNextController(true);
+                controller = controller.GetNextController();
             }
 
             return null;

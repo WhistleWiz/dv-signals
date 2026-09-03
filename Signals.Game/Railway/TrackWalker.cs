@@ -33,13 +33,13 @@ namespace Signals.Game.Railway
         {
             return controller.Type != SignalType.Shunting &&
                 controller.Type != SignalType.Spacing &&
-                controller.GetControllerSignal(false) != null;
+                controller.GetControllerSignal() != null;
         }
 
         private static bool HasMainOrSpacingSignal(BasicSignalController controller)
         {
             return controller.Type != SignalType.Shunting &&
-                controller.GetControllerSignal(false) != null;
+                controller.GetControllerSignal() != null;
         }
 
         private static bool Any(BasicSignalController controller) => controller.Signals.Length > 0 || controller.ShuntingSignals.Length > 0;

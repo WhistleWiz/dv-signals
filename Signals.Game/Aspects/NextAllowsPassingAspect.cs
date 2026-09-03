@@ -12,7 +12,7 @@ namespace Signals.Game.Aspects
 
             if (next == null) return Definition.NoAspectResult;
 
-            var signal = next.GetControllerSignal(Definition.Shunting);
+            var signal = Definition.Shunting ? next.GetControllerShuntingSignal() : next.GetControllerSignal();
 
             if (signal == null) return Definition.NoAspectResult;
 
