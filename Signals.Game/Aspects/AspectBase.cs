@@ -28,6 +28,7 @@ namespace Signals.Game.Aspects
     public abstract class AspectBase<T> : IAspect
         where T : AspectBaseDefinition
     {
+        private bool _applied = false;
         private Coroutine? _sync;
         private SignalLight[] _on;
         private SignalLight[] _blink;
@@ -78,6 +79,8 @@ namespace Signals.Game.Aspects
         /// </remarks>
         public virtual void Apply()
         {
+            _applied = true;
+
             if (Signal.Definition.SynchroniseLamps && CheckLamps())
             {
                 Signal.Definition.StartCoroutine(SynchoniseLamps());
@@ -117,6 +120,8 @@ namespace Signals.Game.Aspects
         /// </remarks>
         public virtual void Unapply()
         {
+            _applied = false;
+
             if (_sync != null)
             {
                 Signal.Definition.StopCoroutine(_sync);
@@ -164,15 +169,9 @@ namespace Signals.Game.Aspects
 
         private System.Collections.IEnumerator SynchoniseLamps()
         {
-            while (true)
+            while (CheckLamps())
             {
-                if (CheckLamps())
-                {
-                    yield return null;
-                    continue;
-                }
-
-                break;
+                yield return null;
             }
 
             ApplyBlinkingLamps();
@@ -186,6 +185,8 @@ namespace Signals.Game.Aspects
 
         private void ApplyBlinkingLamps()
         {
+            if (!_applied) return;
+
             foreach (SignalLight light in _blink)
             {
                 light.TurnOn(true);

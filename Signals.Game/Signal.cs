@@ -103,7 +103,7 @@ namespace Signals.Game
         public Signal? Parent { get; set; }
         public Signal? DistantSignal { get; private set; }
         public int CurrentAspectIndex { get; private set; }
-        public bool IsShunting { get; private set; }
+        public bool IsShunting { get; internal set; }
 
         // Getters only.
         public IAspect? CurrentAspect => IsOn ? AllAspects[CurrentAspectIndex] : null;

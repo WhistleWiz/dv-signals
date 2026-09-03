@@ -30,6 +30,11 @@ namespace Signals.Game.Generation
                 controller.IsOld = Old;
                 controller.PrefabType = PrefabType;
                 controller.Type = SignalType;
+
+                if (SignalType == SignalType.Spacing)
+                {
+                    controller.SetMainSignalsToShunting();
+                }
             }
         }
 

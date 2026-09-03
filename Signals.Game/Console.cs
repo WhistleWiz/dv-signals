@@ -75,7 +75,7 @@ namespace Signals.Game
                 return;
             }
 
-            if (SignalManager.Instance.TryGetSignal(args[0].Int, out var signal))
+            if (!SignalManager.Instance.TryGetSignal(args[0].Int, out var signal))
             {
                 Debug.LogError($"Could not find signal with ID '{args[0]}'");
                 return;
@@ -128,7 +128,7 @@ namespace Signals.Game
                 return;
             }
 
-            if (SignalManager.Instance.TryGetSignal(args[0].Int, out var signal))
+            if (!SignalManager.Instance.TryGetSignal(args[0].Int, out var signal))
             {
                 Debug.LogError($"Could not find signal with ID '{args[0]}'");
                 return;

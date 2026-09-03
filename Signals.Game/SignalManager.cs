@@ -130,6 +130,9 @@ namespace Signals.Game
 
         internal static void LoadSignals(UnityModManager.ModEntry mod)
         {
+            // Don't load the default pack multiple times.
+            if (DefaultPack != null && mod.Info.Id == SignalsMod.Instance.Info.Id) return;
+
             AssetBundle bundle;
             var files = Directory.EnumerateFiles(mod.Path, Constants.Bundle, SearchOption.AllDirectories);
 
@@ -148,7 +151,7 @@ namespace Signals.Game
 
                 if (pack != null)
                 {
-                    if (DefaultPack == null || mod.Info.Id == SignalsMod.Instance.Info.Id)
+                    if (DefaultPack == null)
                     {
                         DefaultPack = pack;
                         SignalsMod.Log("Loaded default pack.");

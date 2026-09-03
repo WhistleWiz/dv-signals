@@ -285,6 +285,14 @@ namespace Signals.Game.Controllers
             }
         }
 
+        internal void SetMainSignalsToShunting()
+        {
+            foreach (var item in Signals)
+            {
+                item.IsShunting = true;
+            }
+        }
+
         protected virtual bool ShouldMoveForwards(RailTrack track)
         {
             return true;
@@ -623,6 +631,11 @@ namespace Signals.Game.Controllers
             ControllerMode.MostRestrictive => GetMostRestrictiveSignal(),
             _ => GetActiveSignal(),
         };
+
+        public virtual Signal? GetControllerShuntingSignal()
+        {
+            return ShuntingSignals.Length > 0 ? ShuntingSignals[0] : null;
+        }
 
         /// <summary>
         /// Gets the next controller from the active signal.
