@@ -153,7 +153,7 @@ namespace Signals.Game
                         DefaultPack = pack;
                         SignalsMod.Log("Loaded default pack.");
                     }
-                    else if (mod.Info.Id != SignalsMod.Instance.Info.Id)
+                    else
                     {
                         if (new Version(pack.ExporterVersion) < Constants.MinimumVersion)
                         {

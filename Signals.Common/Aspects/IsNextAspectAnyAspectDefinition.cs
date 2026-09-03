@@ -6,7 +6,6 @@ namespace Signals.Common.Aspects
     public class IsNextAspectAnyAspectDefinition : AspectBaseDefinition
     {
         public string[] NextIds = new string[0];
-        public bool Shunting = false;
 
         private void Reset()
         {

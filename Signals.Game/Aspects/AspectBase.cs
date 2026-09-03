@@ -166,9 +166,13 @@ namespace Signals.Game.Aspects
         {
             while (true)
             {
-                if (!CheckLamps()) break;
+                if (CheckLamps())
+                {
+                    yield return null;
+                    continue;
+                }
 
-                yield return null;
+                break;
             }
 
             ApplyBlinkingLamps();

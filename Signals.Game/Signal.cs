@@ -328,11 +328,6 @@ namespace Signals.Game
 
             CurrentAspect?.Unapply();
 
-            foreach (var item in AllLights)
-            {
-                item.TurnOff();
-            }
-
             var aspect = AllAspects[newAspect];
             SignalsMod.LogVerbose($"Setting signal '{Name}' to aspect '{aspect.Id}'");
             aspect.Apply();
@@ -346,11 +341,10 @@ namespace Signals.Game
 
         public void UpdateAspect(bool forced)
         {
-            bool changed;
+            bool changed = false;
 
             if (Operation.IsFullyManual())
             {
-                changed = ChangeAspect(ManualOverrideAspect);
                 goto Finalise;
             }
 
@@ -390,6 +384,8 @@ namespace Signals.Game
             {
                 item.CheckAndUpdate(aspectChanged);
             }
+
+            UpdateHoverDisplay();
 
             DisplaysUpdated?.Invoke(AllDisplays);
         }
@@ -492,7 +488,6 @@ namespace Signals.Game
 
             _operation = mode;
             OperationModeChanged?.Invoke(mode);
-            SignalManager.OperationModeChanged?.Invoke(this, mode);
             return true;
         }
 
@@ -522,7 +517,6 @@ namespace Signals.Game
             var changed = ChangeAspect(target);
             UpdateDisplays(changed);
             UpdateIndicators();
-            UpdateHoverDisplay();
 
             return changed;
         }
@@ -553,7 +547,6 @@ namespace Signals.Game
             var changed = ChangeAspect(target);
             UpdateDisplays(changed);
             UpdateIndicators();
-            UpdateHoverDisplay();
 
             return changed;
         }
@@ -579,6 +572,7 @@ namespace Signals.Game
             var controller = GetNextController();
             var visited = new HashSet<BasicSignalController> { Controller };
             var safety = 0;
+
 
             while (controller != null)
             {

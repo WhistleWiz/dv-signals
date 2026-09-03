@@ -44,20 +44,6 @@ namespace Signals.Game.Controllers
             Update(true, true);
         }
 
-        public override Signal? GetActiveSignal()
-        {
-            if (Signals.Length == 0) return null;
-
-            return Signals[Junction.selectedBranch % Signals.Length];
-        }
-
-        public override Signal? GetControllerShuntingSignal()
-        {
-            if (ShuntingSignals.Length == 0) return null;
-
-            return ShuntingSignals[Junction.selectedBranch % ShuntingSignals.Length];
-        }
-
         public override bool UpdateBlocks()
         {
             var updated = false;

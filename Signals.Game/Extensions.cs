@@ -75,7 +75,6 @@ namespace Signals.Game
 
         private const string YardNameStart = "[Y]";
         private const string NoSign = "[#]";
-        private const string TrackThrough = "[track through]";
 
         public static bool IsOccupied(this RailTrack track, CrossingCheckMode crossingMode)
         {
@@ -112,11 +111,6 @@ namespace Signals.Game
             return track.IsPartOfYard() || track.IsNonSign();
         }
 
-        public static bool IsThroughTrack(this RailTrack track)
-        {
-            return track.name == TrackThrough;
-        }
-
         public static double GetLength(this RailTrack track)
         {
             return track.LogicTrack().length;
@@ -137,6 +131,7 @@ namespace Signals.Game
         #region Junctions
 
         private const string JunctionLeft = "junc-l";
+        private const string TrackThrough = "[track through]";
         private const string DoubleTrackTag = "DT-";
         private const string DoubleTrackStationTag = "DTS-";
         private const string DoubleTrackCrossoverTag = "DTC-";
