@@ -148,7 +148,7 @@ namespace Signals.Game
 
                 if (pack != null)
                 {
-                    if (DefaultPack == null)
+                    if (DefaultPack == null || mod.Info.Id == SignalsMod.Instance.Info.Id)
                     {
                         DefaultPack = pack;
                         SignalsMod.Log("Loaded default pack.");
@@ -624,8 +624,5 @@ namespace Signals.Game
         }
 
         #endregion
-
-        // Temp Debug.
-        private StationControllerCache Cache = new StationControllerCache();
     }
 }

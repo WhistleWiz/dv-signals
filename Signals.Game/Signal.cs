@@ -341,10 +341,11 @@ namespace Signals.Game
 
         public void UpdateAspect(bool forced)
         {
-            bool changed = false;
+            bool changed;
 
             if (Operation.IsFullyManual())
             {
+                changed = ChangeAspect(ManualOverrideAspect);
                 goto Finalise;
             }
 
@@ -384,8 +385,6 @@ namespace Signals.Game
             {
                 item.CheckAndUpdate(aspectChanged);
             }
-
-            UpdateHoverDisplay();
 
             DisplaysUpdated?.Invoke(AllDisplays);
         }
