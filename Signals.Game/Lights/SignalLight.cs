@@ -69,6 +69,7 @@ namespace Signals.Game.Lights
             indicator.emissionLight = def.Light;
             indicator.glareColor = def.Colour;
             indicator.renderers = def.Renderers;
+            indicator.binary = def.Binary;
 
             if (def.Glare != null)
             {

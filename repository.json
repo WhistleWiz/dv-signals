@@ -2,6 +2,11 @@
 	"Releases": [
 		{
 			"Id": "DVSignals",
+			"Version": "1.1.3",
+			"DownloadUrl": "https://github.com/WhistleWiz/dv-signals/releases/download/v1.1.3/DVSignals.zip"
+		},
+		{
+			"Id": "DVSignals",
 			"Version": "1.1.2",
 			"DownloadUrl": "https://github.com/WhistleWiz/dv-signals/releases/download/v1.1.2/DVSignals.zip"
 		},

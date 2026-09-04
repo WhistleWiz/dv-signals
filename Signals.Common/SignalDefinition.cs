@@ -18,6 +18,8 @@ namespace Signals.Common
         public int HUDDisplayOrder = 0;
         [Tooltip("If true, will synchronise lamp states when changing aspect")]
         public bool SynchroniseLamps = true;
+        [Tooltip("Delay aspect changes by visually turning off the signal"), Min(0)]
+        public float AspectChangeDelay = 0;
 
         [Header("Optional")]
         [Tooltip("Displays that aren't part of aspects")]

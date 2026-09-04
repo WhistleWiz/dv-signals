@@ -29,6 +29,7 @@ namespace Signals.Game.Aspects
         where T : AspectBaseDefinition
     {
         private bool _applied = false;
+        private Coroutine? _applying;
         private Coroutine? _sync;
         private SignalLight[] _on;
         private SignalLight[] _blink;
@@ -79,6 +80,11 @@ namespace Signals.Game.Aspects
         /// </remarks>
         public virtual void Apply()
         {
+            _applying = Signal.Definition.StartCoroutine(ApplyRoutine(Signal.Definition.AspectChangeDelay));
+        }
+
+        private void InternalApply()
+        {
             _applied = true;
 
             if (Signal.Definition.SynchroniseLamps && CheckLamps())
@@ -121,6 +127,11 @@ namespace Signals.Game.Aspects
         public virtual void Unapply()
         {
             _applied = false;
+
+            if (_applying != null)
+            {
+                Signal.Definition.StopCoroutine(_applying);
+            }
 
             if (_sync != null)
             {
@@ -165,6 +176,19 @@ namespace Signals.Game.Aspects
             {
                 Definition.ActivationAudios.Play(Definition.transform.position, mixerGroup: AudioManager.Instance.switchGroup);
             }
+        }
+
+        private System.Collections.IEnumerator ApplyRoutine(float delay)
+        {
+            yield return null;
+
+            if (delay > 0)
+            {
+                yield return WaitFor.Seconds(delay);
+            }
+
+            InternalApply();
+            _applying = null;
         }
 
         private System.Collections.IEnumerator SynchoniseLamps()

@@ -11,6 +11,8 @@ namespace Signals.Common
         public float LightIntensity = 2.5f;
         [Tooltip("How long it takes for the light to turn on")]
         public float Lag = 0.2f;
+        [Tooltip("If true, the lamp will be either off or at max intensity\nRequires Lag to be 0")]
+        public bool Binary = false;
         [Tooltip("If true, the lamp will only turn on at night")]
         public bool NightOnly = false;
 
