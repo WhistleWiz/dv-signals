@@ -487,6 +487,7 @@ namespace Signals.Game
 
             _operation = mode;
             OperationModeChanged?.Invoke(mode);
+            SignalManager.OperationModeChanged?.Invoke(this, mode);
             return true;
         }
 
