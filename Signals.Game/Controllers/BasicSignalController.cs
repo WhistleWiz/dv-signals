@@ -545,6 +545,9 @@ namespace Signals.Game.Controllers
         /// <param name="startPropagate">Whether this signal should propagate its updates to the signals afterwards.</param>
         public void Update(bool forced, bool startPropagate)
         {
+            // Request the next signal to be updated to propagate out of range.
+            UpdateRequested = Mathf.Max(UpdateRequested - 1, 0);
+
             var blocksUpdated = UpdateBlocks();
 
             foreach (var signal in AllSignals)
@@ -569,11 +572,8 @@ namespace Signals.Game.Controllers
                 }
 
                 signal.UpdateAspect(forced);
+                signal.GetNextController()?.RequestUpdate(startPropagate ? UpdatePropagation : UpdateRequested);
             }
-
-            // Request the next signal to be updated to propagate out of range.
-            UpdateRequested = Mathf.Max(UpdateRequested - 1, 0);
-            GetNextController()?.RequestUpdate(startPropagate ? UpdatePropagation : UpdateRequested);
         }
 
         /// <summary>
