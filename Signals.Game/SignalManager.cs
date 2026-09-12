@@ -364,7 +364,7 @@ namespace Signals.Game
                 TracksideObject.CurrentGauge = (float)gauge / 2;
                 return;
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 SignalsMod.Error($"Gauge mod found but could not get the current gauge: {e}");
                 goto SetDefault;

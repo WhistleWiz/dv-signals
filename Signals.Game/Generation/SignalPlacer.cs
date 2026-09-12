@@ -564,11 +564,18 @@ namespace Signals.Game.Generation
                 Patches.BufferStopControllerPatches.Stops.Clear();
                 return;
             }
-                        
-            int i = 0;
 
-            foreach (var stop in Patches.BufferStopControllerPatches.Stops)
+            for (int i = 0; i < Patches.BufferStopControllerPatches.Stops.Count; i++)
             {
+                var stop = Patches.BufferStopControllerPatches.Stops[i];
+
+                // Mapify can delete stops after Awake runs on them but before the list is cleared, so they must be checked...
+                if (stop == null || stop.transform == null)
+                {
+                    Patches.BufferStopControllerPatches.Stops.RemoveAt(i--);
+                    continue;
+                }
+
                 var prefab = pack.GetBufferStopSignal(pack.EnableOldVersions && OldAreaCalculator.IsWithinOldArea(stop.transform.position));
 
                 if (prefab == null) continue;
@@ -579,7 +586,7 @@ namespace Signals.Game.Generation
                 var instance = Object.Instantiate(prefab, stop.transform);
                 instance.transform.ResetLocal();
                 instance.transform.localPosition = new Vector3(instance.Offset, 0, 0);
-                var controller = new BufferStopSignalController(instance, $"BFS{++i}", stop, !isStatic);
+                var controller = new BufferStopSignalController(instance, $"BFS{i + 1}", stop, !isStatic);
                 bufferStopSignals.Add(controller);
 
                 // Move up the hierarchy so it stays with the track.

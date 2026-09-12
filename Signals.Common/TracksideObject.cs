@@ -26,6 +26,7 @@ namespace Signals.Common
         public bool KeepInSameSide = false;
         public bool MirrorWhenOnOppositeSide = false;
         public bool AlignWithSleepers = false;
+        public bool HideIfOutOfBounds = false;
 
         private void OnDrawGizmos()
         {

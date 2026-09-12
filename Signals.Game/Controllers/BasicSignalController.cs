@@ -270,8 +270,9 @@ namespace Signals.Game.Controllers
                 }
 
                 var opposite = placement.OppositeSide && !item.KeepInSameSide;
-                var span = Helpers.ClampD(placement.Span + (isOut ? -item.OffsetFromController : item.OffsetFromController), 0, kpSet.span);
-                var point = kpSet.points[kpSet.GetPointIndexForSpan(span)];
+                var spanO = placement.Span + (isOut ? -item.OffsetFromController : item.OffsetFromController);
+                var spanT = Helpers.ClampD(spanO, 0, kpSet.span);
+                var point = kpSet.points[kpSet.GetPointIndexForSpan(spanT)];
                 var offset = opposite ? -item.OffsetFromTrack : item.OffsetFromTrack;
 
                 if (item.AtRail)
@@ -282,6 +283,12 @@ namespace Signals.Game.Controllers
                 item.transform.rotation = Quaternion.LookRotation(isOut ? point.forward : -point.forward);
                 item.transform.position = (Vector3)point.position + item.transform.right * offset;
                 item.transform.localScale = (opposite && item.MirrorWhenOnOppositeSide) ? new Vector3(-1, 1, 1) : Vector3.one;
+
+                // Value was clamped, so it was out of bounds.
+                if (item.HideIfOutOfBounds && spanO != spanT)
+                {
+                    item.gameObject.SetActive(false);
+                }
             }
         }
 
