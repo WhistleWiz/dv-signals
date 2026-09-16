@@ -166,6 +166,10 @@ namespace Signals.Common
         public string SubDistantFormat = "{0}";
         public string FallbackFormat = "S{0}";
 
+        [Header("Special Processing")]
+        [Tooltip("Add any transparent material that should have the TransparencyWithFog shader applied")]
+        public Material[] TransparencyWithFog = new Material[0];
+
         public IEnumerable<SignalControllerDefinition> AllControllers
         {
             get

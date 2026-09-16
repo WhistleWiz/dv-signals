@@ -169,7 +169,7 @@ namespace Signals.Game
                         SignalsMod.Log($"Loaded signal pack from {mod.Info.Id}");
                     }
 
-                    ProcessControllers(pack);
+                    ProcessPack(pack);
                     bundle.Unload(false);
                     break;
                 }
@@ -184,6 +184,18 @@ namespace Signals.Game
             {
                 InstalledPacks.Remove(mod.Info.Id);
             }
+        }
+
+        private static void ProcessPack(SignalPack pack)
+        {
+            var twf = Shader.Find("TransparencyWithFog");
+
+            foreach (var mat in pack.TransparencyWithFog)
+            {
+                mat.shader = twf;
+            }
+
+            ProcessControllers(pack);
         }
 
         private static void ProcessControllers(SignalPack pack)
