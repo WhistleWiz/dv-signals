@@ -169,6 +169,8 @@ namespace Signals.Common
         [Header("Special Processing")]
         [Tooltip("Add any transparent material that should have the TransparencyWithFog shader applied")]
         public Material[] TransparencyWithFog = new Material[0];
+        [Tooltip("Add any material whose render queue should be forced to 2000")]
+        public Material[] RenderQueueFix = new Material[0];
 
         public IEnumerable<SignalControllerDefinition> AllControllers
         {

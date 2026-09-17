@@ -195,6 +195,11 @@ namespace Signals.Game
                 mat.shader = twf;
             }
 
+            foreach (var mat in pack.RenderQueueFix)
+            {
+                mat.renderQueue = 2000;
+            }
+
             ProcessControllers(pack);
         }
 
